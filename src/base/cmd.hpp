@@ -52,10 +52,6 @@ class cParseEntity {
 	public:
 		// int mWordNr; // then number of word (in command line)  (this is part of the array index)
 
-		int mCharPos; // at which character does this word start in command line (e.g. in orginal command)
-
-		int mSub; // additional number - e.g. number of word in command or argument; see tKind
-
 		enum class tKind {
 			unknown, // yet-unknown. but mWordNr is valid here
 			pre, // "ot", mWordNr is 0 usually
@@ -70,7 +66,11 @@ class cParseEntity {
 
 		tKind mKind;
 
-		cParseEntity(tKind mKind, int mCharPos, int mSub=0) : mKind(mKind), mCharPos(mCharPos), mSub(mSub) { }
+		int mCharPos; // at which character does this word start in command line (e.g. in orginal command)
+
+		int mSub; // additional number - e.g. number of word in command or argument; see tKind
+
+		cParseEntity(tKind _mKind, int _mCharPos, int _mSub=0) : mKind(_mKind), mCharPos(_mCharPos), mSub(_mSub) { }
 
 		// to define the entities meaning later once we know them:
 		void SetKind(tKind kind) { mKind=kind; }
@@ -387,10 +387,10 @@ class cValidateError {
 			now  // we checked with authoritative source now (e.g. the server) and still there is a problem (user dosn't exist on server)
 		};
 
+		string mMessage;
 		tKind mKind;
 		tGuess mGuess;
 
-		string mMessage;
 
 		vector<int> argpos; // TODO:nrix at which position of argument did the error occured
 

@@ -327,7 +327,7 @@ vector<T> operator+(const T &a, const vector<T> &b) {
 
 template <class T>
 vector<T> operator+(const vector<T> &a, const T &b) {
-	vector<T> b_vector(1,a);
+	vector<T> b_vector(1,b);
 	return a + b_vector;
 }
 

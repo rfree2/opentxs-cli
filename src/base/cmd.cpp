@@ -215,7 +215,6 @@ void cCmdProcessing::_Validate() {
 }
 
 void cCmdProcessing::Parse(bool allowBadCmdname) {
-	_dbg1("Entering Parse()");
 	if (mStateParse != tState::never) { _dbg1("Already parsed"); return; }
 	mStateParse = tState::failed; // assumed untill succeed below
 	try {
@@ -287,7 +286,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		if(dbg) _dbg2("Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
 	}
 
-	if (test_char2word) { for (int i=0; i<mCommandLineString.size(); ++i) {
+	if (test_char2word) { for (size_t i=0; i<mCommandLineString.size(); ++i) {
 		const char c = mCommandLineString.at(i);
 		_dbg3("char '" << c << "' on position " << i << " is inside word: " << mData->CharIx2WordIx(i) );
 	} }
@@ -351,7 +350,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 
 		mData->mWordIx2Entity.at(0).SetKind( cParseEntity::tKind::pre ); // "ot" token
 
-		for (int i=1; i<=namepart_words; ++i) mData->mWordIx2Entity.at(i).SetKind( cParseEntity::tKind::cmdname , i ); // mark this words as part of cmdname
+		for (size_t i=1; (xsize_t)i <= namepart_words; ++i) mData->mWordIx2Entity.at(i).SetKind( cParseEntity::tKind::cmdname , i ); // mark this words as part of cmdname
 		if(dbg) _dbg2("Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
 
 		try {
@@ -374,7 +373,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		const size_t var_size_all = format.mVar.size() + format.mVarExt.size(); // number of the size of all variables (normal + extra)
 		_dbg2("Format: size of vars: " << var_size_normal << " normal, and all is: " << var_size_all);
 
-		int pos = 2; // number of currently parsed word "msg send"
+		size_t pos = 2; // number of currently parsed word "msg send"
 		if (name.find(" ") == string::npos) pos=1; // in case of 1-word name
 
 		phase=1;
@@ -385,7 +384,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
 				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) { _dbg1("reached END, pos="<<pos);	phase=9; break;	}
-				if (var_nr >= var_size_normal) { _dbg1("reached end of var normal, var_nr="<<var_nr); phase=2;	break;	}
+				if ( (xsize_t)var_nr >= var_size_normal) { _dbg1("reached end of var normal, var_nr="<<var_nr); phase=2;	break;	}
 
 				string word = mCommandLine.at(pos);
 				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
@@ -420,7 +419,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
 				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) { _dbg1("reached END, pos="<<pos);	phase=9; break;	}
-				if (var_nr >= var_size_all) { _dbg1("reached end of var ALL, var_nr="<<var_nr); phase=3;	break;	}
+				if ( (xsize_t)var_nr >= var_size_all) { _dbg1("reached end of var ALL, var_nr="<<var_nr); phase=3;	break;	}
 
 				string word = mCommandLine.at(pos);
 				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
