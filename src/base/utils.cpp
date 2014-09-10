@@ -287,29 +287,51 @@ void DisplayStringEndl(std::ostream & out, const std::string text) {
 	out << std::endl;
 }
 
+
+// class cTextUtils
+static const char cTextUtils::s_char_space=' '; // the space character
+static const char cTextUtils::s_char_escape='\\'; // the escape character
+static const char cTextUtils::s_char_space_nbr='#'; // the special character that replaces space when space is ment to NOT break words but be part of them. TODO replace with unicode once we have wchar / wstring
+
 std::string SpecialFromEscape(const std::string &s, int & pos) {
 	std::ostringstream newStr;
-	bool lock = false;
-	for(int i = 0; i < s.length();i++) {
-		if(s[i] == '\\' && s[i+1] == 32) {
-			newStr<<"#";
-			lock = true;
-			pos--;
+	bool in_escape = false; // are we now in middle of escaping, after just reading the escape character
+	const char escape_char = '\\'; // TODO global constant?
+	const char nonbreak_char = '#'; // TODO global constant?
+	const char space_char = ' ';
+	const auto s_len = s.length();
+	assert(pos>=0);
+	for (int i = 0; i < s_len; i++) {
+		try {
+			const bool is_escape = s.at(i) == escape_char;
+			if (is_escape) {
+				if (! (s+1 < s_len) ) throw std::string("Invalid escape opened at end of string");
+				const char next_char = s.at(i+1);
+				if (next_char == space_char) {
+					newStr<<nonbreak_char;
+					in_escape = true;
+					pos--;
+				} else throw std::string("Unknown escape: next_char=" + ToStr(next_char));
+			} // if escape
+			else if (in_escape==true) {
+				if (s.at(i) == space_char) { } // we here eat the space that we already escaped
+				else throw std::string("Where is the character that we just escaped?");
+			}
+			else { //  it's a normal character, just add it
+				newStr<<s.at(i);
+				in_escape = false;
+			}
+		} catch (std::string &s) { _warn("Exception occured here: " << s);
+			throw std::runtime_error("Parsing error ("<<s<<") while at position i="+ToStr(i)+", with s=["<<s<<"]." + OT_CODE_STAMP);
 		}
-		else if (lock == true  && s[i] == 32 ) {
-			newStr<<"";
-		}
-		else {
-			newStr<<s[i];
-			lock = false;
-		}
-	}
+	} // for all characters
+	assert(pos>=0); assert(!in_escape);;
 	return newStr.str();
 }
 
 std::string EscapeFromSpecial(const std::string &s) {
 	std::ostringstream  newStr;
-	for(int i = 0; i < s.length();i++) {
+	for(int i = 0; i < s.length(); i++) {
 		if(s[i] == '#')
 			newStr << "\\" << " ";
 		else

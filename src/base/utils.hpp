@@ -178,7 +178,7 @@ template <class T, class T2>
 void DbgDisplayMap(const std::map<T, T2> &m, const std::string &delim=" ") {
 	for(auto var : m) {
 		std::cerr << var.first << delim << var.second << endl;
- 	}
+	}
 }
 
 
@@ -291,6 +291,16 @@ public:
 void hintingToTxt(std::fstream & file, string command, vector<string> &commands);
 void generateQuestions (std::fstream & file, string command);
 void generateAnswers (std::fstream & file, string command, vector<string> &completions);
+
+// ========== logger ==========
+
+/// Part of text utils are in form of class (though many are yet as free functions)
+class cTextUtils {
+	public:
+		static const char s_char_space; // the space character
+		static const char s_char_escape; // the escape character
+		static const char s_char_space_nbr; // the special character that replaces space when space is ment to NOT break words but be part of them
+};
 
 // ====================================================================
 
