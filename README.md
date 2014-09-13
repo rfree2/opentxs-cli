@@ -26,9 +26,9 @@ Relation with Open-Transactions (in run-time)
 
 (current computer):
 ~/.ot/otcli/ <--- private store for otcli/othint own config/cache/data
-~/.ot/client_data/ <--- here otcli will save not-yet-pushed OT data
+~/.ot/client_data/ --- here otcli will save not-yet-pushed OT data
 (possibly on external computer - but easier on localhost same user):
-~/.ot/server_data/ <--- here some external server will operate to which we will talk using OT
+~/.ot/server_data/ --- here some external server will operate to which we will talk using OT
 Once OT federation will work fully, external server will talk to yet another server and push
 our data to end users on any server.
 
@@ -64,6 +64,12 @@ How to building/compile otcli from source code:
 1) Build otcli - choosing compiler
 2) Build otcli - dependencies
 3) Build otcli - main
+
+_this section is being rewritten_
+
+Try:
+
+CMAKE_PREFIX_PATH="$HOME/.local/" CMAKE_INSTALL_PREFIX="$HOME/.local/" cmake .. && make -j 8
 
 0) If you system was already configured then just do ./full-rebuild.sh ; Else:
 

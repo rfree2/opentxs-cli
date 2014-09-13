@@ -573,6 +573,8 @@ void cInteractiveShell::RunOnce(const string line, shared_ptr<nUse::cUseOT> use)
 	try {
 		_RunOnce(line, use);
 	} catch (const myexception &e) { e.Report(); throw ; } catch (const std::exception &e) { _erro("Exception " << e.what()); throw ; }
+#else
+	(void)use; // unused in this case
 #endif
 }
 
