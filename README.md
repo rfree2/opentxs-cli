@@ -69,7 +69,7 @@ _this section is being rewritten_
 
 Try:
 
-CMAKE_PREFIX_PATH="$HOME/.local/" CMAKE_INSTALL_PREFIX="$HOME/.local/" cmake .. && make -j 8
+mkdir -p build ; cd build ; CMAKE_PREFIX_PATH="$HOME/.local/" CMAKE_INSTALL_PREFIX="$HOME/.local/" cmake .. && make 
 
 0) If you system was already configured then just do ./full-rebuild.sh ; Else:
 

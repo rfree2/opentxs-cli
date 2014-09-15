@@ -21,6 +21,8 @@
 #include <functional>
 #include <memory>
 
+#include "cpp_safe_int.hpp"
+
 #if defined(_MSC_VER) && _MSC_VER > 1800
 #define NOEXCEPT noexcept
 #else
