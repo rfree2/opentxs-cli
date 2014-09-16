@@ -7,145 +7,87 @@
 #include <cmath>
 #include <iomanip>
 
-#ifndef USE_BOOST_FOR_TESTING
-	#define USE_BOOST_FOR_TESTING USE_BOOST
-#endif
+#define ALLOWED_BOOST 1
 
-#if USE_BOOST_FOR_TESTING
+#ifdef ALLOWED_BOOST
 #include <boost/multiprecision/cpp_int.hpp>
 #endif
 
 
-#if USE_BOOST_FOR_TESTING
-	typedef boost::multiprecision::checked_int1024_t t_safenumber;
+#ifdef ALLOWED_BOOST
+
+typedef boost::multiprecision::checked_int1024_t t_safenumber;
+
+// typedef boost::multiprecision::number<cpp_int_backend<16384, 16384, signed_magnitude, checked, void> >    t_safenumber;
+
 #else
-	typedef long double t_safenumber; // that should work too but the one with boost is nicer
-	// e.g. do not throw warnings from the TESTING CODE (but that can be fixed)
+
+typedef long long double t_safenumber;
+
 #endif
-
-
 namespace nCppSafe {
-
 /***
-Following operations must be fixed to
-- not cause a warning
-- and to be safe e.g. if the integral type has negative value.
 
-signed long a; size_t b;
-if ( a < b ) ... // error
+size_t size;
+int b;
+if ( (opsize_t)size < b ) // ok
 
-if ( (xsize_t)a < b ) // ok
-if ( (xsize_t)a <= b ) // ok
-if ( (xsize_t)a > b ) // ok
-if ( (xsize_t)a >= b ) // ok
-
-if ( b < a(xsize_t) ) // ok
-if ( b <= a(xsize_t) ) // ok
-if ( b > a(xsize_t) ) // ok
-if ( b >= a(xsize_t) ) // ok
 */
 
-/***
-@description This is a speciall struct that is suppose to:
-- allow comparing integrals that can be negative with a size_t
-- also possibly do a (partial) check is the value used makes sense to be used in size_t context
 
-The full version of size_t but with sign.
+/***
+@struct
+@brief you cast an size_t to this type, and then resulting type is comparable to all build-in integral types without warning nor overflows.
+
+This is a speciall struct that is suppose to:
+- allow comparing integrals that can be negative
+
 Use this ONLY for casting for ONLY comparsions.
-This type is allowed to give you garbaged value in other cases, e.g. if you would like to store large negative
-number here, then it only guarantees to be able to confirm that will be smaller then your size_t (e.g. we could store here value like -1)
 */
 
-#define ATTR // TODO attribute operator?
+#define ATTR __attribute__((pure)) // TODO attribute operator?
 struct xsize_t_struct {
-	private:
-		size_t m_value; // the value (without size) minus zero is not allowed.
-		bool m_minus; // 0=plus.  if value==0 then m_minus=0 always!
+	public: /* public to not mock around with friending templated operators */
+		size_t m_v; // the value of size_t
 
 	public:
-		xsize_t_struct() { }
-		xsize_t_struct(size_t t) { m_minus=0; m_value=t; }
+		explicit xsize_t_struct(size_t size) : m_v(size) {} // only proper way to init this
+		template <class TYPE> xsize_t_struct(TYPE integral)=delete; // this is blocked
+		xsize_t_struct()=delete; // this is blocked too
 
-		void my_abort(const std::string & msg) {
-			std::cout << "size_t arithmetics error in " << __FUNCTION__ << " " << __FILE__<<" : " << msg << std::endl;
-			abort();
-		}
-
-		// TODO also for signed long int
-		xsize_t_struct(signed long long int v) {
-			if (v<0) {
-				// we are not guaranteeing to store other values then needed for comparsing, so no need to check if -v is stored correctly
-				m_minus = 1;
-				m_value = 1; // -v  we just store it as representing "-1". we avoid "-v" in case if that could wrap around,
-				// and result in minus=1,value=0 which would represent "-0" and that is not allowed (because other code
-				// is not prepared to handle that correctly when comparing "-0" <= 0.
-			}
-			else {
-				m_minus = 0;
-				const size_t limit_max = std::numeric_limits<size_t>::max();
-				unsigned long long int vu = v;
-				if (vu > limit_max) {
-					my_abort(std::string("Overflow: value of v=") + std::to_string(v) + std::string(" is too big to be placed in signed-size_t, "
-						"you are probably doing something wrong if you were about to compare it to size_t then"));
-				}
-				m_value = v;
-			}
-		}
-
-		ATTR bool operator<=(T_size_t b) const  { if (m_minus) return 1; return m_value <= b; }
-		ATTR bool operator<(T_size_t b) const   { if (m_minus) return 1; return m_value < b; }
-		ATTR bool operator>=(T_size_t b) const  { if (m_minus) return 0; return m_value >= b; }
-		ATTR bool operator>(T_size_t b) const   { if (m_minus) return 0; return m_value > b; }
-		ATTR bool operator==(T_size_t b) const  { if (m_minus) return 0; return m_value == b; }
-		ATTR bool operator!=(T_size_t b) const  { if (m_minus) return 1; return m_value != b; }
-
-		template <class T_T_size_t>
-		friend ATTR bool operator<=(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator<(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator>=(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator>(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator==(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator!=(T_size_t b, xT_size_t_struct a);
-
-		private:
-		template <class T_size_t>
-		ATTR operator T_size_t() {
-			// to catch any errors
-			my_abort( std::string("Trying to convert the special signed-T_size_t object back to use it by value; "
-				"That is not allowed, it shoul be used ONLY FOR COMPARSION with T_size_t."
-				" value=")+std::to_string(m_value)+std::string(" back to T_size_t!"));
-			//if (m_minus) my_abort( std::string("Trying to convert negative value=")+std::to_string(m_value)+std::string(" back to T_size_t!"));
-			return 0; // m_value;
-		}
-
-
+		// TEST CASE it -2,-1,0,+1,+2  N * N tests
 };
+
+//template <class T_INT> bool operator< (T_INT value, xsize_t_struct size)   { std::cerr<<" {value="<<value<<"<"<<size.m_v<<" 1 } "; if (value<0) return 1; return value < size.m_v; }
+//template <class T_INT> bool operator< (xsize_t_struct size, T_INT value)   { std::cerr<<" {xsize="<<size.m_v<<" < value="<<value<<" 2 } "; if (value<0) return 0; return size.m_v < value; }
+
+template <class T_INT> bool operator< (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return value < size.m_v; }
+template <class T_INT> bool operator< (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return size.m_v < value; }
+
+template <class T_INT> bool operator<= (T_INT value, xsize_t_struct size)  { if (value<0) return 1; return value <= size.m_v; } // -100 <= 0
+template <class T_INT> bool operator<= (xsize_t_struct size, T_INT value)  { if (value<0) return 0; return size.m_v <= value; } // 0 <= -100
+
+template <class T_INT> bool operator> (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return value > size.m_v; }
+template <class T_INT> bool operator> (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return size.m_v > value; }
+
+template <class T_INT> bool operator>= (T_INT value, xsize_t_struct size)  { if (value<0) return 0; return value >= size.m_v; }
+template <class T_INT> bool operator>= (xsize_t_struct size, T_INT value)  { if (value<0) return 1; return size.m_v >= value; }
+
+template <class T_INT> bool operator!= (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return value != size.m_v; }
+template <class T_INT> bool operator!= (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return value != size.m_v; }
+
+template <class T_INT> bool operator== (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return value == size.m_v; }
+template <class T_INT> bool operator== (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return value == size.m_v; }
+// @TODO all op
+
 #undef ATTR
 
-#define ATTR // TODO attribute operator?
-template <class T_size_t>
-ATTR bool operator<=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 0; return b <= a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator<(T_size_t b, xT_size_t_struct a)   { if (a.m_minus) return 0; return b < a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator>=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 1; return b >= a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator>(T_size_t b, xT_size_t_struct a)   { if (a.m_minus) return 1; return b > a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator==(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 0; return b == a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator!=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 1; return b != a.m_value; }
-#undef ATTR
+
 
 typedef xsize_t_struct xsize_t; // TODO sfinae
 
 
 
-
-} // nCppSafe
+}
+ // nCppSafe
 
