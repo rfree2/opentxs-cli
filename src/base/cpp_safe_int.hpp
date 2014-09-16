@@ -92,17 +92,11 @@ struct xsize_t_struct {
 			}
 		}
 
-		template <class T_T_size_t>
 		ATTR bool operator<=(T_size_t b) const  { if (m_minus) return 1; return m_value <= b; }
-		template <class T_T_size_t>
 		ATTR bool operator<(T_size_t b) const   { if (m_minus) return 1; return m_value < b; }
-		template <class T_T_size_t>
 		ATTR bool operator>=(T_size_t b) const  { if (m_minus) return 0; return m_value >= b; }
-		template <class T_T_size_t>
 		ATTR bool operator>(T_size_t b) const   { if (m_minus) return 0; return m_value > b; }
-		template <class T_T_size_t>
 		ATTR bool operator==(T_size_t b) const  { if (m_minus) return 0; return m_value == b; }
-		template <class T_T_size_t>
 		ATTR bool operator!=(T_size_t b) const  { if (m_minus) return 1; return m_value != b; }
 
 		template <class T_T_size_t>
