@@ -384,7 +384,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
 				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) { _dbg1("reached END, pos="<<pos);	phase=9; break;	}
-				if ( (xsize_t)var_nr >= var_size_normal) { _dbg1("reached end of var normal, var_nr="<<var_nr); phase=2;	break;	}
+				if ( var_nr >= (xsize_t)var_size_normal) { _dbg1("reached end of var normal, var_nr="<<var_nr); phase=2;	break;	}
 
 				string word = mCommandLine.at(pos);
 				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
@@ -419,7 +419,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
 				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) { _dbg1("reached END, pos="<<pos);	phase=9; break;	}
-				if ( (xsize_t)var_nr >= var_size_all) { _dbg1("reached end of var ALL, var_nr="<<var_nr); phase=3;	break;	}
+				if ( var_nr >= (xsize_t)var_size_all) { _dbg1("reached end of var ALL, var_nr="<<var_nr); phase=3;	break;	}
 
 				string word = mCommandLine.at(pos);
 				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
@@ -597,7 +597,7 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 		if (mCommandLineString.at(char_pos-1) == ' ') {
 			_mark("tryblock2");
 			word_ix++; // jump to next word XXX
-			if (word_ix >= mCommandLine.size()) { fake_empty=true;
+			if (word_ix >= (xsize_t)mCommandLine.size()) { fake_empty=true;
 				int add_empty_at_word = mData->CharIx2WordIx(char_pos-1); // choose the word-index after which we should insert the "" new word (if we're completing in middle of string)
 				_mark("will add in add_empty_at_word=" << add_empty_at_word);
 				mCommandLine.insert( mCommandLine.begin() + add_empty_at_word , "");
@@ -688,8 +688,8 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			}
 			else {
 				ASRT(mFormat);
-				if (arg_nr <= mFormat->mVar.size()) { entity.SetKind(cParseEntity::tKind::variable); }
-				else if (arg_nr <= mFormat->SizeAllVar()) { entity.SetKind(cParseEntity::tKind::variable_ext); }
+				if (arg_nr <= (xsize_t)mFormat->mVar.size()) { entity.SetKind(cParseEntity::tKind::variable); }
+				else if (arg_nr <= (xsize_t)mFormat->SizeAllVar()) { entity.SetKind(cParseEntity::tKind::variable_ext); }
 				else { entity.SetKind(cParseEntity::tKind::option_name); }
 			}
 		}
@@ -852,9 +852,9 @@ cParamInfo cCmdFormat::GetParamInfo(int nr) const {
 	// similar to cCmdData::VarAccess()
 	if (nr <= 0) throw myexception("Illegal number for var, nr="+ToStr(nr));
 	const int ix = nr - 1;
-	if (ix >= mVar.size()) { // then this is an extra argument
+	if (ix >= (xsize_t)mVar.size()) { // then this is an extra argument
 		const int ix_ext = ix - mVar.size();
-		if (ix_ext >= mVarExt.size()) { // then this var number does not exist - out of range
+		if (ix_ext >= (xsize_t)mVarExt.size()) { // then this var number does not exist - out of range
 			throw myexception("Missing argument: out of range number for var, nr="+ToStr(nr)+" ix="+ToStr(ix)+" ix_ext="+ToStr(ix_ext)+" vs size="+ToStr(mVarExt.size()));
 		}
 		return mVarExt.at(ix_ext);
@@ -879,7 +879,6 @@ void cCmdFormat::Debug() const {
 
 void cCmdFormat::PrintUsageLong(ostream &out) const {
 	using namespace zkr;
-	bool written=false;
 
 	const int width1 = 20;
 
@@ -898,7 +897,6 @@ void cCmdFormat::PrintUsageLong(ostream &out) const {
 	}
 
 	for (int sort=0; sort<=1; ++sort) {
-		size_t nr=0;
 		for(auto opt : mOption) {
 			const string &name = opt.first;
 			const cParamInfo &info = opt.second;
@@ -933,7 +931,6 @@ void cCmdFormat::PrintUsageShort(ostream &out) const {
 	if (written) out<<" ";
 
 	for (int sort=0; sort<=1; ++sort) {
-		size_t nr=0;
 		for(auto opt : mOption) {
 			const string &name = opt.first;
 			const cParamInfo &info = opt.second;
@@ -971,9 +968,9 @@ size_t cCmdData::SizeAllVar() const { // return size of required mVar + optional
 string cCmdData::VarAccess(int nr, const string &def, bool doThrow) const { // see [nr] ; if doThrow then will throw on missing var, else returns def
 	if (nr <= 0) throw cErrArgIllegal("Illegal number for var, nr="+ToStr(nr)+" (1,2,3... is expected)");
 	const int ix = nr - 1;
-	if (ix >= mVar.size()) { // then this is an extra argument
+	if (ix >= (xsize_t)mVar.size()) { // then this is an extra argument
 		const int ix_ext = ix - mVar.size();
-		if (ix_ext >= mVarExt.size()) { // then this var number does not exist - out of range
+		if (ix_ext >= (xsize_t)mVarExt.size()) { // then this var number does not exist - out of range
 			if (doThrow) {
 				throw cErrArgMissing("Missing argument: out of range number for var, nr="+ToStr(nr)+" ix="+ToStr(ix)+" ix_ext="+ToStr(ix_ext)+" vs size="+ToStr(mVarExt.size()));
 			}
@@ -1013,7 +1010,7 @@ string cCmdData::Opt1If(const string& name, const string &def) const { // same b
 
 
 string cCmdData::VarDef(int nr, const string &def, bool doThrow) const {
-	return VarAccess(nr, def, false);
+	return VarAccess(nr, def, doThrow);
 }
 
 string cCmdData::Var(int nr) const { // nr: 1,2,3,4 including both arg and argExt

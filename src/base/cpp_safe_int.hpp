@@ -92,31 +92,31 @@ struct xsize_t_struct {
 			}
 		}
 
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator<=(T_size_t b) const  { if (m_minus) return 1; return m_value <= b; }
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator<(T_size_t b) const   { if (m_minus) return 1; return m_value < b; }
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator>=(T_size_t b) const  { if (m_minus) return 0; return m_value >= b; }
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator>(T_size_t b) const   { if (m_minus) return 0; return m_value > b; }
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator==(T_size_t b) const  { if (m_minus) return 0; return m_value == b; }
-		template <class T_T_size_t>
+		template <class T_size_t>
 		ATTR bool operator!=(T_size_t b) const  { if (m_minus) return 1; return m_value != b; }
 
-		template <class T_T_size_t>
-		friend ATTR bool operator<=(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator<(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator>=(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator>(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator==(T_size_t b, xT_size_t_struct a);
-		template <class T_T_size_t>
-		friend ATTR bool operator!=(T_size_t b, xT_size_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator<=(T_size_t b, xsize_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator<(T_size_t b, xsize_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator>=(T_size_t b, xsize_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator>(T_size_t b, xsize_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator==(T_size_t b, xsize_t_struct a);
+		template <class T_size_t>
+		friend ATTR bool operator!=(T_size_t b, xsize_t_struct a);
 
 		private:
 		template <class T_size_t>
@@ -135,17 +135,17 @@ struct xsize_t_struct {
 
 #define ATTR // TODO attribute operator?
 template <class T_size_t>
-ATTR bool operator<=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 0; return b <= a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator<(T_size_t b, xT_size_t_struct a)   { if (a.m_minus) return 0; return b < a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator>=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 1; return b >= a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator>(T_size_t b, xT_size_t_struct a)   { if (a.m_minus) return 1; return b > a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator==(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 0; return b == a.m_value; }
-template <class T_T_size_t>
-ATTR bool operator!=(T_size_t b, xT_size_t_struct a)  { if (a.m_minus) return 1; return b != a.m_value; }
+ATTR bool operator<=(T_size_t b, xsize_t_struct a)  { if (a.m_minus) return 0; return b <= a.m_value; }
+template <class T_size_t>
+ATTR bool operator<(T_size_t b, xsize_t_struct a)   { if (a.m_minus) return 0; return b < a.m_value; }
+template <class T_size_t>
+ATTR bool operator>=(T_size_t b, xsize_t_struct a)  { if (a.m_minus) return 1; return b >= a.m_value; }
+template <class T_size_t>
+ATTR bool operator>(T_size_t b, xsize_t_struct a)   { if (a.m_minus) return 1; return b > a.m_value; }
+template <class T_size_t>
+ATTR bool operator==(T_size_t b, xsize_t_struct a)  { if (a.m_minus) return 0; return b == a.m_value; }
+template <class T_size_t>
+ATTR bool operator!=(T_size_t b, xsize_t_struct a)  { if (a.m_minus) return 1; return b != a.m_value; }
 #undef ATTR
 
 typedef xsize_t_struct xsize_t; // TODO sfinae

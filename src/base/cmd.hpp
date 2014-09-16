@@ -221,10 +221,9 @@ class cCmdFormat {  MAKE_CLASS_NAME("cCmdFormat");
 		typedef map<string, cParamInfo> tOption;
 
 	protected:
+		cCmdExecutable mExec;
 		tVar mVar, mVarExt;
 		tOption mOption;
-
-		cCmdExecutable mExec;
 
 		friend class cCmdProcessing; // allow direct access (should be read-only!)
 
@@ -263,6 +262,7 @@ class cCmdData {  MAKE_CLASS_NAME("cCmdData");
 
 		// [nr] REMARK: the argument "nr" is indexed like 1,2,3,4 (not from 0) and is including both arg and argExt.
 
+		// general accessor to return variables, implementation to be used by other methods:
 		string VarAccess(int nr, const string &def, bool doThrow) const; // see [nr] ; if doThrow then will throw on missing var, else returns def
 
 	public:
