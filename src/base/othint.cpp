@@ -573,8 +573,8 @@ void cInteractiveShell::RunOnce(const string line, shared_ptr<nUse::cUseOT> use)
 	try {
 		_RunOnce(line, use);
 	} catch (const myexception &e) { e.Report(); throw ; } catch (const std::exception &e) { _erro("Exception " << e.what()); throw ; }
-#else
-	(void)use; // unused in this case
+//#else
+//	(void)use; // unused in this case
 #endif
 }
 
@@ -602,7 +602,7 @@ bool my_rl_wrapper_debug; // external
 // (done with number=0) is an error (at least currently, in future we might cache various completion
 // arrays, or recalculate on change)
 
-#ifdef USE_EDITLINE
+//#ifdef USE_EDITLINE
 /**
 Caller: before calling this function gReadlineHandleParser and gReadlineHandlerUseOT must be set!
 Caller: you must free the returned char* memory if not NULL! (this will be done by readline lib implementation that calls us)
@@ -665,19 +665,19 @@ char ** completion(const char* text, int start, int end __attribute__((__unused_
 	}
 	return (matches);
 }
-#endif
+//#endif
 
 void cInteractiveShell::RunEditline(shared_ptr<nUse::cUseOT> use) {
-#ifdef USE_EDITLINE
+//#ifdef USE_EDITLINE
 	try {
 		_RunEditline(use);
 
 	} catch (const myexception &e) { e.Report(); throw ; } catch (const std::exception &e) { _erro("Exception " << e.what()); throw ; }
-#endif
+//#endif
 }
 
 void cInteractiveShell::_RunEditline(shared_ptr<nUse::cUseOT> use) {
-#ifdef USE_EDITLINE
+//#ifdef USE_EDITLINE
 	_mark("Running editline loop");
 	// nOT::nUse::useOT.Init(); // Init OT on the beginning // disabled to avoid some problems and delay (and valgrid complain)
 
@@ -736,7 +736,7 @@ void cInteractiveShell::_RunEditline(shared_ptr<nUse::cUseOT> use) {
 	clear_history(); // http://cnswww.cns.cwru.edu/php/chet/readline/history.html#IDX11
 
 	gReadlineHandlerUseOT->CloseApi(); // Close OT_API at the end of shell runtime
-#endif
+//#endif
 }
 
 } // namespace nOTHint
