@@ -7,6 +7,7 @@
 #include <cctype>
 #include <locale>
 #include <fstream>
+#include <cassert>
 
 #include "utils.hpp"
 
@@ -309,7 +310,7 @@ std::string SpecialFromEscape(const std::string &s, int & pos) {
 		try {
 			const bool is_escape = s.at(i) == escape_char;
 			if (is_escape) {
-				if (! (s+1 < s_len) ) throw std::string("Invalid escape opened at end of string");
+				if (! (std::stoi(s)+1 < s_len) ) throw std::string("Invalid escape opened at end of string");
 				const char next_char = s.at(i+1);
 				if (next_char == space_char) {
 					newStr<<nonbreak_char;

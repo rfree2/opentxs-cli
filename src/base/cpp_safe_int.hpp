@@ -10,19 +10,19 @@
 #define ALLOWED_BOOST 1
 
 #ifdef ALLOWED_BOOST
-#include <boost/multiprecision/cpp_int.hpp>
+//#include <boost/multiprecision/cpp_int.hpp>
 #endif
 
 
 #ifdef ALLOWED_BOOST
 
-typedef boost::multiprecision::checked_int1024_t t_safenumber;
+//typedef boost::multiprecision::checked_int1024_t t_safenumber;
 
 // typedef boost::multiprecision::number<cpp_int_backend<16384, 16384, signed_magnitude, checked, void> >    t_safenumber;
 
 #else
 
-typedef long long double t_safenumber;
+//typedef long long double t_safenumber;
 
 #endif
 namespace nCppSafe {
