@@ -289,9 +289,13 @@ void DisplayStringEndl(std::ostream & out, const std::string text) {
 
 
 // class cTextUtils
-static const char cTextUtils::s_char_space=' '; // the space character
-static const char cTextUtils::s_char_escape='\\'; // the escape character
-static const char cTextUtils::s_char_space_nbr='#'; // the special character that replaces space when space is ment to NOT break words but be part of them. TODO replace with unicode once we have wchar / wstring
+//static const char cTextUtils::s_char_space=' '; // the space character
+//static const char cTextUtils::s_char_escape='\\'; // the escape character
+//static const char cTextUtils::s_char_space_nbr='#'; // the special character that replaces space when space is ment to NOT break words but be part of them. TODO replace with unicode once we have wchar / wstring
+
+const char cTextUtils::s_char_space=' '; // the space character
+const char cTextUtils::s_char_escape='\\'; // the escape character
+const char cTextUtils::s_char_space_nbr='#'; // the special character that replaces space when space is ment to NOT break words but be part of them. TODO replace with unicode once we have wchar / wstring
 
 std::string SpecialFromEscape(const std::string &s, int & pos) {
 	std::ostringstream newStr;
@@ -322,7 +326,7 @@ std::string SpecialFromEscape(const std::string &s, int & pos) {
 				in_escape = false;
 			}
 		} catch (std::string &s) { _warn("Exception occured here: " << s);
-			throw std::runtime_error("Parsing error ("<<s<<") while at position i="+ToStr(i)+", with s=["<<s<<"]." + OT_CODE_STAMP);
+			throw std::runtime_error("Parsing error ("+s+") while at position i="+ToStr(i)+", with s=["+s+"]." + OT_CODE_STAMP);
 		}
 	} // for all characters
 	assert(pos>=0); assert(!in_escape);;

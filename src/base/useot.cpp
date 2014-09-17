@@ -1457,7 +1457,7 @@ bool cUseOT::NymImport(const string & filename, bool dryrun) {
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	std:string toImport;
+	std::string toImport;
 	nUtils::cEnvUtils envUtils;
 
 	if(!filename.empty()) {
