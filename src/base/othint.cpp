@@ -75,7 +75,7 @@ File format of sources: identation with \t char, which we assume is 2 spaces wid
 // OTNewcliCmdline
 
 // Please read and follow this syntax examples from example_coding.cpp
-
+#define USE_EDITLINE
 
 namespace nOT {
 
@@ -323,8 +323,8 @@ bool cInteractiveShell::Execute(const string cmd) {
 		}
 	} // length
 	return all_ok;
-#else
-    return true;
+//else
+//    return true;
 #endif
 }
 
