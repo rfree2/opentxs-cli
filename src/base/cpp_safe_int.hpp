@@ -61,23 +61,23 @@ struct xsize_t_struct {
 //template <class T_INT> bool operator< (T_INT value, xsize_t_struct size)   { std::cerr<<" {value="<<value<<"<"<<size.m_v<<" 1 } "; if (value<0) return 1; return value < size.m_v; }
 //template <class T_INT> bool operator< (xsize_t_struct size, T_INT value)   { std::cerr<<" {xsize="<<size.m_v<<" < value="<<value<<" 2 } "; if (value<0) return 0; return size.m_v < value; }
 
-template <class T_INT> bool operator< (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return value < size.m_v; }
-template <class T_INT> bool operator< (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return size.m_v < value; }
+template <class T_INT> bool operator< (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return static_cast<size_t>(value) < size.m_v; }
+template <class T_INT> bool operator< (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return size.m_v < static_cast<size_t>(value); }
 
-template <class T_INT> bool operator<= (T_INT value, xsize_t_struct size)  { if (value<0) return 1; return value <= size.m_v; } // -100 <= 0
-template <class T_INT> bool operator<= (xsize_t_struct size, T_INT value)  { if (value<0) return 0; return size.m_v <= value; } // 0 <= -100
+template <class T_INT> bool operator<= (T_INT value, xsize_t_struct size)  { if (value<0) return 1; return static_cast<size_t>(value) <= size.m_v; } // -100 <= 0
+template <class T_INT> bool operator<= (xsize_t_struct size, T_INT value)  { if (value<0) return 0; return size.m_v <= static_cast<size_t>(value); } // 0 <= -100
 
-template <class T_INT> bool operator> (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return value > size.m_v; }
-template <class T_INT> bool operator> (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return size.m_v > value; }
+template <class T_INT> bool operator> (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return static_cast<size_t>(value) > size.m_v; }
+template <class T_INT> bool operator> (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return size.m_v > static_cast<size_t>(value); }
 
-template <class T_INT> bool operator>= (T_INT value, xsize_t_struct size)  { if (value<0) return 0; return value >= size.m_v; }
-template <class T_INT> bool operator>= (xsize_t_struct size, T_INT value)  { if (value<0) return 1; return size.m_v >= value; }
+template <class T_INT> bool operator>= (T_INT value, xsize_t_struct size)  { if (value<0) return 0; return static_cast<size_t>(value) >= size.m_v; }
+template <class T_INT> bool operator>= (xsize_t_struct size, T_INT value)  { if (value<0) return 1; return size.m_v >= static_cast<size_t>(value); }
 
-template <class T_INT> bool operator!= (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return value != size.m_v; }
-template <class T_INT> bool operator!= (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return value != size.m_v; }
+template <class T_INT> bool operator!= (T_INT value, xsize_t_struct size)   { if (value<0) return 1; return static_cast<size_t>(value) != size.m_v; }
+template <class T_INT> bool operator!= (xsize_t_struct size, T_INT value)   { if (value<0) return 1; return static_cast<size_t>(value) != size.m_v; }
 
-template <class T_INT> bool operator== (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return value == size.m_v; }
-template <class T_INT> bool operator== (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return value == size.m_v; }
+template <class T_INT> bool operator== (T_INT value, xsize_t_struct size)   { if (value<0) return 0; return static_cast<size_t>(value) == size.m_v; }
+template <class T_INT> bool operator== (xsize_t_struct size, T_INT value)   { if (value<0) return 0; return static_cast<size_t>(value) == size.m_v; }
 // @TODO all op
 
 #undef ATTR

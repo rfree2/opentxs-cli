@@ -301,7 +301,7 @@ std::string SpecialFromEscape(const std::string &s, int & pos) {
 	const char space_char = ' ';
 	const auto s_len = s.length();
 	assert(pos>=0);
-	for (int i = 0; i < s_len; i++) {
+	for (int i = 0; i < xsize_t(s_len); i++) {
 		try {
 			const bool is_escape = s.at(i) == escape_char;
 			if (is_escape) {
@@ -331,7 +331,7 @@ std::string SpecialFromEscape(const std::string &s, int & pos) {
 
 std::string EscapeFromSpecial(const std::string &s) {
 	std::ostringstream  newStr;
-	for(int i = 0; i < s.length(); i++) {
+	for(int i = 0; i < xsize_t(s.length()); i++) {
 		if(s[i] == '#')
 			newStr << "\\" << " ";
 		else
@@ -342,7 +342,7 @@ std::string EscapeFromSpecial(const std::string &s) {
 
 std::string SpaceFromSpecial(const std::string &s) {
 	std::ostringstream  newStr;
-		for(int i = 0; i < s.length();i++) {
+		for(int i = 0; i < xsize_t(s.length());i++) {
 			if(s[i] == '#')
 				newStr<<" ";
 			else
@@ -353,7 +353,7 @@ std::string SpaceFromSpecial(const std::string &s) {
 
 std::string SpaceFromEscape(const std::string &s) {
 	std::ostringstream  newStr;
-		for(int i = 0; i < s.length();i++) {
+		for(int i = 0; i < xsize_t(s.length());i++) {
 			if(s[i] == '\\' && s[i+1] ==32)
 				newStr<<"";
 			else
@@ -364,7 +364,7 @@ std::string SpaceFromEscape(const std::string &s) {
 
 std::string EscapeFromSpace(const std::string &s) {
 	std::ostringstream  newStr;
-	for(int i = 0; i < s.length();i++) {
+	for(int i = 0; i < xsize_t(s.length());i++) {
 		if(s[i] == 32)
 			newStr << "\\" << " ";
 		else
@@ -376,7 +376,7 @@ std::string EscapeFromSpace(const std::string &s) {
 
 std::string EscapeString(const std::string &s) {
 	std::ostringstream  newStr;
-		for(int i = 0; i < s.length();i++) {
+		for(int i = 0; i < xsize_t(s.length());i++) {
 			if(s[i] >=32 && s[i] <= 126)
 				newStr<<s[i];
 			else

@@ -996,7 +996,7 @@ cParamInfo cCmdFormat::GetParamInfo(int nr) const {
 
 	if (ix >= xsize_t(mVar.size())) { // then this is an extra argument
 		const int ix_ext = ix - mVar.size();
-		if (ix_ext >= mVarExt.size()) { // then this var number does not exist - out of range
+		if (ix_ext >= xsize_t(mVarExt.size())) { // then this var number does not exist - out of range
 			throw myexception("Missing argument: out of range number for var, nr=" + ToStr(nr) + " ix=" + ToStr(ix) + " ix_ext=" + ToStr(ix_ext) + " vs size=" + ToStr(mVarExt.size()));
 		}
 		return mVarExt.at(ix_ext);
@@ -1135,9 +1135,9 @@ string cCmdData::VarAccess(int nr, const string &def, bool doThrow) const { // s
 	if (nr <= 0)
 		throw cErrArgIllegal("Illegal number for var, nr=" + ToStr(nr) + " (1,2,3... is expected)");
 	const int ix = nr - 1;
-	if (ix >= mVar.size()) { // then this is an extra argument
+	if (ix >= xsize_t(mVar.size())) { // then this is an extra argument
 		const int ix_ext = ix - mVar.size();
-		if (ix_ext >= mVarExt.size()) { // then this var number does not exist - out of range
+		if (ix_ext >= xsize_t(mVarExt.size())) { // then this var number does not exist - out of range
 			if (doThrow) {
 				throw cErrArgMissing("Missing argument: out of range number for var, nr=" + ToStr(nr) + " ix=" + ToStr(ix) + " ix_ext=" + ToStr(ix_ext) + " vs size=" + ToStr(mVarExt.size()));
 			}
