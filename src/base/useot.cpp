@@ -4,7 +4,7 @@
 #include "useot.hpp"
 
 #include <OTPaths.hpp>
-
+#include <OTStorage.hpp>
 #include "lib_common3.hpp"
 
 #include "bprinter/table_printer.h"
@@ -296,7 +296,7 @@ bool cUseOT::AccountRefresh(const string & accountName, bool all, bool dryrun) {
 			ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(accountIndex);
 			ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
 			ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-			if ( mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true) ) { // forcing download
+			if ( mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, false) ) { // forcing download
 				_info("Account " + AccountGetName(accountID) + "(" + accountID +  ")" + " retrieval success from server " + ServerGetName(accountServerID) + "(" + accountServerID +  ")");
 				++accountsRetrieved;
 			}else
@@ -994,6 +994,7 @@ bool cUseOT::CashSend(const string & nymSender, const string & nymRecipient, con
 	string retainedCopy = "";
 	string indices = "";
 	bool passwordProtected = false; // TODO check if password protected
+
 	string exportedCashPurse = CashExport(nymSenderID, nymRecipientID, account, indices, passwordProtected, retainedCopy);
 	if (!exportedCashPurse.empty()) {
 		string response = mMadeEasy->send_user_cash(accountServerID, nymSenderID, nymRecipientID, exportedCashPurse, retainedCopy);
@@ -1182,6 +1183,29 @@ string cUseOT::ContractSign(const std::string & nymID, const std::string & contr
 		return "";
 	return opentxs::OTAPI_Wrap::AddSignature(nymID, contract);
 }
+
+bool cUseOT::MarketList(const string & srvName, const string & nymName, bool dryrun) {
+	_fact("market ls " << srvName << ", " << nymName);
+	if (dryrun) return false;
+	if (!Init()) return false;
+
+	ID serverID = ServerGetId(srvName);
+	ID nymID = NymGetId(nymName);
+
+	if (!opentxs::OTDB::Exists("markets", serverID, "market_data.bin")) {
+		auto &nocol = zkr::cc::fore::console;
+		auto &red = zkr::cc::fore::lightred;
+		std::cout << red << "No markets available for " << srvName << " server" << nocol << std::endl;
+		_erro("Can't open file: .ot/client_data/markets/" << serverID << "/market_data.bin");
+		return false;
+	}
+
+	string marketList = mMadeEasy->get_market_list(serverID, nymID);
+	_dbg2("market list:" << marketList);
+	nUtils::DisplayStringEndl(cout, marketList);
+	return true;
+}
+
 
 vector<string> cUseOT::MsgGetAll() { ///< Get all messages from all Nyms. FIXME unused
 	if(!Init())

@@ -24,6 +24,7 @@ else()
 endif()
 
 if(UNIX)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake/modules/")
   if (LOCAL_EDITLINE)
           find_package(EditlineLocal REQUIRED)
           if (EDITLINE_FOUND)

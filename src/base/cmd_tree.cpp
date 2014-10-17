@@ -486,6 +486,11 @@ void cCmdParser::Init() {
 	AddFormat("cash withdraw-from", {pAccountMy, pAmount}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.CashWithdraw( D.V(1), stoi(D.V(2)), D.has("--dryrun") ); } );
 
+	//======== ot market ========
+
+	AddFormat( "market ls", {}, {pServer, pNym}, NullMap,
+		LAMBDA {auto &D=*d; return U.MarketList( D.v(1, U.ServerGetName(U.ServerGetDefault())), D.v(2,  U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
+
 	//======== ot msg-in and msg-out ========
 
 	AddFormat( "msg-in show", {}, {pNym, pMsgInIndex}, NullMap,

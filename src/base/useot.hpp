@@ -7,6 +7,7 @@ Template for new files, replace word "template" and later delete this line here.
 #define INCLUDE_OT_NEWCLI_USEOT
 
 #include "lib_common2.hpp"
+//#include "OTStorage.hpp"
 
 namespace opentxs{
 class OT_ME;
@@ -154,6 +155,10 @@ namespace nUse {
 		//================= ?contract =================
 
 		string ContractSign(const std::string & nymID, const std::string & contract);
+
+		//================= msg =================
+		EXEC bool MarketList(const string & srvName, const string & nymName, bool dryrun);
+
 
 		//================= msg =================
 
