@@ -26,7 +26,6 @@ class cInteractiveShell {
 		void _CompleteOnce(const string line, shared_ptr<nUse::cUseOT> use);
 
 		bool Execute(const string cmd);
-
 	public:
 		cInteractiveShell();
 		void RunOnce(const string line, shared_ptr<nUse::cUseOT> use);

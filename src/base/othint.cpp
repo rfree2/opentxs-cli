@@ -607,6 +607,22 @@ bool my_rl_wrapper_debug; // external
 Caller: before calling this function gReadlineHandleParser and gReadlineHandlerUseOT must be set!
 Caller: you must free the returned char* memory if not NULL! (this will be done by readline lib implementation that calls us)
 */
+static void FixSpecial(string & cmd) {
+	string to_rm = "\\";
+	string q = "\"";
+	bool aq = false;
+
+	size_t found = cmd.find(to_rm);
+	if(found==string::npos) return;
+
+	while(found!=string::npos) {
+		cmd.replace(found,1,"");
+		found = cmd.find(to_rm);
+	}
+	cmd = q + cmd + q;
+
+}
+
 static char* CompletionReadlineWrapper(const char *sofar , int number) {
 	// sofar - current word,  number - number of question / of word to be returned
 	// rl_line_buffer - current ENTIER line (or more - with trailing trash after rl_end)
@@ -646,6 +662,7 @@ static char* CompletionReadlineWrapper(const char *sofar , int number) {
 		if (dbg) _dbg3("Stop autocomplete because we are at last callback number="<<number<<" completions_size="<<completions_size);
 		return NULL;
 	}
+	FixSpecial(completions.at(number));
 	if (dbg) _dbg3("Current completion number="<<number<<" is: [" + completions.at(number) + "]");
 	return strdup( completions.at(number).c_str() ); // caller must free() this memory
 }
