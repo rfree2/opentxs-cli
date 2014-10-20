@@ -2342,6 +2342,58 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
+bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & asset, const string & srvName, const string & myAcc, const string & myNym, bool dryrun) {
+	_fact("voucher buy " << recNymName << " " << amount << " " << asset << " " << srvName << " " << myAcc << " " << myNym);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	ASRT(recNymName!="");
+	ASRT(amount);
+	ASRT(srvName!="");
+	ASRT(myAcc!="");
+	ASRT(myNym!="");
+
+	ID recNymID = NymGetId(recNymName);
+	ID myNymID = NymGetId(myNym);
+	ID assetID = AssetGetId(asset);
+	ID srvID = ServerGetId(srvName);
+	ID accID = AccountGetId(myAcc);
+
+	// comfortable lambda function, reports errors, returns always false
+	auto err = [] (string var, string mess, string com)->bool {
+		_erro("" << mess << " [" << var << "]");
+		cout << zkr::cc::fore::red << com << zkr::cc::fore::console << endl;
+		return false;
+	}; // end of lambda
+
+	if(amount <= 0) return err(ToStr(amount), "Amount <= 0", "Amount must be greater then zero!");
+
+	string memo = "(no mempo implemented yet)"; // TODO
+	string attempt = "withdraw_voucher";
+
+	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, accID, recNymID, memo, amount);					 _dbg1("response: " << response);
+
+	// connection with server
+	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, myNymID, accID, attempt, response);				 _dbg1("reply: " << reply);
+	if(reply != 1) return err(ToStr(reply), "withraw voucher (made easy) failed!", "Error from server!");
+
+	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response); 		_dbg1("ledger: " << ledger);
+	if(ledger=="") return err(ledger, "Some error with ledger", "Server error");
+
+	auto transactionReply = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, myNymID, accID, ledger, 0); _dbg1("t reply: " << transactionReply);
+	if(transactionReply == "") return err(transactionReply, "some error with transaction reply", "Server error");
+
+	auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher(srvID, myNymID, accID, transactionReply);
+	if(voucher == "") return err(voucher, "Error with getting voucher", "Server error");
+
+
+	bool srvAcc = mMadeEasy->retrieve_account(srvID, myNymID, accID, true);							 _dbg1("srvAcc retrv: " << srvAcc);
+	if(!srvAcc) return err(ToStr(srvAcc), "Retriving account failed! Used force download", "Retriving account failed!");
+	else cout << zkr::cc::fore::lightgreen << "Retrived accounc successfull" << zkr::cc::console << endl; // all ok
+
+	return true;
+}
+
 bool cUseOT::OTAPI_loaded = false;
 bool cUseOT::OTAPI_error = false;
 
