@@ -156,9 +156,12 @@ namespace nUse {
 
 		string ContractSign(const std::string & nymID, const std::string & contract);
 
-		//================= msg =================
+		//================= market =================
 		EXEC bool MarketList(const string & srvName, const string & nymName, bool dryrun);
 
+
+		//================= mint =================
+		EXEC bool MintShow(const string & srvName, const string & nymName, const string & assetName, bool dryrun);
 
 		//================= msg =================
 

@@ -1206,6 +1206,23 @@ bool cUseOT::MarketList(const string & srvName, const string & nymName, bool dry
 	return true;
 }
 
+bool cUseOT::MintShow(const string & srvName, const string & nymName, const string & assetName, bool dryrun) {
+	_fact("mint ls " << srvName << " " << nymName << " " << assetName);
+	if(dryrun) return false;
+	if(!Init())	return false;
+
+	ID srvID = ServerGetId(srvName);
+	ID nymID = NymGetId(nymName);
+	ID assetID = AssetGetId(assetName);
+
+	const string mint = mMadeEasy->load_or_retrieve_mint(srvID, nymID, assetID);
+
+	auto &nocol = zkr::cc::fore::console;
+	auto &blue = zkr::cc::fore::blue;
+
+	cout << blue << mint << nocol << endl;
+	return true;
+}
 
 vector<string> cUseOT::MsgGetAll() { ///< Get all messages from all Nyms. FIXME unused
 	if(!Init())

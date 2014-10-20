@@ -491,6 +491,10 @@ void cCmdParser::Init() {
 	AddFormat( "market ls", {}, {pServer, pNym}, NullMap,
 		LAMBDA {auto &D=*d; return U.MarketList( D.v(1, U.ServerGetName(U.ServerGetDefault())), D.v(2,  U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
+	//======== ot mint ========
+	AddFormat( "mint show", {}, {pServer, pNym, pAsset}, NullMap,
+			LAMBDA {auto &D=*d; return U.MintShow( D.v(1, U.ServerGetName(U.ServerGetDefault())), D.v(2,  U.NymGetName(U.NymGetDefault())),  D.v(3, U.AssetGetName(U.AssetGetDefault())), D.has("--dryrun") ); } );
+
 	//======== ot msg-in and msg-out ========
 
 	AddFormat( "msg-in show", {}, {pNym, pMsgInIndex}, NullMap,
