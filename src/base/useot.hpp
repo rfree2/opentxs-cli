@@ -240,7 +240,9 @@ namespace nUse {
 
 		//================= voucher ==============
 
+		EXEC bool VoucherDeposit(const string & nymName, const string & acc, const string &srv);
 		EXEC bool VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, string memo, bool dryrun);
+
 	};
 
 } // nUse

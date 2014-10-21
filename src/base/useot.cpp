@@ -2343,6 +2343,14 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
+EXEC bool cUseOT::VoucherDeposit(const string & nymName, const string & acc, const string &srv) {
+
+	//auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher()
+
+	//auto deposit = opentxs::OTAPI_Wrap::depositCheque()
+}
+
+
 bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, string memo, bool dryrun) {
 	_fact("voucher buy " << recNymName << " " << amount << " " << myAcc << " " << memo);
 	if(dryrun) return true;
@@ -2358,7 +2366,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 
 	// comfortable lambda function, reports errors, returns always false
 	auto err = [] (string var, string mess, string com)->bool {
-		_erro("" << mess << " [" << var << "]");
+		_erro( mess << " [" << var << "]");
 		cout << zkr::cc::fore::lightred << com << zkr::cc::fore::console << endl;
 		return false;
 	}; // end of lambda
@@ -2393,7 +2401,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 
 	auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher(srvID, myNymID, myAccID, transactionReply);
 	if(voucher == "") return err(voucher, "Error with getting voucher", "Server error");
-
+	cout << voucher << endl;
 	mMadeEasy->send_user_payment(srvID, myNymID, myNymID, voucher); // saving voucher in my outpayments
 	// after sending this voucher, it will be removed automatically
 
