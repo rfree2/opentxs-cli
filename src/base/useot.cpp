@@ -1124,6 +1124,7 @@ bool cUseOT::CashShow(const string & account, bool dryrun) { // TODO make it wor
 		} // while
 		tp.PrintFooter();
 	} // if count > 0
+	cout << zkr::cc::console << endl;
 	return true;
 }
 
@@ -2400,6 +2401,12 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	_dbg3("srvAcc retrv: " << srvAcc);
 	if(!srvAcc) return err(ToStr(srvAcc), "Retriving account failed! Used force download", "Retriving account failed!");
 	else cout << zkr::cc::fore::lightgreen << "Operation successfull" << zkr::cc::console << endl; // all ok
+
+	auto outPaymentMy = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(myNymID, 0);
+
+	cout << "Last out-payment for nym: " << opentxs::OTAPI_Wrap::GetNym_Name(myNymID) << endl;
+	cout << zkr::cc::fore::lightblue << outPaymentMy << endl;
+	cout << zkr::cc::console << endl;
 
 	return true;
 }
