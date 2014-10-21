@@ -618,8 +618,8 @@ void cCmdParser::Init() {
 
 	//======== ot voucher ========
 
-	AddFormat("voucher buy", {pNymTo, pAmount}, {pAsset, pServer, pAccountMy, pNymMy}, NullMap,
-		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), stoi(D.V(2)),  D.v(3, U.AssetGetName(U.AssetGetDefault())), D.v(4, U.ServerGetName(U.ServerGetDefault())), D.v(5, U.AccountGetName(U.AccountGetDefault())), D.v(6, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
+	AddFormat("voucher buy", {pNymTo, pAmount}, {pAccountMy}, NullMap,
+		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), stoi(D.V(2)), D.v(3, U.AccountGetName(U.AccountGetDefault())), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();
 }
