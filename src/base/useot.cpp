@@ -2369,7 +2369,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	string accType = opentxs::OTAPI_Wrap::GetAccountWallet_Type(myAccID);
 
 	if(amount > balance && accType=="simple") { // TODO: issuer
-		string mess = "Balance account " + myAcc + " is " + ToStr(balance);
+		string mess = "Balance [" + myAcc + "] is " + ToStr(balance);
 		return err(ToStr(balance), "Not enought money", mess);
 	}
 
@@ -2393,6 +2393,8 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher(srvID, myNymID, myAccID, transactionReply);
 	if(voucher == "") return err(voucher, "Error with getting voucher", "Server error");
 
+	mMadeEasy->send_user_payment(srvID, myNymID, myNymID, voucher); // saving voucher in my outpayments
+	// after sending this voucher, it will be removed automatically
 
 	bool srvAcc = mMadeEasy->retrieve_account(srvID, myNymID, myAccID, false);
 	_dbg3("srvAcc retrv: " << srvAcc);
