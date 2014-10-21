@@ -2342,8 +2342,8 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, bool dryrun) {
-	_fact("voucher buy " << recNymName << " " << amount << " " << myAcc);
+bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, string memo, bool dryrun) {
+	_fact("voucher buy " << recNymName << " " << amount << " " << myAcc << " " << memo);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -2358,13 +2358,24 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	// comfortable lambda function, reports errors, returns always false
 	auto err = [] (string var, string mess, string com)->bool {
 		_erro("" << mess << " [" << var << "]");
-		cout << zkr::cc::fore::red << com << zkr::cc::fore::console << endl;
+		cout << zkr::cc::fore::lightred << com << zkr::cc::fore::console << endl;
 		return false;
 	}; // end of lambda
 
+	// amount validating
 	if(amount < 1) return err(ToStr(amount), "Amount < 1", "Amount must be greater then zero!");
 
-	string memo = "(no mempo implemented yet)"; // TODO
+	int64_t balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(myAccID);
+	string accType = opentxs::OTAPI_Wrap::GetAccountWallet_Type(myAccID);
+
+	if(amount > balance && accType=="simple") { // TODO: issuer
+		string mess = "Balance account " + myAcc + " is " + ToStr(balance);
+		return err(ToStr(balance), "Not enought money", mess);
+	}
+
+	if(memo=="") memo = "(no memo)";
+	_info("memo: " << memo);
+
 	string attempt = "withdraw_voucher";
 
 	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, myAccID, recNymID, memo, amount);
@@ -2373,7 +2384,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, myNymID, myAccID, attempt, response);
 	if(reply != 1) return err(ToStr(reply), "withraw voucher (made easy) failed!", "Error from server!");
 
-	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response); 		_dbg1("ledger: " << ledger);
+	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response);
 	if(ledger=="") return err(ledger, "Some error with ledger", "Server error");
 
 	auto transactionReply = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, myNymID, myAccID, ledger, 0);
