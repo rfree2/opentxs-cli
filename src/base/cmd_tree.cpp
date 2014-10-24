@@ -272,6 +272,16 @@ void cCmdParser::Init() {
 		}
 	);
 
+	cParamInfo pOutpaymentIndex( "outpayment-index", [] () -> string { return Tr(eDictType::help, "outpayment-index") },
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			const int nr = curr_word_ix+1;
+			return true; //TODO
+		} ,
+		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			return vector<string> {}; //TODO hinting function for outpayment index
+		}
+	);
+
 	cParamInfo pPaymetInboxIndex( "payment-inbox-index", [] () -> string { return Tr(eDictType::help, "payment-inbox-index") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
@@ -556,6 +566,14 @@ void cCmdParser::Init() {
 
 	AddFormat("nym rename", {pNymMy, pNymNewName}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.NymRename(D.V(1), D.V(2), D.has("--dryrun") ); } );
+
+	//======== ot nym-outpayment ========
+
+	AddFormat("nym-outpayment ls", {}, {pNym}, NullMap,
+			LAMBDA { auto &D=*d; return U.OutpaymentsDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
+
+	AddFormat( "nym-outpayment show", {}, {pNym, pOutpaymentIndex}, NullMap,
+			LAMBDA { auto &D=*d; return U.OutpaymentsShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
 
 	//======== ot payment ========
 
