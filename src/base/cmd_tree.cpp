@@ -639,6 +639,9 @@ void cCmdParser::Init() {
 	AddFormat("voucher new", {pNymTo, pAmount}, {pAccountMy}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), stoi(D.V(2)), D.v(3, U.AccountGetName(U.AccountGetDefault())), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
+	AddFormat("voucher deposit", {}, {pAccount}, NullMap,
+			LAMBDA { auto &D=*d; return U.VoucherDeposit(D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--dryrun") ); } );
+
 	mI->BuildCache_CmdNames();
 }
 

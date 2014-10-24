@@ -2392,11 +2392,28 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-EXEC bool cUseOT::VoucherDeposit(const string & nymName, const string & acc, const string &srv) {
+bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
+	_fact("voucher deposit " << " " << acc);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	ID accID = AccountGetId(acc);
+	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+
+	string voucher ;
+
+	_dbg3("voucher is empty, starting text editor");
+	nUtils::cEnvUtils envUtils;
+	voucher = envUtils.Compose();
 
 	//auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher()
 
-	//auto deposit = opentxs::OTAPI_Wrap::depositCheque()
+	auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
+
+	cout << dep << endl;
+
+	return true;
 }
 
 
