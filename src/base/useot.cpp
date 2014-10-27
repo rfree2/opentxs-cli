@@ -2401,16 +2401,15 @@ bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
 	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
 
-	string voucher ;
+	string voucher = "" ;
 
 	_dbg3("voucher is empty, starting text editor");
 	nUtils::cEnvUtils envUtils;
 	voucher = envUtils.Compose();
 
-	//auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher()
+	if(voucher.empty()) return false;
 
 	auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
-
 	cout << dep << endl;
 
 	return true;
@@ -2418,7 +2417,7 @@ bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
 
 
 bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, string memo, bool dryrun) {
-	_fact("voucher buy " << recNymName << " " << amount << " " << myAcc << " " << memo);
+	_fact("voucher new " << recNymName << " " << amount << " " << myAcc << " " << memo);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -2454,7 +2453,6 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	string attempt = "withdraw_voucher";
 
 	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, myAccID, recNymID, memo, amount);
-
 	// connection with server
 	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, myNymID, myAccID, attempt, response);
 	if(reply != 1) return err(ToStr(reply), "withraw voucher (made easy) failed!", "Error from server!");
@@ -2474,10 +2472,43 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	bool srvAcc = mMadeEasy->retrieve_account(srvID, myNymID, myAccID, false);
 	_dbg3("srvAcc retrv: " << srvAcc);
 	if(!srvAcc) return err(ToStr(srvAcc), "Retriving account failed! Used force download", "Retriving account failed!");
-	else cout << zkr::cc::fore::lightgreen << "Operation successfull" << zkr::cc::console << endl; // all okS
+	else cout << zkr::cc::fore::lightgreen << "Operation successfull" << zkr::cc::console << endl; // all ok
 
 	return true;
 }
+
+bool cUseOT::VoucherSend(const string & senderNym, bool dryrun) {
+	_fact("ot voucher send " << senderNym);
+	if (dryrun) return true;
+	if (!Init()) return false;
+
+	string voucher = "";
+	_dbg3("voucher is empty, starting text editor");
+	nUtils::cEnvUtils envUtils;
+	voucher = envUtils.Compose();
+
+	if (voucher.empty()) return false;
+
+	ID recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(voucher);
+	ID senderID = NymGetId(senderNym);
+	ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(voucher);
+
+	auto & col1 = zkr::cc::fore::blue;
+	auto & col2 = zkr::cc::fore::lightyellow;
+
+	cout << col1 << "   Sender: " << col2 << NymGetName(senderID) << endl;
+	cout << col1 << "Recipient: " << col2 << NymGetName(recNymID) << endl;
+	cout << col1 << "   Server: " << col2 << ServerGetName(srvID) << zkr::cc::fore::console << endl;
+
+
+	auto send = mMadeEasy->send_user_payment(srvID, senderID, recNymID, voucher);
+	//cout << send << endl;
+
+
+
+	return true;
+}
+
 
 bool cUseOT::OTAPI_loaded = false;
 bool cUseOT::OTAPI_error = false;
