@@ -1750,18 +1750,27 @@ bool cUseOT::OutpaymentsDisplay(const string & nym, bool dryrun) {
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 	cout << zkr::cc::fore::lightblue << "Printing outpayments for nym: " << nym << " (" << count << ")" << zkr::cc::console << endl;
 
+
 	bprinter::TablePrinter table(&std::cout);
-	table.AddColumn("index", 5);
+	table.AddColumn("Index", 5);
 	table.AddColumn("Recipient", 20);
-	table.AddColumn("Payment",30);
+	table.AddColumn("Type", 20);
+	table.AddColumn("Asset", 20);
+	table.AddColumn("Amount", 10);
 
 	table.PrintHeader();
 	for (int32_t i = 0; i<count; i++) {
-		table << i << NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i))
-				<< opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
+		auto instr = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
+		auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
+		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
+		auto asset = AssetGetName( opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instr) );
+		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
+
+		table << i << to << type << asset << amount;
 	}
 	table.PrintFooter();
 	cout << zkr::cc::console << endl;
+
 	return true;
 }
 bool cUseOT::OutpaymentsShow(const string & nym, int32_t index, bool dryrun) {
@@ -2400,6 +2409,8 @@ bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
 	ID accID = AccountGetId(acc);
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
 	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
+
 
 	string voucher = "" ;
 
@@ -2407,7 +2418,15 @@ bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
 	nUtils::cEnvUtils envUtils;
 	voucher = envUtils.Compose();
 
-	if(voucher.empty()) return false;
+	if(voucher.empty()) {
+		_warn("Empty voucher, aborted");
+		return false;
+	}
+	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(voucher);
+
+	if(assetID != vAssetID)
+		cout << zkr::cc::fore::yellow << "Assets are different" << zkr::cc::console << endl;
+
 
 	auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
 	cout << dep << endl;
@@ -2501,11 +2520,8 @@ bool cUseOT::VoucherSend(const string & senderNym, bool dryrun) {
 	cout << col1 << "   Server: " << col2 << ServerGetName(srvID) << zkr::cc::fore::console << endl;
 
 
+
 	auto send = mMadeEasy->send_user_payment(srvID, senderID, recNymID, voucher);
-	//cout << send << endl;
-
-
-
 	return true;
 }
 
