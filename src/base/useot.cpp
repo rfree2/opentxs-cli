@@ -2401,7 +2401,7 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
+bool cUseOT::VoucherDeposit(const string & acc, int32_t index, bool dryrun) {
 	_fact("voucher deposit " << " " << acc);
 	if(dryrun) return true;
 	if(!Init()) return false;
@@ -2411,18 +2411,22 @@ bool cUseOT::VoucherDeposit(const string & acc, bool dryrun) {
 	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
 
-
 	string voucher = "" ;
+	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
-	_dbg3("voucher is empty, starting text editor");
 	nUtils::cEnvUtils envUtils;
-	voucher = envUtils.Compose();
+
+	if(index > -1 && index < count)
+		voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
+	else voucher = envUtils.Compose();
 
 	if(voucher.empty()) {
 		_warn("Empty voucher, aborted");
 		return false;
 	}
 	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(voucher);
+
+	auto valid = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(voucher);
 
 	if(assetID != vAssetID)
 		cout << zkr::cc::fore::yellow << "Assets are different" << zkr::cc::console << endl;
@@ -2496,20 +2500,28 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	return true;
 }
 
-bool cUseOT::VoucherSend(const string & senderNym, bool dryrun) {
+bool cUseOT::VoucherSend(const string & senderNym, int32_t index, bool dryrun) {
 	_fact("ot voucher send " << senderNym);
 	if (dryrun) return true;
 	if (!Init()) return false;
 
+	ID senderID = NymGetId(senderNym);
 	string voucher = "";
-	_dbg3("voucher is empty, starting text editor");
-	nUtils::cEnvUtils envUtils;
-	voucher = envUtils.Compose();
+	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(senderID);
 
-	if (voucher.empty()) return false;
+	nUtils::cEnvUtils envUtils;
+
+	if (index > -1 && index < count)
+		voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(senderID,index);
+	else
+		voucher = envUtils.Compose();
+
+	if (voucher.empty()) {
+		_warn("Empty voucher, aborted");
+		return false;
+	}
 
 	ID recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(voucher);
-	ID senderID = NymGetId(senderNym);
 	ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(voucher);
 
 	auto & col1 = zkr::cc::fore::blue;
