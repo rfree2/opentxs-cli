@@ -1748,6 +1748,13 @@ bool cUseOT::OutpaymentsDisplay(const string & nym, bool dryrun) {
 	ID nymID = NymGetId(nym);
 
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+
+	if(!count) {
+		cout << zkr::cc::fore::lightblue << "No outpayments for nym: " << nym << zkr::cc::console << endl;
+		return true;
+	}
+
+
 	cout << zkr::cc::fore::lightblue << "Printing outpayments for nym: " << nym << " (" << count << ")" << zkr::cc::console << endl;
 
 
@@ -1779,6 +1786,13 @@ bool cUseOT::OutpaymentsShow(const string & nym, int32_t index, bool dryrun) {
 	if(!Init()) return false;
 
 	ID nymID = NymGetId(nym);
+	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+
+	if(index < 0 || index >= count) {
+		cout << zkr::cc::fore::lightred << "Can't load payment with given index!"
+				<< zkr::cc::console << endl;
+		return false;
+	}
 
 	auto payment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
 	auto srv = opentxs::OTAPI_Wrap::GetNym_OutpaymentsServerIDByIndex(nymID, index);
