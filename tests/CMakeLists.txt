@@ -13,6 +13,7 @@ endif(MSVC)
 
 set(SRC
   tests.cpp
+  unittest.cpp
 )
 
 add_executable(${NAME} ${SRC})

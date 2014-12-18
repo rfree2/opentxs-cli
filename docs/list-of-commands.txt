@@ -293,7 +293,8 @@ ot receipt?
 ------------------------------
 
 *ot voucher buy <nym-to> <amount> [acc-my] [--memo text]
-ot voucher new 
+*ot voucher new 
+*ot voucher deposit 
 
 ------------------------------
 
