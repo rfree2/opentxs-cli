@@ -11,6 +11,18 @@ if(MSVC)
   )
 endif(MSVC)
 
+include_directories(
+    ${opentxsIncludePath}
+    ${opentxsIncludePath}/opentxs/core/
+  )
+
+find_library(core opentxs-core)
+find_library(ext opentxs-ext)
+find_library(basket opentxs-basket)
+find_library(cash opentxs-cash)
+find_library(client opentxs-client)
+
+
 set(SRC
   tests.cpp
   unittest.cpp

@@ -1755,23 +1755,29 @@ bool cUseOT::OutpaymentsDisplay(const string & nym, bool dryrun) {
 	}
 
 
-	cout << zkr::cc::fore::lightblue << "Printing outpayments for nym: " << nym << " (" << count << ")" << zkr::cc::console << endl;
-
+	cout << "Printing outpayments for nym: " << zkr::cc::fore::lightblue << nym << zkr::cc::console << " (" << count << ")" << endl;
+	auto color = zkr::cc::fore::lightyellow;
+	auto nocolor = zkr::cc::console;
 
 	bprinter::TablePrinter table(&std::cout);
+	table.SetContentColor(nocolor);
+
 	table.AddColumn("Index", 5);
 	table.AddColumn("Recipient", 20);
 	table.AddColumn("Type", 20);
 	table.AddColumn("Asset", 20);
 	table.AddColumn("Amount", 10);
-
 	table.PrintHeader();
+
 	for (int32_t i = 0; i<count; i++) {
 		auto instr = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
 		auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
 		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
-		auto asset = AssetGetName( opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instr) );
+		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instr));
 		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
+
+		if(to == nym) table.SetContentColor(color);
+		else table.SetContentColor(nocolor);
 
 		table << i << to << type << asset << amount;
 	}
@@ -2415,15 +2421,18 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-bool cUseOT::VoucherDeposit(const string & acc, int32_t index, bool dryrun) {
+bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t index, bool dryrun) {
 	_fact("voucher deposit " << " " << acc);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	ID accID = AccountGetId(acc);
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
-	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+//	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+	ID nymID = NymGetId(nym);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
+
+
 
 	string voucher = "" ;
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
@@ -2441,7 +2450,7 @@ bool cUseOT::VoucherDeposit(const string & acc, int32_t index, bool dryrun) {
 	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(voucher);
 
 	auto valid = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(voucher);
-
+	_mark(valid);
 	if(assetID != vAssetID)
 		cout << zkr::cc::fore::yellow << "Assets are different" << zkr::cc::console << endl;
 
@@ -2481,7 +2490,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 
 	if(amount > balance && accType=="simple") { // TODO: issuer
 		string mess = "Balance [" + myAcc + "] is " + ToStr(balance);
-		return err(ToStr(balance), "Not enought money", mess);
+		return err(ToStr(balance), "Not enough money", mess);
 	}
 
 	if(memo=="") memo = "(no memo)";
@@ -2492,7 +2501,7 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, myAccID, recNymID, memo, amount);
 	// connection with server
 	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, myNymID, myAccID, attempt, response);
-	if(reply != 1) return err(ToStr(reply), "withraw voucher (made easy) failed!", "Error from server!");
+	if(reply != 1) return err(ToStr(reply), "withdraw voucher (made easy) failed!", "Error from server!");
 
 	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response);
 	if(ledger=="") return err(ledger, "Some error with ledger", "Server error");
@@ -2508,8 +2517,8 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 
 	bool srvAcc = mMadeEasy->retrieve_account(srvID, myNymID, myAccID, false);
 	_dbg3("srvAcc retrv: " << srvAcc);
-	if(!srvAcc) return err(ToStr(srvAcc), "Retriving account failed! Used force download", "Retriving account failed!");
-	else cout << zkr::cc::fore::lightgreen << "Operation successfull" << zkr::cc::console << endl; // all ok
+	if(!srvAcc) return err(ToStr(srvAcc), "Retrieving account failed! Used force download", "Retriving account failed!");
+	else cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl; // all ok
 
 	return true;
 }
