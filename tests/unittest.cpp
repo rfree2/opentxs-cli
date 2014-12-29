@@ -17,7 +17,7 @@ protected:
 	int32_t amount;
 
 	virtual void SetUp() {
-		nym1 = "alice";
+		nym1 = "Trader Bob";
 		toNym = "FT's Test Nym";
 		fromNym = "Trader Bob";
 		fromAcc = "Bob's Tokens";
@@ -43,19 +43,19 @@ TEST_F(cUseOtTest, VoucherCreate) {
 
 	EXPECT_FALSE(useOt->VoucherWithdraw(toNym, ballance + 1, fromAcc, "", false));
 
-	EXPECT_TRUE(useOt->VoucherWithdraw(toNym, amount, fromAcc, "", false));
-	EXPECT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
+	ASSERT_TRUE(useOt->VoucherWithdraw(toNym, amount, fromAcc, "", false));
+	ASSERT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
 	EXPECT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }
 
 TEST_F(cUseOtTest, VoucherDeposit) {
 	auto accID = useOt->AccountGetId(fromAcc);
-	auto ballance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID) - amount;
+	auto currentBallance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
-	EXPECT_TRUE(useOt->VoucherDeposit(fromAcc, toNym, 0, false));
+	ASSERT_TRUE(useOt->VoucherDeposit(fromAcc, fromNym, 0, false));
 	EXPECT_TRUE(useOt->AccountInAccept(fromAcc, 0, false, false));
-	EXPECT_EQ(ballance, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
-	EXPECT_FALSE(useOt->OutpaymentsShow(fromNym, 0, false));
+	EXPECT_EQ(currentBallance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
+	//EXPECT_FALSE(useOt->OutpaymentsShow(fromNym, 0, false));
 }
 
 /*
