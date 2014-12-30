@@ -36,14 +36,14 @@ TEST_F(cUseOtTest, OutPayments) {
 }
 
 TEST_F(cUseOtTest, VoucherCreate) {
-	EXPECT_FALSE(useOt->VoucherWithdraw(nym1, -20, "bitcoins", "some memo", 0));
+	EXPECT_FALSE(useOt->VoucherWithdraw("bitcoins", -20, "some memo", 0));
 
 	auto accID = useOt->AccountGetId(fromAcc);
 	auto ballance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
-	EXPECT_FALSE(useOt->VoucherWithdraw(toNym, ballance + 1, fromAcc, "", false));
+	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, ballance + 1,  "", false));
 
-	ASSERT_TRUE(useOt->VoucherWithdraw(toNym, amount, fromAcc, "", false));
+	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, amount, "", false));
 	ASSERT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
 	EXPECT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }
