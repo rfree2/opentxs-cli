@@ -636,14 +636,14 @@ void cCmdParser::Init() {
 
 	//======== ot voucher ========
 
-	AddFormat("voucher new", {pNymTo, pAmount}, {pAccountMy}, { {"--memo",pText} },
-		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), stoi(D.V(2)), D.v(3, U.AccountGetName(U.AccountGetDefault())), D.o1("--memo", ""), D.has("--dryrun") ); } );
+	AddFormat("voucher new", {pAccountMy, pAmount}, {}, { {"--memo",pText} },
+		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.v(1, U.AccountGetName(U.AccountGetDefault())), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher deposit", {pAccount, pNym}, {}, { {"--outpayment-index", pOutpaymentIndex} },
 			LAMBDA { auto &D=*d; return U.VoucherDeposit(D.V(1), D.V(2), stoi(D.o1("--outpayment-index","-1")), D.has("--dryrun") ); } );
 
-	AddFormat("voucher send", {}, {pNymFrom}, { {"--outpayment-index", pOutpaymentIndex} },
-			LAMBDA { auto &D=*d; return U.VoucherSend(D.v(1, U.NymGetName( U.NymGetDefault() )), stoi(D.o1("--outpayment-index","-1")),  D.has("--dryrun")) ; } );
+	AddFormat("voucher send", {pNymFrom, pNymTo}, {}, { {"--outpayment-index", pOutpaymentIndex} },
+			LAMBDA { auto &D=*d; return U.VoucherSend(D.v(1, U.NymGetName( U.NymGetDefault() )), D.V(2), stoi(D.o1("--outpayment-index","-1")),  D.has("--dryrun")) ; } );
 
 	mI->BuildCache_CmdNames();
 }

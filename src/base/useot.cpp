@@ -1828,53 +1828,45 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	// TODO accept all payments
 	// TODO accept various instruments types
 	_fact("Accept incoming payment nr " << index << " for account " << account);
-	if (dryrun) return false;
-	if(!Init()) return false;
+	if (dryrun)
+		return false;
+	if (!Init())
+		return false;
 
 	ID accountID = AccountGetId(account);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
 
-	//payment instrument and myacct must both have same asset type
-  //int32_t nAcceptedPurses = accept_from_paymentbox(strMyAcctID, strIndices, "PURSE");
-  // Voucher is already interpreted as a form of cheque, so this is redundant.
-  //
-  //  int32_t nAcceptedVouchers = accept_from_paymentbox(strMyAcctID, strIndices, "VOUCHER")
-  //int32_t nAcceptedCheques = accept_from_paymentbox(strMyAcctID, strIndices, "CHEQUE");
+	auto handleError = [] (string message)->bool {
+		_erro(message);
+		cout << zkr::cc::fore::lightred << message << zkr::cc::fore::console << endl;
+		return false;
+	};
 
+	_dbg1("nym: " << NymGetName(accountNymID) << ", acc: " << account);
 
-  if (accountID.empty()){
-		 opentxs::OTAPI_Wrap::Output(0, "Failure: strMyAcctID not a valid string.\n");
-		 return false;
-	}
+	/*
+	 payment instrument and myacct must both have same asset type
+	 int32_t nAcceptedPurses = accept_from_paymentbox(strMyAcctID, strIndices, "PURSE");
+	 Voucher is already interpreted as a form of cheque, so this is redundant.
 
-	if (accountNymID.empty()) {
-		 opentxs::OTAPI_Wrap::Output(0, "Failure: Unable to find NymID based on myacct. Use: --myacct ACCT_ID\n");
-		 opentxs::OTAPI_Wrap::Output(0, "The designated asset account must be yours. OT will find the Nym based on the account.\n\n");
-		 return false;
-	}
+	 int32_t nAcceptedVouchers = accept_from_paymentbox(strMyAcctID, strIndices, "VOUCHER")
+	 int32_t nAcceptedCheques = accept_from_paymentbox(strMyAcctID, strIndices, "CHEQUE");
+	 */
 
-	if (accountServerID.empty()) {
-		 opentxs::OTAPI_Wrap::Output(0, "Failure: Unable to find Server ID based on myacct. Use: --myacct ACCT_ID\n");
-		 opentxs::OTAPI_Wrap::Output(0, "The designated asset account must be yours. OT will find the Server based on the account.\n\n");
-		 return false;
-	}
-	// ******************************************************************
-	//
 	_dbg3("Loading payment inbox");
+
 	string paymentInbox = opentxs::OTAPI_Wrap::LoadPaymentInbox(accountServerID, accountNymID); // Returns NULL, or an inbox.
 
-	if (paymentInbox.empty()) {
-		 opentxs::OTAPI_Wrap::Output(0, "\n\n accept_from_paymentbox:  OT_API_LoadPaymentInbox Failed.\n\n");
-		 return false;
-	}
+	if (paymentInbox.empty())
+		return handleError("accept_from_paymentbox: OT_API_LoadPaymentInbox Failed.");
+
 	_dbg3("Get size of inbox ledger");
+
 	int32_t nCount = opentxs::OTAPI_Wrap::Ledger_GetCount(accountServerID, accountNymID, accountNymID, paymentInbox);
-	if (nCount < 0) {
-		 opentxs::OTAPI_Wrap::Output(0, "Unable to retrieve size of payments inbox ledger. (Failure.)\n");
-		 return false;
-	}
+	if (nCount < 0)
+		return handleError("Unable to retrieve size of payments inbox ledger. (Failure.)\n");
 
 	//int32_t nIndicesCount = VerifyStringVal(strIndices) ? opentxs::OTAPI_Wrap::NumList_Count(strIndices) : 0;
 
@@ -1883,7 +1875,7 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	//
 	// (But either way, we loop through all the instruments.)
 	//
-//	for (int32_t nIndex = (nCount - 1); nIndex >= 0; --nIndex) { // Loop from back to front, so if any are removed, the indices remain accurate subsequently.
+//	for (int32_t nIndex = (nCount - 1); nIndex >= 0; --nIndex) { // Loop from back to front,NymG so if any are removed, the indices remain accurate subsequently.
 //		 bool bContinue = false;
 //
 //		 // - If indices are specified, but the current index is not on
@@ -1900,19 +1892,19 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 //		 }
 //	}
 	_dbg3("Get payment instrument");
-	string instrument = mMadeEasy->get_payment_instrument(accountServerID, accountNymID, index, paymentInbox); // strInbox is optional and avoids having to load it multiple times. This function will just load it itself, if it has to.
-	if (instrument.empty()) {
-		opentxs::OTAPI_Wrap::Output(0, "\n\n Unable to get payment instrument based on index: " + ToStr(index) + ".\n\n");
-		return false;
-	}
+
+	// strInbox is optional and avoids having to load it multiple times. This function will just load it itself, if it has to.
+	string instrument = mMadeEasy->get_payment_instrument(accountServerID, accountNymID, index, paymentInbox);
+	if (instrument.empty())
+		return handleError("Unable to get payment instrument based on index: " + ToStr(index));
+
 
 	_dbg3("Get type of instrument");
 	string strType = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
 
-	if (strType.empty()) {
-			opentxs::OTAPI_Wrap::Output(0, "\n\nFailure: Unable to determine instrument's type. Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE.\n");
-			return false;
-	}
+	if (strType.empty())
+		return handleError("Unable to determine instrument's type. Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE");
+
 
 	// If there's a payment type,
 	// and it's not "ANY", and it's the wrong type,
@@ -1941,38 +1933,45 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	// sure the Nym matches.
 
 	string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
-  if ( !recipientNymID.empty() && !CheckIfExists(eSubjectType::User, recipientNymID) ) {
-  	_erro("The instrument " + ToStr(index) + " is endorsed to a specific recipient (" + recipientNymID + ") and that doesn't match the account's owner Nym (" + accountNymID + "). (Skipping.)");
-  	opentxs::OTAPI_Wrap::Output(0, "The instrument " + ToStr(index) + " is endorsed to a specific recipient (" + recipientNymID + ") and that doesn't match the account's owner Nym (" + accountNymID + "). (Skipping.) \n");
-  	return false;
-  }
-  _dbg3("Get instrument assetID");
-  string instrumentAssetType = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
 
-  if (accountAssetID != instrumentAssetType) {
-  	opentxs::OTAPI_Wrap::Output(0, "The instrument at index " + ToStr(index) + " has a different asset type than the selected account. (Skipping.) \n");
-  	return false;
-  }
 
-  _dbg3("Check if instrument is valid");
+	_dbg1("recNym: " << NymGetName(recipientNymID));
+	/*
+	 if (!recipientNymID.empty() && !CheckIfExists(eSubjectType::User, recipientNymID)) {
+	 _erro("The instrument " + ToStr(index) + " is endorsed to a specific recipient ("
+	 + NymGetName(recipientNymID) + ") and that doesn't match the account's owner Nym ("
+	 + AccountGetName(accountNymID) + "). (Skipping.)");
 
-  time64_t tFrom = opentxs::OTAPI_Wrap::Instrmnt_GetValidFrom(instrument);
-  time64_t tTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
-  time64_t tTime = opentxs::OTAPI_Wrap::GetTime();
+	 opentxs::OTAPI_Wrap::Output(0, "The instrument " + ToStr(index) + " is endorsed to a specific recipient (" + recipientNymID + ") and that doesn't match the account's owner Nym (" + accountNymID + "). (Skipping.) \n");
+	 return false;
+	 }*/
+	_dbg3("Get instrument assetID");
+	string instrumentAssetType = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
 
-  if (tTime < tFrom) {
-		opentxs::OTAPI_Wrap::Output(0, "The instrument at index " + ToStr(index) + " is not yet within its valid date range. (Skipping.)\n");
-		return false;
+	if (accountAssetID != instrumentAssetType) {
+		return handleError(
+				"The instrument at index " + ToStr(index) + " has a different asset type than the selected account");
 	}
-	if (tTo > OT_TIME_ZERO && tTime > tTo) {
-		opentxs::OTAPI_Wrap::Output(0, "The instrument at index " + ToStr(index) + " is expired. (Moving it to the record box.)\n");
 
+	_dbg3("Check if instrument is valid");
+
+	time64_t tFrom = opentxs::OTAPI_Wrap::Instrmnt_GetValidFrom(instrument);
+	time64_t tTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
+	time64_t tTime = opentxs::OTAPI_Wrap::GetTime();
+
+	if (tTime < tFrom)
+		return handleError("The instrument at index " + ToStr(index) + " is not yet within its valid date range");
+
+	if (tTo > OT_TIME_ZERO && tTime > tTo) {
+		opentxs::OTAPI_Wrap::Output(0,
+				"The instrument at index " + ToStr(index) + " is expired. (Moving it to the record box.)\n");
+		handleError("The instrument at index " + ToStr(index) + " is expired. (Moving it to the record box.)");
 		// Since this instrument is expired, remove it from the payments inbox, and move to record box.
 		_dbg3("Expired instument - moving into record inbox");
 		// Note: this harvests
 		if ((index >= 0) && opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, // bIsInbox = true;
-				index, true)) {// bSaveCopy = true. (Since it's expired, it'll go into the expired box.)
-				return false;
+				index, true)) { // bSaveCopy = true. (Since it's expired, it'll go into the expired box.)
+			return false;
 		}
 		return false;
 	}
@@ -1986,27 +1985,33 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	// They DO need to be removed from the payments inbox, but just not here in the script. (Rather,
 	// internally by OT itself.)
 	//
-	_dbg3("Checking type of instrument");
-	if ("CHEQUE" == strType || "VOUCHER" == strType || "INVOICE" == strType) {
-			//return details_deposit_cheque(strServerID, strMyAcctID, strMyNymID, instrument, strType); //TODO implement ChequeDeposit
+
+	if ("CHEQUE" == strType || "VOUCHER" == strType) {
+		_dbg3("payment type: " << strType);
+		auto deposit = opentxs::OTAPI_Wrap::depositCheque(accountServerID, accountNymID, accountID, instrument);
+		cout << deposit << endl;
 		return true;
 	}
 
+	if("INVOICE" == strType) { // TODO: implement this
+		return handleError("Not implemented yet");
+
+	}
+
 	if ("PURSE" == strType) {
-		_dbg3("Type of instrument: " << strType );
-		int32_t nDepositPurse = CashDeposit( accountID, accountNymID, accountServerID, instrument); // strIndices is left blank in this case
+		_dbg3("Type of instrument: " << strType);
+		int32_t nDepositPurse = CashDeposit(accountID, accountNymID, accountServerID, instrument); // strIndices is left blank in this case
 		// if nIndex !=  -1, go ahead and call RecordPayment on the purse at that index, to
 		// remove it from payments inbox and move it to the recordbox.
 		//
 		if ((index != -1) && (1 == nDepositPurse)) {
-				int32_t nRecorded = opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, //bIsInbox=true
-						index, true); // bSaveCopy=true.
+			int32_t nRecorded = opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, //bIsInbox=true
+					index, true); // bSaveCopy=true.
 		}
-
 		return true;
 	}
 
-			opentxs::OTAPI_Wrap::Output(0, "\nSkipping this instrument: Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE.\n");
+	opentxs::OTAPI_Wrap::Output(0, "\nSkipping this instrument: Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE.\n");
 
 	return false;
 }
@@ -2432,8 +2437,6 @@ bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t inde
 	ID nymID = NymGetId(nym);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
 
-
-
 	string voucher = "" ;
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
@@ -2447,13 +2450,13 @@ bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t inde
 		_warn("Empty voucher, aborted");
 		return false;
 	}
+
 	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(voucher);
 
 	auto valid = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(voucher);
 	_mark(valid);
 	if(assetID != vAssetID)
 		cout << zkr::cc::fore::yellow << "Assets are different" << zkr::cc::console << endl;
-
 
 	auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
 	cout << dep << endl;
@@ -2462,12 +2465,11 @@ bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t inde
 }
 
 
-bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const string & myAcc, string memo, bool dryrun) {
-	_fact("voucher new " << recNymName << " " << amount << " " << myAcc << " " << memo);
+bool cUseOT::VoucherWithdraw(const string & myAcc, int64_t amount, string memo, bool dryrun) {
+	_fact("voucher new " << myAcc << " " << amount << " " << memo);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	const ID recNymID = NymGetId(recNymName);
 	const ID myAccID = AccountGetId(myAcc);
 
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(myAccID);
@@ -2498,13 +2500,13 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 
 	string attempt = "withdraw_voucher";
 
-	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, myAccID, recNymID, memo, amount);
+	auto response = mMadeEasy->withdraw_voucher(srvID, myNymID, myAccID, myNymID, memo, amount);
 	// connection with server
 	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, myNymID, myAccID, attempt, response);
 	if(reply != 1) return err(ToStr(reply), "withdraw voucher (made easy) failed!", "Error from server!");
 
 	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response);
-	if(ledger=="") return err(ledger, "Some error with ledger", "Server error");
+	if(ledger == "") return err(ledger, "Some error with ledger", "Server error");
 
 	auto transactionReply = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, myNymID, myAccID, ledger, 0);
 	if(transactionReply == "") return err(transactionReply, "some error with transaction reply", "Server error");
@@ -2523,12 +2525,14 @@ bool cUseOT::VoucherWithdraw(const string & recNymName, int64_t amount, const st
 	return true;
 }
 
-bool cUseOT::VoucherSend(const string & senderNym, int32_t index, bool dryrun) {
+bool cUseOT::VoucherSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
 	_fact("ot voucher send " << senderNym);
 	if (dryrun) return true;
 	if (!Init()) return false;
 
 	ID senderID = NymGetId(senderNym);
+	ID recNymID = NymGetId(recipientNym);
+
 	string voucher = "";
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(senderID);
 
@@ -2544,7 +2548,6 @@ bool cUseOT::VoucherSend(const string & senderNym, int32_t index, bool dryrun) {
 		return false;
 	}
 
-	ID recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(voucher);
 	ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(voucher);
 
 	auto & col1 = zkr::cc::fore::blue;
@@ -2553,8 +2556,6 @@ bool cUseOT::VoucherSend(const string & senderNym, int32_t index, bool dryrun) {
 	cout << col1 << "   Sender: " << col2 << NymGetName(senderID) << endl;
 	cout << col1 << "Recipient: " << col2 << NymGetName(recNymID) << endl;
 	cout << col1 << "   Server: " << col2 << ServerGetName(srvID) << zkr::cc::fore::console << endl;
-
-
 
 	auto send = mMadeEasy->send_user_payment(srvID, senderID, recNymID, voucher);
 	return true;
