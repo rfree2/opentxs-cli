@@ -636,8 +636,8 @@ void cCmdParser::Init() {
 
 	//======== ot voucher ========
 
-	AddFormat("voucher new", {pAccountMy, pAmount}, {}, { {"--memo",pText} },
-		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.v(1, U.AccountGetName(U.AccountGetDefault())), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+	AddFormat("voucher new", {pAccountFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
+		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), stoi(D.V(3)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher deposit", {pAccount, pNym}, {}, { {"--outpayment-index", pOutpaymentIndex} },
 			LAMBDA { auto &D=*d; return U.VoucherDeposit(D.V(1), D.V(2), stoi(D.o1("--outpayment-index","-1")), D.has("--dryrun") ); } );
