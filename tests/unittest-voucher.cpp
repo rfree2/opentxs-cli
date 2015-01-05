@@ -7,7 +7,7 @@
 
 using namespace nOT::nUtils;
 
-class cUseOtTest: public testing::Test {
+class cUseOtVoucherTest: public testing::Test {
 protected:
 	std::shared_ptr<nOT::nUse::cUseOT> useOt;
 	std::string nym1;
@@ -33,16 +33,16 @@ protected:
 	}
 
 	virtual void TearDown() {
-
+		cout << "END" << endl;
 	}
 };
 
-TEST_F(cUseOtTest, OutPayments) {
+TEST_F(cUseOtVoucherTest, OutPayments) {
 	EXPECT_FALSE(useOt->OutpaymentsShow(nym1, 200, 0));
 	EXPECT_FALSE(useOt->OutpaymentsShow(nym1, -1, 0));
 }
 
-TEST_F(cUseOtTest, VoucherCreate) {
+TEST_F(cUseOtVoucherTest, VoucherCreate) {
 	EXPECT_FALSE(useOt->VoucherWithdraw("bitcoins", toNym, -20, "some memo", 0));
 
 	auto accID = useOt->AccountGetId(fromAcc);
@@ -55,7 +55,7 @@ TEST_F(cUseOtTest, VoucherCreate) {
 	EXPECT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }
 
-TEST_F(cUseOtTest, VoucherDeposit) {
+TEST_F(cUseOtVoucherTest, VoucherDeposit) {
 	auto accID = useOt->AccountGetId(fromAcc);
 	auto currentBallance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
@@ -65,7 +65,7 @@ TEST_F(cUseOtTest, VoucherDeposit) {
 	//EXPECT_FALSE(useOt->OutpaymentsShow(fromNym, 0, false));
 }
 
-TEST_F(cUseOtTest, Voucher) {
+TEST_F(cUseOtVoucherTest, Voucher) {
 	const auto startBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
 	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount2, "", false));
 
@@ -73,7 +73,6 @@ TEST_F(cUseOtTest, Voucher) {
 	EXPECT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
 
 	ASSERT_TRUE(useOt->VoucherSend(fromNym, toNym, 0, false));
-	//EXPECT_TRUE(useOt->Refresh(false));
 
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(toAcc, true, false);

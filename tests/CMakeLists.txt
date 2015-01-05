@@ -25,7 +25,8 @@ find_library(client opentxs-client)
 
 set(SRC
   tests.cpp
-  unittest.cpp
+  unittest-voucher.cpp
+  unittest-cheque.cpp
 )
 
 add_executable(${NAME} ${SRC})
