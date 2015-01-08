@@ -68,7 +68,8 @@ void cUseOT::CloseApi() {
 }
 
 cUseOT::~cUseOT() {
-    delete mMadeEasy;
+    _dbg1("");
+	delete mMadeEasy;
 }
 
 bool cUseOT::PrintInstrumentInfo(const string &instrument) {
@@ -86,6 +87,7 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	auto col = zkr::cc::fore::cyan;
 	auto col2 = zkr::cc::fore::blue;
 	auto ncol = zkr::cc::console;
+	auto err = zkr::cc::fore::lightred;
 
 	auto now = OTTimeGetCurrentTime();
 
@@ -93,9 +95,13 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	cout << col << "   Sender account: " << ncol << AccountGetName(senderAccID) << col2 << " (" << senderAccID << ")" << endl;
 	cout << col << "       Sender nym: " << ncol << NymGetName(senderNymID) << col2 << " (" << senderNymID << ")" << endl;
 	cout << col << "    Recipient nym: " << ncol << NymGetName(recNymID) << col2 << " (" << recNymID << ")" << endl;
+	cout << col << "       Asset type: " << ncol << AssetGetName(assetID) << col2 << " (" << assetID << ")" << endl;
 	cout << col << "           Amount: " << ncol << amount << endl;
 	cout << col << "             Memo: " << ncol << memo << endl;
 	cout << col << "             Type: " << ncol << type << endl;
+
+	if(validTo - now < 0) cout << err << "\n\nexpired" << ncol << endl;
+
 
 	return true;
 }
@@ -1210,7 +1216,7 @@ bool cUseOT::CashWithdraw(const string & account, int64_t amount, bool dryrun) {
 }
 
 bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun) {
-	_fact("cheque new " << fromAcc << " " << toNym << " " << srv);
+	_fact("cheque new \"" << fromAcc << "\" \"" << toNym << "\" " << srv);
 	if (dryrun) return false;
 	if (!Init()) return false;
 
@@ -1221,39 +1227,22 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t am
 	const ID srvID = ServerGetId(srv);
 
 	// Cheque is valid 6 months TODO
-	const time64_t validFrom = OTTimeGetCurrentTime();
-	const time64_t validTo = validFrom + OT_TIME_SIX_MONTHS_IN_SECONDS;
+	auto now = OTTimeGetCurrentTime();
+	const time64_t validFrom = now;
+	const time64_t validTo = now + OT_TIME_SIX_MONTHS_IN_SECONDS;
 
-	auto col = zkr::cc::fore::cyan;
-	auto col2 = zkr::cc::fore::blue;
-	auto ncol = zkr::cc::console;
+	_info(mMadeEasy->load_or_retrieve_encrypt_key(srvID, fromNymID, toNymID));
 
-	cout << col << "           Server: " << ncol << srv << col2 << " (" << srvID << ")" << endl;
-	cout << col << "   Sender account: " << ncol << fromAcc << col2 << " (" << fromAccID << ")" << endl;
-	cout << col << "       Sender nym: " << ncol << NymGetName(fromNymID) << col2 << " (" << fromNymID << ")" << endl;
-//	cout << col << "Recipient account: " << ncol << endl;
-	cout << col << "    Recipient nym: " << ncol << toNym << col2 << " (" << toNymID << ")" << endl;
-	cout << col << "           Amount: " << ncol << amount << endl;
-	cout << col << "             Memo: " << ncol << endl;
+	const auto cheque = opentxs::OTAPI_Wrap::WriteCheque(srvID, amount, validFrom, validTo, fromAccID, fromNymID, memo,
+			toNymID);
 
+	// OTAPI_Wrap::WriteCheque should drop a notice
+	// into the payments outbox, the same as it does when you "sendcheque" (after all, the same
+	// resolution would be expected once it is cashed.)
 
-	const auto cheque = opentxs::OTAPI_Wrap::WriteCheque(srvID, amount, validFrom, validTo, fromAccID, fromNymID, memo, toNymID);
+	PrintInstrumentInfo(cheque);
 
-	_dbg1(cheque);
-
-	/**
-	 *
-std::string OTAPI_Wrap::WriteCheque	(	const std::string & 	SERVER_ID,
-const int64_t & 	CHEQUE_AMOUNT,
-const time64_t & 	VALID_FROM,
-const time64_t & 	VALID_TO,
-const std::string & 	SENDER_ACCT_ID,
-const std::string & 	SENDER_USER_ID,
-const std::string & 	CHEQUE_MEMO,
-const std::string & 	RECIPIENT_USER_ID
-)
-	 */
-
+	bool retrieveFrom = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
 
 	return true;
 }
@@ -2067,10 +2056,18 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	// internally by OT itself.)
 	//
 
+	PrintInstrumentInfo(instrument);
 	if ("CHEQUE" == strType || "VOUCHER" == strType) {
 		_dbg3("payment type: " << strType);
+
+
+		_dbg2(" srv: " << ServerGetName(accountServerID));
+		_dbg2(" nym: " << NymGetName(accountNymID));
+		_dbg2(" acc: " << AccountGetName(accountID));
+
 		auto deposit = opentxs::OTAPI_Wrap::depositCheque(accountServerID, accountNymID, accountID, instrument);
 		cout << deposit << endl;
+		if(deposit < 0) return false;
 		return true;
 	}
 
