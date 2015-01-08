@@ -71,6 +71,36 @@ cUseOT::~cUseOT() {
     delete mMadeEasy;
 }
 
+bool cUseOT::PrintInstrumentInfo(const string &instrument) {
+
+	const auto assetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
+	const auto serverID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(instrument);
+	const auto senderAccID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderAcctID(instrument);
+	const auto senderNymID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderUserID(instrument);
+	const auto recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
+	const auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instrument);
+	const auto memo = opentxs::OTAPI_Wrap::Instrmnt_GetMemo(instrument);
+	const auto validTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
+	const auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
+
+	auto col = zkr::cc::fore::cyan;
+	auto col2 = zkr::cc::fore::blue;
+	auto ncol = zkr::cc::console;
+
+	auto now = OTTimeGetCurrentTime();
+
+	cout << col << "           Server: " << ncol << ServerGetName(serverID) << col2 << " (" << serverID << ")" << endl;
+	cout << col << "   Sender account: " << ncol << AccountGetName(senderAccID) << col2 << " (" << senderAccID << ")" << endl;
+	cout << col << "       Sender nym: " << ncol << NymGetName(senderNymID) << col2 << " (" << senderNymID << ")" << endl;
+	cout << col << "    Recipient nym: " << ncol << NymGetName(recNymID) << col2 << " (" << recNymID << ")" << endl;
+	cout << col << "           Amount: " << ncol << amount << endl;
+	cout << col << "             Memo: " << ncol << memo << endl;
+	cout << col << "             Type: " << ncol << type << endl;
+
+	return true;
+}
+
+
 void cUseOT::LoadDefaults() {
 	// TODO What if there is, for example no accounts?
 	// TODO Check if defaults are correct.
@@ -1179,6 +1209,55 @@ bool cUseOT::CashWithdraw(const string & account, int64_t amount, bool dryrun) {
 	return true;
 }
 
+bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun) {
+	_fact("cheque new " << fromAcc << " " << toNym << " " << srv);
+	if (dryrun) return false;
+	if (!Init()) return false;
+
+	const ID fromAccID = AccountGetId(fromAcc);
+	const ID toNymID = NymGetId(toNym);
+
+	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
+	const ID srvID = ServerGetId(srv);
+
+	// Cheque is valid 6 months TODO
+	const time64_t validFrom = OTTimeGetCurrentTime();
+	const time64_t validTo = validFrom + OT_TIME_SIX_MONTHS_IN_SECONDS;
+
+	auto col = zkr::cc::fore::cyan;
+	auto col2 = zkr::cc::fore::blue;
+	auto ncol = zkr::cc::console;
+
+	cout << col << "           Server: " << ncol << srv << col2 << " (" << srvID << ")" << endl;
+	cout << col << "   Sender account: " << ncol << fromAcc << col2 << " (" << fromAccID << ")" << endl;
+	cout << col << "       Sender nym: " << ncol << NymGetName(fromNymID) << col2 << " (" << fromNymID << ")" << endl;
+//	cout << col << "Recipient account: " << ncol << endl;
+	cout << col << "    Recipient nym: " << ncol << toNym << col2 << " (" << toNymID << ")" << endl;
+	cout << col << "           Amount: " << ncol << amount << endl;
+	cout << col << "             Memo: " << ncol << endl;
+
+
+	const auto cheque = opentxs::OTAPI_Wrap::WriteCheque(srvID, amount, validFrom, validTo, fromAccID, fromNymID, memo, toNymID);
+
+	_dbg1(cheque);
+
+	/**
+	 *
+std::string OTAPI_Wrap::WriteCheque	(	const std::string & 	SERVER_ID,
+const int64_t & 	CHEQUE_AMOUNT,
+const time64_t & 	VALID_FROM,
+const time64_t & 	VALID_TO,
+const std::string & 	SENDER_ACCT_ID,
+const std::string & 	SENDER_USER_ID,
+const std::string & 	CHEQUE_MEMO,
+const std::string & 	RECIPIENT_USER_ID
+)
+	 */
+
+
+	return true;
+}
+
 string cUseOT::ContractSign(const std::string & nymID, const std::string & contract){ // FIXME can't sign contract with this (assetNew() functionality)
 	if(!Init())
 		return "";
@@ -1808,13 +1887,15 @@ bool cUseOT::OutpaymentsShow(const string & nym, int32_t index, bool dryrun) {
 	auto &col2 = zkr::cc::fore::lightyellow;
 	auto &col3 = zkr::cc::fore::yellow;
 
-	cout << col1 << "     Index: " << col2 << index << endl;
-	cout << col1 << "       Nym: " << col2 << nym << col3 << " (" << nymID << ")"<< endl;
-	cout << col1 << "    Server: " << col2 << ServerGetName(srv) << col3 << " (" << srv << ")"<< endl;
-	cout << col1 << " Recipient: " << col2 << NymGetName(rec) << col3 << " (" << rec << ")"<< endl;
-	cout << endl;
-	cout << col1 << "Outpayment: " << endl;
+//	cout << col1 << "     Index: " << col2 << index << endl;
+//	cout << col1 << "       Nym: " << col2 << nym << col3 << " (" << nymID << ")"<< endl;
+//	cout << col1 << "    Server: " << col2 << ServerGetName(srv) << col3 << " (" << srv << ")"<< endl;
+//	cout << col1 << " Recipient: " << col2 << NymGetName(rec) << col3 << " (" << rec << ")"<< endl;
+//	cout << endl;
+//	cout << col1 << "Outpayment: " << endl;
 	cout << col2 << payment << zkr::cc::console << endl;
+
+	PrintInstrumentInfo(payment);
 
 	return true;
 }
@@ -1967,7 +2048,7 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 				"The instrument at index " + ToStr(index) + " is expired. (Moving it to the record box.)\n");
 		handleError("The instrument at index " + ToStr(index) + " is expired. (Moving it to the record box.)");
 		// Since this instrument is expired, remove it from the payments inbox, and move to record box.
-		_dbg3("Expired instument - moving into record inbox");
+		_dbg3("Expired instrument - moving into record inbox");
 		// Note: this harvests
 		if ((index >= 0) && opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, // bIsInbox = true;
 				index, true)) { // bSaveCopy = true. (Since it's expired, it'll go into the expired box.)
@@ -2175,6 +2256,41 @@ bool cUseOT::PurseCreate(const string & serverName, const string & asset, const 
 
 	return true;
 }
+
+bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
+	_fact("payment send " << senderNym << " " << recipientNym << " " << index);
+	if (dryrun)
+		return true;
+	if (!Init())
+		return false;
+
+	const ID senderNymID = NymGetId(senderNym);
+	const ID recNymID = NymGetId(recipientNym);
+
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(senderNymID);
+
+	if (index < 0 || index >= count) {
+		_erro("index: " << index << ", count: " << count);
+		cout << zkr::cc::fore::lightred << "Unable to load outpayment for nym " << senderNym << " with index: " << index
+				<< zkr::cc::fore::console << endl;
+		return false;
+	}
+
+	const auto payment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(senderNymID, index);
+
+	cout << endl << endl;
+	PrintInstrumentInfo(payment);
+
+	const ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(payment);
+
+	cout << zkr::cc::fore::yellow << "\n\n Sending to nym: " << recipientNym << zkr::cc::fore::console << endl;
+
+	auto send = mMadeEasy->send_user_payment(srvID, senderNymID, recNymID, payment);
+
+	return true;
+}
+
+
 bool cUseOT::PurseDisplay(const string & serverName, const string & asset, const string & nymName, bool dryrun) {
 	_fact("purse show= " << serverName << " " << asset << " " << nymName);
 	if(dryrun) return true;
@@ -2467,8 +2583,10 @@ bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t inde
 
 bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun) {
 	_fact("voucher new " << fromAcc << " " << toNym << " " << amount << " " << memo);
-	if(dryrun) return true;
-	if(!Init()) return false;
+	if (dryrun)
+		return true;
+	if (!Init())
+		return false;
 
 	const ID fromAccID = AccountGetId(fromAcc);
 	const ID toNymID = NymGetId(toNym);
@@ -2477,8 +2595,7 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 	const ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(fromAccID);
 	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
 
-
-	// comfortable lambda function, reports errors, returns always false
+	// comfortable lambda function, reports errors, returns false
 	auto err = [] (string var, string mess, string com)->bool {
 		_erro( mess << " [" << var << "]");
 		cout << zkr::cc::fore::lightred << com << zkr::cc::fore::console << endl;
@@ -2486,17 +2603,19 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 	}; // end of lambda
 
 	// amount validating
-	if(amount < 1) return err(ToStr(amount), "Amount < 1", "Amount must be greater then zero!");
+	if (amount < 1)
+		return err(ToStr(amount), "Amount < 1", "Amount must be greater then zero!");
 
 	int64_t balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID);
 	string accType = opentxs::OTAPI_Wrap::GetAccountWallet_Type(fromAccID);
 
-	if(amount > balance && accType=="simple") { // TODO: issuer
+	if (amount > balance && accType == "simple") { // TODO: issuer
 		string mess = "Balance [" + fromAcc + "] is " + ToStr(balance);
 		return err(ToStr(balance), "Not enough money", mess);
 	}
 
-	if(memo=="") memo = "(no memo)";
+	if (memo == "")
+		memo = "(no memo)";
 	_info("memo: " << memo);
 
 	string attempt = "withdraw_voucher";
@@ -2504,24 +2623,32 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 	auto response = mMadeEasy->withdraw_voucher(srvID, fromNymID, fromAccID, toNymID, memo, amount);
 	// connection with server
 	auto reply = mMadeEasy->InterpretTransactionMsgReply(srvID, fromNymID, fromAccID, attempt, response);
-	if(reply != 1) return err(ToStr(reply), "withdraw voucher (made easy) failed!", "Error from server!");
+	if (reply != 1)
+		return err(ToStr(reply), "withdraw voucher (made easy) failed!", "Error from server!");
 
 	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response);
-	if(ledger == "") return err(ledger, "Some error with ledger", "Server error");
+	if (ledger == "")
+		return err(ledger, "Some error with ledger", "Server error");
 
 	auto transactionReply = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, fromNymID, fromAccID, ledger, 0);
-	if(transactionReply == "") return err(transactionReply, "some error with transaction reply", "Server error");
+	if (transactionReply == "")
+		return err(transactionReply, "some error with transaction reply", "Server error");
 
 	auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher(srvID, fromNymID, fromAccID, transactionReply);
-	if(voucher == "") return err(voucher, "Error with getting voucher", "Server error");
+	if (voucher == "")
+		return err(voucher, "Error with getting voucher", "Server error");
+
 	cout << voucher << endl;
 	mMadeEasy->send_user_payment(srvID, fromNymID, fromNymID, voucher); // saving voucher in my outpayments
 	// after sending this voucher, it will be removed automatically
 
 	bool srvAcc = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
 	_dbg3("srvAcc retrv: " << srvAcc);
-	if(!srvAcc) return err(ToStr(srvAcc), "Retrieving account failed! Used force download", "Retriving account failed!");
-	else cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl; // all ok
+
+	if (!srvAcc)
+		return err(ToStr(srvAcc), "Retrieving account failed! Used force download", "Retriving account failed!");
+	else
+		cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl; // all ok
 
 	return true;
 }

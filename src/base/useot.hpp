@@ -79,6 +79,7 @@ namespace nUse {
 		enum class eBoxType { Inbox, Outbox };
 		EXEC bool MsgDisplayForNymBox( eBoxType boxType, const string & nymName, int msg_index, bool dryrun);
 
+		bool PrintInstrumentInfo(const string &instrument);
 	public:
 
 		cUseOT(const string &mDbgName);
@@ -152,6 +153,10 @@ namespace nUse {
 		EXEC bool CashShow(const string & account, bool dryrun); ///< Show purse connected with account
 		EXEC bool CashWithdraw(const string & account, int64_t amount, bool dryrun); ///< withdraw cash from account on server into local purse
 
+		//================= cheque =================
+
+		EXEC bool ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun);
+
 		//================= ?contract =================
 
 		string ContractSign(const std::string & nymID, const std::string & contract);
@@ -214,6 +219,7 @@ namespace nUse {
 		EXEC bool PaymentAccept(const string & account, const int64_t index, bool dryrun); ///< accept specified payment from payment inbox
 		EXEC bool PaymentDiscard(const string & nym, const string & index, bool all, bool dryrun);
 		EXEC bool PaymentDiscardAll(bool dryrun);
+		EXEC bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun);
 
 		//================= purse ==================
 
