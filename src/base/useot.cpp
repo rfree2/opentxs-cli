@@ -1807,7 +1807,17 @@ bool cUseOT::NymSetDefault(const string & nymName, bool dryrun) {
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
 }
-bool cUseOT::OutpaymentsDisplay(const string & nym, bool dryrun) {
+
+bool cUseOT::OutpaymentCheckIndex(const string & nymName, const int32_t & index) {
+	if(!Init())
+			return false;
+	if ( index >= 0 && index < opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(NymGetId(nymName)) ) {
+		return true;
+	}
+	return false;
+}
+
+bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 	_fact("nym-outpayment ls " << nym);
 	if (dryrun) return true;
 	if (!Init()) return false;
@@ -1853,8 +1863,8 @@ bool cUseOT::OutpaymentsDisplay(const string & nym, bool dryrun) {
 
 	return true;
 }
-bool cUseOT::OutpaymentsShow(const string & nym, int32_t index, bool dryrun) {
-	_fact("nym-outpayment show " << index << " " << nym);
+bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
+	_fact("nym-outpaymen show " << index << " " << nym);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -2540,28 +2550,30 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-bool cUseOT::VoucherDeposit(const string & acc, const string & nym, int32_t index, bool dryrun) {
-	_fact("voucher deposit " << " " << acc);
+bool cUseOT::VoucherCancel(const string & acc, const int32_t & index, bool dryrun) {
+	_fact("voucher cancel " << " " << acc << " " << index);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	ID accID = AccountGetId(acc);
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
-//	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
-	ID nymID = NymGetId(nym);
+	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+//	ID nymID = NymGetId(nym);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
 
 	string voucher = "" ;
+
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
-	nUtils::cEnvUtils envUtils;
+	if(count == 0) {
+		cout << zkr::cc::fore::lightred << "Empty outpayments for nym: " << NymGetName(nymID) << zkr::cc::console << endl;
+		return false;
+	}
 
-	if(index > -1 && index < count)
-		voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
-	else voucher = envUtils.Compose();
+	voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
 
-	if(voucher.empty()) {
-		_warn("Empty voucher, aborted");
+	if(opentxs::OTAPI_Wrap::Instrmnt_GetType(voucher) != "VOUCHER") {
+		cout << zkr::cc::fore::lightred << "Not a voucher!" << zkr::cc::console << endl;
 		return false;
 	}
 
@@ -2637,8 +2649,9 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 		return err(voucher, "Error with getting voucher", "Server error");
 
 	cout << voucher << endl;
-	mMadeEasy->send_user_payment(srvID, fromNymID, fromNymID, voucher); // saving voucher in my outpayments
-	// after sending this voucher, it will be removed automatically
+	mMadeEasy->send_user_payment(srvID, fromNymID, fromNymID, voucher);
+	// sending voucher to yourself - saving voucher in my outpayments
+	// after sending this voucher, this copy will be removed automatically
 
 	bool srvAcc = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
 	_dbg3("srvAcc retrv: " << srvAcc);

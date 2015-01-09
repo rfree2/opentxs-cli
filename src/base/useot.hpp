@@ -210,8 +210,10 @@ namespace nUse {
 
 		//================= nym-outpayments ==========
 
-		EXEC bool OutpaymentsDisplay(const string & nym, bool dryrun);
-		EXEC bool OutpaymentsShow(const string & nym, int32_t index, bool dryrun);
+		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
+		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
+		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
+		EXEC bool OutpaymentRemove();
 
 		//================= payment ==================
 
@@ -251,7 +253,7 @@ namespace nUse {
 
 		//================= voucher ==============
 
-		EXEC bool VoucherDeposit(const string & acc, const string & nym, int32_t index, bool dryrun);
+		EXEC bool VoucherCancel(const string & acc, const int32_t & index, bool dryrun);
 		EXEC bool VoucherSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun);
 		EXEC bool VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun);
 
