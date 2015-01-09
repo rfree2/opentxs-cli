@@ -7,22 +7,32 @@ Nym odbiorcy zarejestrowany na serwerze
 :nym-from
 Nym nadawcy, istniejący w lokalnym portfelu
 :nym-new-name
+Alias dla tworzonego nyma
 :account
-:account-my
+Konto
 :account-to
+Konto odbiorcy zarejestrowany na serwerze
+:account-my
+Moje konto
+:account-from
+Nym nadawcy, istniejący w lokalnym portfelu
 :account-new
 :asset
 :server
 :int
 :amount
+Kwota
 :subject
 :yes-no
 :text
 :cmdword1
 :cmdword2
 :msg-index-inbox
+Indeks wiadomosci ze skrzynki odbiorczej
 :msg-index-outbox
+Indeks wiadomosci ze skrzynki nadawczej
 :inbox-index
+Indeks wiadomosci
 :payment-inbox-index
 :file
 :lang
