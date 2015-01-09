@@ -7,7 +7,7 @@
 
 using namespace nOT::nUtils;
 
-class cUseOtChequeTest : public ::testing::Test {
+class cUseOtChequeTest : public testing::Test {
 protected:
 	std::shared_ptr<nOT::nUse::cUseOT> useOt;
 
@@ -20,7 +20,7 @@ protected:
 	int64_t amount;
 
 	virtual void SetUp() {
-		useOt = std::make_shared<nOT::nUse::cUseOT>("test");
+		useOt = std::make_shared<nOT::nUse::cUseOT>("test-cheque");
 
 		//useOt = new nOT::nUse::cUseOT("test");
 		fromAcc = "FT's Tokens";
@@ -28,7 +28,7 @@ protected:
 		toNym = "Trader Bob";
 		toAcc = "Bob's Tokens";
 		//server = useOt->ServerGetName(useOt->ServerGetDefault());
-		amount = 5;
+		amount = 7;
 
 		cout << "cheque test" << endl;
 	}
@@ -40,7 +40,7 @@ protected:
 
 TEST_F(cUseOtChequeTest, CreateCheque) {
 
-	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, server, "test cheque", false);
+	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, "Transactions.com", "test cheque", false);
 	EXPECT_TRUE(result);
 
 }
@@ -55,13 +55,16 @@ TEST_F(cUseOtChequeTest, SendCheque) {
 
 TEST_F(cUseOtChequeTest, DepositCheque) {
 	const auto toNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc));
+	const auto fromNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
 
-	ASSERT_TRUE(useOt->PaymentAccept(toAcc, 0, false));
+
+	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(toAcc, true, false);
 
 	EXPECT_EQ(toNymBalance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
+	EXPECT_EQ(fromNymBalance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)));
 
 }
 

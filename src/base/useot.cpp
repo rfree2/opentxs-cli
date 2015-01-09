@@ -1888,7 +1888,7 @@ bool cUseOT::OutpaymentsShow(const string & nym, int32_t index, bool dryrun) {
 	return true;
 }
 
-bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dryrun) {
+bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	//case ("CHEQUE")
 	//case ("VOUCHER")
 	//case ("INVOICE")
@@ -1963,6 +1963,8 @@ bool cUseOT::PaymentAccept(const string & account, const int64_t index, bool dry
 	_dbg3("Get payment instrument");
 
 	// strInbox is optional and avoids having to load it multiple times. This function will just load it itself, if it has to.
+	if(index == -1) index = nCount -1;
+
 	string instrument = mMadeEasy->get_payment_instrument(accountServerID, accountNymID, index, paymentInbox);
 	if (instrument.empty())
 		return handleError("Unable to get payment instrument based on index: " + ToStr(index));
