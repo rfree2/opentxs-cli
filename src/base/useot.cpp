@@ -68,7 +68,6 @@ void cUseOT::CloseApi() {
 }
 
 cUseOT::~cUseOT() {
-    _dbg1("");
 	delete mMadeEasy;
 }
 
