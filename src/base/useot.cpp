@@ -72,7 +72,7 @@ cUseOT::~cUseOT() {
 }
 
 bool cUseOT::PrintInstrumentInfo(const string &instrument) {
-
+	const auto txn = opentxs::OTAPI_Wrap::Instrmnt_GetTransNum(instrument);
 	const auto assetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
 	const auto serverID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(instrument);
 	const auto senderAccID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderAcctID(instrument);
@@ -89,7 +89,7 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	auto err = zkr::cc::fore::lightred;
 
 	auto now = OTTimeGetCurrentTime();
-
+	cout << col << "              TXN: " << ncol << txn << endl;
 	cout << col << "           Server: " << ncol << ServerGetName(serverID) << col2 << " (" << serverID << ")" << endl;
 	cout << col << "   Sender account: " << ncol << AccountGetName(senderAccID) << col2 << " (" << senderAccID << ")" << endl;
 	cout << col << "       Sender nym: " << ncol << NymGetName(senderNymID) << col2 << " (" << senderNymID << ")" << endl;
@@ -1863,13 +1863,34 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 
 	return true;
 }
-bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
-	_fact("nym-outpaymen show " << index << " " << nym);
+
+bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool dryrun) {
+	_fact("outpayment remove " << index << " " << nym);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	ID nymID = NymGetId(nym);
-	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+	const auto nymID = NymGetId(nym);
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+
+	if(count == 0) {
+		cout << zkr::cc::fore::yellow << "Can't remove. Outpayment box is empty!" << zkr::cc::console << endl;
+		return false;
+	}
+
+	auto ok = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, 0);
+
+	if(ok) cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl;
+
+	return ok;
+}
+
+bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
+	_fact("outpayment show " << index << " " << nym);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	const ID nymID = NymGetId(nym);
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
 	if(index < 0 || index >= count) {
 		cout << zkr::cc::fore::lightred << "Can't load payment with given index!"

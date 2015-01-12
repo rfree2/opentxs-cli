@@ -572,11 +572,14 @@ void cCmdParser::Init() {
 
 	//======== ot nym-outpayment ========
 
-	AddFormat("nym-outpayment ls", {}, {pNym}, NullMap,
+	AddFormat("outpayment ls", {}, {pNym}, NullMap,
 			LAMBDA { auto &D=*d; return U.OutpaymentDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
-	AddFormat( "nym-outpayment show", {}, {pNym, pOutpaymentIndex}, NullMap,
+	AddFormat("outpayment show", {}, {pNym, pOutpaymentIndex}, NullMap,
 			LAMBDA { auto &D=*d; return U.OutpaymentShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
+
+	AddFormat("outpayment rm", {pNym, pOutpaymentIndex}, {}, NullMap,
+				LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.V(2)) ,  D.has("--dryrun") ); } );
 
 	//======== ot payment ========
 

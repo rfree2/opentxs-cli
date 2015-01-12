@@ -213,7 +213,7 @@ namespace nUse {
 		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
 		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
-		EXEC bool OutpaymentRemove();
+		EXEC bool OutpaymentRemove(const string & nym, const int32_t & index, bool dryrun);
 
 		//================= payment ==================
 
