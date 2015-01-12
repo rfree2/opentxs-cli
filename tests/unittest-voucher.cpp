@@ -27,7 +27,7 @@ protected:
 		fromNym = "Trader Bob";
 		fromAcc = "Bob's Tokens";
 
-		amount = 100;
+		amount = 50;
 		amount2 = 1;
 		useOt = std::make_shared<nOT::nUse::cUseOT>("test");
 	}
@@ -38,8 +38,8 @@ protected:
 };
 
 TEST_F(cUseOtVoucherTest, OutPayments) {
-	EXPECT_FALSE(useOt->OutpaymentsShow(nym1, 200, 0));
-	EXPECT_FALSE(useOt->OutpaymentsShow(nym1, -1, 0));
+	EXPECT_FALSE(useOt->OutpaymentShow(nym1, 200, 0));
+	EXPECT_FALSE(useOt->OutpaymentShow(nym1, -1, 0));
 }
 
 TEST_F(cUseOtVoucherTest, VoucherCreate) {
@@ -51,46 +51,44 @@ TEST_F(cUseOtVoucherTest, VoucherCreate) {
 	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, toNym, ballance + 1, "", false));
 
 	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "", false));
-	ASSERT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
+	ASSERT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
 	EXPECT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }
 
-TEST_F(cUseOtVoucherTest, VoucherDeposit) {
+TEST_F(cUseOtVoucherTest, VoucherCancel) {
 	auto accID = useOt->AccountGetId(fromAcc);
 	auto currentBallance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
-	ASSERT_TRUE(useOt->VoucherDeposit(fromAcc, fromNym, 0, false));
+	ASSERT_TRUE(useOt->VoucherCancel(fromAcc, 0, false));
 	EXPECT_TRUE(useOt->AccountInAccept(fromAcc, 0, false, false));
 	EXPECT_EQ(currentBallance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
-	//EXPECT_FALSE(useOt->OutpaymentsShow(fromNym, 0, false));
 }
 
-TEST_F(cUseOtVoucherTest, Voucher) {
+TEST_F(cUseOtVoucherTest, VoucherFullOperation) {
 	const auto startBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
+
+	// create
 	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount2, "", false));
 
 	EXPECT_EQ(opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)), startBalance - 1);
-	EXPECT_TRUE(useOt->OutpaymentsShow(fromNym, 0, false));
+	EXPECT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
 
-	ASSERT_TRUE(useOt->VoucherSend(fromNym, toNym, 0, false));
+	// send
+	ASSERT_TRUE(useOt->PaymentSend(fromNym, toNym, 0, false));
+	//ASSERT_TRUE(useOt->VoucherSend(fromNym, toNym, 0, false));
 
+	// refresh
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(toAcc, true, false);
 
 	const auto toNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc));
 
-	EXPECT_TRUE(useOt->PaymentAccept(toAcc, 0, false));
+	// accept
+	EXPECT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(toAcc, true, false);
 
 	EXPECT_EQ(toNymBalance + amount2, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 }
-
-/*
- TEST_F(cUseOtTest, VoucherSend) {
- std::string fromNym = "FT's Test Nym";
- auto result = useOt->VoucherSend(fromNym, 0, false);
- EXPECT_TRUE(result);
- }*/
 
