@@ -83,6 +83,10 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	const auto validTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
 	const auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
 
+	const auto valid = opentxs::OTAPI_Wrap::Message_IsTransactionCanceled(serverID, senderNymID, senderAccID, instrument);
+
+	_mark(valid);
+
 	auto col = zkr::cc::fore::cyan;
 	auto col2 = zkr::cc::fore::blue;
 	auto ncol = zkr::cc::console;
@@ -100,6 +104,7 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	cout << col << "             Type: " << ncol << type << endl;
 
 	if(validTo - now < 0) cout << err << "\n\nexpired" << ncol << endl;
+
 
 
 	return true;
@@ -1241,7 +1246,29 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t am
 
 	PrintInstrumentInfo(cheque);
 
-	bool retrieveFrom = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
+	mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
+
+	return true;
+}
+
+bool cUseOT::ChequeDiscard(const string & acc, const string & nym, const int32_t & index, bool dryrun) {
+	_fact("cheque discard " << acc << " " << index);
+	if (dryrun) return true;
+	if (!Init()) return false;
+
+	const auto accID = AccountGetId(acc);
+	const auto nymID = NymGetId(nym);
+
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+
+	if(count == 0) return false;
+
+	const auto cheque = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
+
+	const auto srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(cheque);
+
+	auto discard = opentxs::OTAPI_Wrap::DiscardCheque(srvID, nymID, accID, cheque);
+	_info(discard);
 
 	return true;
 }
@@ -1276,7 +1303,7 @@ bool cUseOT::MarketList(const string & srvName, const string & nymName, bool dry
 
 bool cUseOT::MintShow(const string & srvName, const string & nymName, const string & assetName, bool dryrun) {
 	_fact("mint ls " << srvName << " " << nymName << " " << assetName);
-	if(dryrun) return false;
+	if(dryrun) return true;
 	if(!Init())	return false;
 
 	ID srvID = ServerGetId(srvName);
@@ -1933,10 +1960,10 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if (!Init())
 		return false;
 
-	ID accountID = AccountGetId(account);
-	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	const ID accountID = AccountGetId(account);
+	const ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
+	const ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
+	const ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
 
 	auto handleError = [] (string message)->bool {
 		_erro(message);
@@ -1945,6 +1972,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	};
 
 	_dbg1("nym: " << NymGetName(accountNymID) << ", acc: " << account);
+
 
 	/*
 	 payment instrument and myacct must both have same asset type
@@ -1968,6 +1996,8 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if (nCount < 0)
 		return handleError("Unable to retrieve size of payments inbox ledger. (Failure.)\n");
 
+	if (index == -1) index = nCount - 1;
+	_info("index = " << index << "nCount = " << nCount);
 	//int32_t nIndicesCount = VerifyStringVal(strIndices) ? opentxs::OTAPI_Wrap::NumList_Count(strIndices) : 0;
 
 	// Either we loop through all the instruments and accept them all, or
@@ -1994,7 +2024,6 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	_dbg3("Get payment instrument");
 
 	// strInbox is optional and avoids having to load it multiple times. This function will just load it itself, if it has to.
-	if(index == -1) index = nCount -1;
 
 	string instrument = mMadeEasy->get_payment_instrument(accountServerID, accountNymID, index, paymentInbox);
 	if (instrument.empty())
@@ -2093,9 +2122,9 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 		_dbg3("payment type: " << strType);
 
 
-		_dbg2(" srv: " << ServerGetName(accountServerID));
-		_dbg2(" nym: " << NymGetName(accountNymID));
-		_dbg2(" acc: " << AccountGetName(accountID));
+		_dbg2("srv: " << ServerGetName(accountServerID));
+		_dbg2("nym: " << NymGetName(accountNymID));
+		_dbg2("acc: " << AccountGetName(accountID));
 
 		auto deposit = opentxs::OTAPI_Wrap::depositCheque(accountServerID, accountNymID, accountID, instrument);
 		cout << deposit << endl;
@@ -2571,14 +2600,14 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	return true;
 }
 
-bool cUseOT::VoucherCancel(const string & acc, const int32_t & index, bool dryrun) {
-	_fact("voucher cancel " << " " << acc << " " << index);
+bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun) {
+	_fact("voucher cancel " << " " << acc << " " << nym << " " << index);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	ID accID = AccountGetId(acc);
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
-	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+	ID nymID = NymGetId(nym);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
 
 	string voucher = "" ;

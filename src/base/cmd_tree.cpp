@@ -499,6 +499,14 @@ void cCmdParser::Init() {
 	AddFormat("cash withdraw-from", {pAccountMy, pAmount}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.CashWithdraw( D.V(1), stoi(D.V(2)), D.has("--dryrun") ); } );
 
+	//======== ot cheque ========
+
+	AddFormat("cheque new", {pAccountFrom, pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
+			LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), stoi(D.V(3)), D.v(4, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
+
+	AddFormat("cheque discard", {pAccount, pNym, pOutpaymentIndex}, {}, {},
+			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
+
 	//======== ot market ========
 
 	AddFormat( "market ls", {}, {pServer, pNym}, NullMap,
@@ -645,13 +653,11 @@ void cCmdParser::Init() {
 	AddFormat("voucher new", {pAccountFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), stoi(D.V(3)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
-	AddFormat("voucher cancel", {pAccount}, {pOutpaymentIndex}, {},
-			LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), stoi(D.v(2,"0")), D.has("--dryrun") ); } );
+	AddFormat("voucher cancel", {pAccount, pNym, pOutpaymentIndex}, {pOutpaymentIndex}, {},
+			LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();
 }
-
-
 
 
 } // namespace

@@ -156,6 +156,8 @@ namespace nUse {
 		//================= cheque =================
 
 		EXEC bool ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun);
+		EXEC bool ChequeDiscard(const string &acc, const string &nym, const int32_t & index, bool dryrun);
+
 
 		//================= ?contract =================
 
@@ -211,6 +213,7 @@ namespace nUse {
 		//================= nym-outpayments ==========
 
 		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
+
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
 		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
 		EXEC bool OutpaymentRemove(const string & nym, const int32_t & index, bool dryrun);
@@ -253,7 +256,7 @@ namespace nUse {
 
 		//================= voucher ==============
 
-		EXEC bool VoucherCancel(const string & acc, const int32_t & index, bool dryrun);
+		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun);
 		EXEC bool VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun);
 
 	};
