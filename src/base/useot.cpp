@@ -2558,7 +2558,6 @@ bool cUseOT::VoucherCancel(const string & acc, const int32_t & index, bool dryru
 	ID accID = AccountGetId(acc);
 	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
 	ID nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
-//	ID nymID = NymGetId(nym);
 	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
 
 	string voucher = "" ;
@@ -2661,42 +2660,6 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 	else
 		cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl; // all ok
 
-	return true;
-}
-
-bool cUseOT::VoucherSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
-	_fact("ot voucher send " << senderNym);
-	if (dryrun) return true;
-	if (!Init()) return false;
-
-	ID senderID = NymGetId(senderNym);
-	ID recNymID = NymGetId(recipientNym);
-
-	string voucher = "";
-	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(senderID);
-
-	nUtils::cEnvUtils envUtils;
-
-	if (index > -1 && index < count)
-		voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(senderID,index);
-	else
-		voucher = envUtils.Compose();
-
-	if (voucher.empty()) {
-		_warn("Empty voucher, aborted");
-		return false;
-	}
-
-	ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(voucher);
-
-	auto & col1 = zkr::cc::fore::blue;
-	auto & col2 = zkr::cc::fore::lightyellow;
-
-	cout << col1 << "   Sender: " << col2 << NymGetName(senderID) << endl;
-	cout << col1 << "Recipient: " << col2 << NymGetName(recNymID) << endl;
-	cout << col1 << "   Server: " << col2 << ServerGetName(srvID) << zkr::cc::fore::console << endl;
-
-	auto send = mMadeEasy->send_user_payment(srvID, senderID, recNymID, voucher);
 	return true;
 }
 

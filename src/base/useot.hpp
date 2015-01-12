@@ -254,7 +254,6 @@ namespace nUse {
 		//================= voucher ==============
 
 		EXEC bool VoucherCancel(const string & acc, const int32_t & index, bool dryrun);
-		EXEC bool VoucherSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun);
 		EXEC bool VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun);
 
 	};

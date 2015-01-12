@@ -642,11 +642,8 @@ void cCmdParser::Init() {
 	AddFormat("voucher new", {pAccountFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), stoi(D.V(3)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
-	AddFormat("voucher deposit", {pAccount}, {pOutpaymentIndex}, {},
+	AddFormat("voucher cancel", {pAccount}, {pOutpaymentIndex}, {},
 			LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), stoi(D.v(2,"0")), D.has("--dryrun") ); } );
-
-	AddFormat("voucher send", {pAccount, pNym}, {pOutpaymentIndex}, {},
-			LAMBDA { auto &D=*d; return U.VoucherSend(D.v(1, U.NymGetName( U.NymGetDefault() )), D.V(2), stoi(D.o1("--outpayment-index","-1")),  D.has("--dryrun")) ; } );
 
 	mI->BuildCache_CmdNames();
 }
