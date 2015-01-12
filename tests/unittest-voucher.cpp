@@ -59,7 +59,7 @@ TEST_F(cUseOtVoucherTest, VoucherCancel) {
 	auto accID = useOt->AccountGetId(fromAcc);
 	auto currentBallance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
-	ASSERT_TRUE(useOt->VoucherCancel(fromAcc, 0, false));
+	ASSERT_TRUE(useOt->VoucherCancel(fromAcc, fromNym, 0, false));
 	EXPECT_TRUE(useOt->AccountInAccept(fromAcc, 0, false, false));
 	EXPECT_EQ(currentBallance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }

@@ -86,7 +86,7 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard){
 	auto create = useOt->ChequeCreate(fromAcc, toNym, amount, server, "to discard", false);
 	ASSERT_TRUE(create);
 
-	auto discard = useOt->ChequeDiscard(fromAcc, 0, false);
+	auto discard = useOt->ChequeDiscard(fromAcc, fromNym, 0, false);
 	EXPECT_TRUE(discard);
 
 	useOt->NymRefresh(toNym, true, false);
