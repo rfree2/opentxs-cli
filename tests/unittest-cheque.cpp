@@ -7,7 +7,7 @@
 
 using namespace nOT::nUtils;
 
-class cUseOtChequeTest : public testing::Test {
+class cUseOtChequeTest: public testing::Test {
 protected:
 	std::shared_ptr<nOT::nUse::cUseOT> useOt;
 
@@ -42,7 +42,7 @@ TEST_F(cUseOtChequeTest, CreateCheque) {
 }
 
 TEST_F(cUseOtChequeTest, VoucherCancel) {
-	EXPECT_FALSE(useOt->VoucherCancel(fromAcc, 0, false));
+	EXPECT_FALSE(useOt->VoucherCancel(fromAcc, fromNym, 0, false));
 
 }
 
@@ -58,7 +58,6 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 	const auto toNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc));
 	const auto fromNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
 
-
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
 	useOt->NymRefresh(toNym, true, false);
@@ -69,20 +68,7 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 
 }
 
-TEST_F(cUseOtChequeTest, OutpaymentRemove) {
-
-//	auto result = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(useOt->NymGetId(fromNym), 0);
-//	auto txn =
-//	auto result = opentxs::OTAPI_Wrap::RemoveSentMessage(0, useOt->ServerGetId(server), useOt->NymGetId(fromNym));
-
-	auto result = useOt->OutpaymentRemove(fromNym, 0, false);
-	_info(result);
-
-	EXPECT_TRUE(result);
-
-}
-
-TEST_F(cUseOtChequeTest, CreateAndDiscard){
+TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 	auto create = useOt->ChequeCreate(fromAcc, toNym, amount, server, "to discard", false);
 	ASSERT_TRUE(create);
 
@@ -99,6 +85,6 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard){
 
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
-
 }
+
 

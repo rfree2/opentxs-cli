@@ -1904,7 +1904,7 @@ bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool dr
 		return false;
 	}
 
-	auto ok = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, 0);
+	auto ok = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, index);
 
 	if(ok) cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl;
 
