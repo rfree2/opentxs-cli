@@ -611,6 +611,11 @@ void cCmdParser::Init() {
 	AddFormat("purse show", {}, {pServer, pAsset, pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.PurseDisplay( D.v(1, U.ServerGetName(U.ServerGetDefault())), D.v(2, U.AssetGetName(U.AssetGetDefault())), D.v(3, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
+	//======== ot recordbox ========
+
+	AddFormat("recordbox ls", {}, {pNym, pAccount, pServer}, NullMap,
+				LAMBDA { auto &D=*d; return U.RecordBoxDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.v(2, U.AccountGetName(U.AccountGetDefault())), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
+
 	//======== ot server ========
 
 	AddFormat("server", {}, {}, NullMap,

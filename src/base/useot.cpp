@@ -813,6 +813,37 @@ bool cUseOT::AssetSetDefault(const std::string & asset, bool dryrun){
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
 }
+// testing
+bool cUseOT::BasketNew() {
+	if(!Init()) return false;
+
+	int32_t basketCount = 2;
+	int64_t amount = 100;
+	auto fromNym = "Trader Bob";
+
+	string basket = opentxs::OTAPI_Wrap::GenerateBasketCreation(NymGetId(fromNym), amount);
+
+	_dbg2("basket: " << basket);
+
+	const auto asset1 = "US Dollars";
+	const auto asset2 = "Bitcoins";
+
+	const auto asset1ID = AssetGetId(asset1);
+	const auto asset2ID = AssetGetId(asset2);
+
+	_dbg3(opentxs::OTAPI_Wrap::GetAssetType_Contract(asset1ID));
+	_dbg3(opentxs::OTAPI_Wrap::GetAssetType_Contract(asset2ID));
+
+	auto tmpBasket = opentxs::OTAPI_Wrap::AddBasketCreationItem(NymGetId(fromNym), basket, asset2ID, amount);
+
+	_dbg2("tmpBasket: " << tmpBasket);
+
+	basket = tmpBasket;
+
+	auto response = mMadeEasy->issue_basket_currency(ServerGetDefault(), NymGetId(fromNym), basket);
+
+	return true;
+}
 
 bool cUseOT::CashExportWrap(const ID & nymSender, const ID & nymRecipient, const string & account, bool passwordProtected, bool dryrun) {
 	// TODO get indices
@@ -1913,35 +1944,32 @@ bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool dr
 
 bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
 	_fact("outpayment show " << index << " " << nym);
-	if(dryrun) return true;
-	if(!Init()) return false;
+	if (dryrun)
+		return true;
+	if (!Init())
+		return false;
 
 	const ID nymID = NymGetId(nym);
 	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
-	if(index < 0 || index >= count) {
-		cout << zkr::cc::fore::lightred << "Can't load payment with given index!"
-				<< zkr::cc::console << endl;
+	if (index <= 0) {
+		cout << zkr::cc::fore::lightred << "Empty outpayment box!" << zkr::cc::console << endl;
 		return false;
 	}
 
-	auto payment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
+	auto outpayment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
 	auto srv = opentxs::OTAPI_Wrap::GetNym_OutpaymentsServerIDByIndex(nymID, index);
-	auto rec =  opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID, index);
+	auto rec = opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID, index);
 
-	auto &col1 = zkr::cc::fore::lightblue;
-	auto &col2 = zkr::cc::fore::lightyellow;
-	auto &col3 = zkr::cc::fore::yellow;
+	cout << zkr::cc::fore::lightblue << outpayment << zkr::cc::console << endl;
 
-//	cout << col1 << "     Index: " << col2 << index << endl;
-//	cout << col1 << "       Nym: " << col2 << nym << col3 << " (" << nymID << ")"<< endl;
-//	cout << col1 << "    Server: " << col2 << ServerGetName(srv) << col3 << " (" << srv << ")"<< endl;
-//	cout << col1 << " Recipient: " << col2 << NymGetName(rec) << col3 << " (" << rec << ")"<< endl;
-//	cout << endl;
-//	cout << col1 << "Outpayment: " << endl;
-	cout << col2 << payment << zkr::cc::console << endl;
+	PrintInstrumentInfo(outpayment);
 
-	PrintInstrumentInfo(payment);
+	(opentxs::OTAPI_Wrap::Nym_VerifyOutpaymentsByIndex(nymID, index)) ?
+			cout << zkr::cc::fore::green << "\nverification successfull" :
+			cout << zkr::cc::fore::lightred << "\nverification failed";
+
+	cout << zkr::cc::console << endl;
 
 	return true;
 }
@@ -2367,6 +2395,60 @@ bool cUseOT::PurseDisplay(const string & serverName, const string & asset, const
 //	const std::string & 	USER_ID
 //	)
 
+	return true;
+}
+
+bool cUseOT::RecordBoxDisplay(const string &nym, const string &acc, const string & srv, bool dryrun) {
+	_fact("recordbox ls " << nym << " " << acc << " " << srv);
+	if (dryrun)
+		return true;
+	if (!Init())
+		return false;
+
+	const auto nymID = NymGetId(nym);
+	const auto accID = AccountGetId(acc);
+	const auto srvID = ServerGetId(srv);
+
+	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
+
+	if(recordBox.empty()) {
+		cout << zkr::cc::fore::yellow << "Recordbox is empty" << zkr::cc::console << endl;
+		return false;
+	}
+
+	const auto count = opentxs::OTAPI_Wrap::Ledger_GetCount(srvID, nymID, accID, recordBox);
+
+	_dbg2(count);
+
+	bprinter::TablePrinter table(&std::cout);
+	table.SetContentColor(zkr::cc::console);
+
+	table.AddColumn("ID", 5);
+	table.AddColumn("Type", 20);
+	table.AddColumn("Sender", 20);
+	table.AddColumn("Recipient", 20);
+	table.AddColumn("Amount", 10);
+	table.PrintHeader();
+
+	for (int32_t i = 0; i < count; ++i) {
+		const auto transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, nymID, accID, recordBox, i);
+		if (transaction == "")
+			return false;
+		const auto id = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(srvID, nymID, accID, recordBox, i);
+		const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
+		const auto senderNym = NymGetName(
+				opentxs::OTAPI_Wrap::Transaction_GetSenderUserID(srvID, nymID, accID, transaction));
+		const auto recipientNym = NymGetName(
+				opentxs::OTAPI_Wrap::Transaction_GetRecipientUserID(srvID, nymID, accID, transaction));
+		const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
+
+		(opentxs::OTAPI_Wrap::Transaction_IsCanceled(srvID, nymID, accID, transaction)) ?
+				table.SetContentColor(zkr::cc::fore::yellow) : table.SetContentColor(zkr::cc::console);
+
+		table << id << type << senderNym << recipientNym << amount;
+	}
+
+	table.PrintFooter();
 	return true;
 }
 

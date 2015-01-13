@@ -79,7 +79,6 @@ namespace nUse {
 		enum class eBoxType { Inbox, Outbox };
 		EXEC bool MsgDisplayForNymBox( eBoxType boxType, const string & nymName, int msg_index, bool dryrun);
 
-		bool PrintInstrumentInfo(const string &instrument);
 	public:
 
 		cUseOT(const string &mDbgName);
@@ -96,6 +95,8 @@ namespace nUse {
 		EXEC bool DisplayHistory(bool dryrun);
 		string SubjectGetDescr(const nUtils::eSubjectType type, const string & subject);
 		bool Refresh(bool dryrun);
+		bool PrintInstrumentInfo(const string &instrument);
+
 		//================= account =================
 
 		vector<ID> AccountGetAllIds();
@@ -140,6 +141,12 @@ namespace nUse {
 		EXEC bool AssetIssue(const string & serverID, const string & nymID, bool dryrun) ;
 		EXEC bool AssetNew(const string & nym, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
+
+		//================= basket =================
+
+		EXEC bool BasketDisplay();
+		EXEC bool BasketNew();
+
 
 		//================= cash =================
 
@@ -230,6 +237,11 @@ namespace nUse {
 
 		EXEC bool PurseCreate(const string & serverName, const string & asset, const string & ownerName, const string & signerName, bool dryrun);
 		EXEC bool PurseDisplay(const string & serverName, const string & asset, const string & nymName, bool dryrun);
+
+		//================= recordbox ==================
+
+		EXEC bool RecordBoxDisplay(const string &nym, const string &acc, const string & srv, bool dryrun);
+
 
 		//================= server =================
 
