@@ -275,10 +275,7 @@ void cCmdParser::Init() {
 	cParamInfo pOutpaymentIndex( "outpayment-index", [] () -> string { return Tr(eDictType::help, "outpayment-index") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			if ( ( data.Var(nr) == "-1" && use.OutpaymentCheckIndex(data.Var(nr-1), 0) ) || use.OutpaymentCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)) ) ) {//TODO check if integer
-				return true;
-			}
-			return false;
+			return use.OutpaymentCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> {}; //TODO hinting function for outpayment index
@@ -614,7 +611,7 @@ void cCmdParser::Init() {
 	//======== ot recordbox ========
 
 	AddFormat("recordbox ls", {}, {pNym, pAccount, pServer}, NullMap,
-				LAMBDA { auto &D=*d; return U.RecordBoxDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.v(2, U.AccountGetName(U.AccountGetDefault())), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
+			LAMBDA { auto &D=*d; return U.RecordDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.v(2, U.AccountGetName(U.AccountGetDefault())), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
 
 	//======== ot server ========
 
@@ -659,7 +656,7 @@ void cCmdParser::Init() {
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), stoi(D.V(3)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher cancel", {pAccount, pNym, pOutpaymentIndex}, {pOutpaymentIndex}, {},
-			LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();
 }
