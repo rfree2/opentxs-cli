@@ -22,14 +22,9 @@ find_library(basket opentxs-basket)
 find_library(cash opentxs-cash)
 find_library(client opentxs-client)
 
+file(GLOB_RECURSE SRC_FILES unittest-*.cpp)
 
-set(SRC
-  tests.cpp
-  unittest-voucher.cpp
-  unittest-cheque.cpp
-)
-
-add_executable(${NAME} ${SRC})
+add_executable(${NAME} ${SRC_FILES})
 
 target_link_libraries(${NAME}
   ${GTEST_BOTH_LIBRARIES}
