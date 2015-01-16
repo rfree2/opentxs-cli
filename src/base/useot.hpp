@@ -9,6 +9,7 @@ Template for new files, replace word "template" and later delete this line here.
 #include "lib_common2.hpp"
 //#include "OTStorage.hpp"
 
+
 namespace opentxs{
 class OT_ME;
 };
@@ -105,6 +106,9 @@ namespace nUse {
 		ID AccountGetId(const string & account); ///< Gets account ID both from name and ID with prefix
 		string AccountGetName(const ID & accountID);
 		bool AccountSetName(const string & accountID, const string & NewAccountName);
+
+		ID AccountGetNymID(const string & account);
+		string AccountGetNym(const string & account);
 
 		HINT vector<string> AccountGetAllNames();
 
@@ -240,8 +244,12 @@ namespace nUse {
 
 		//================= recordbox ==================
 
-		EXEC bool RecordBoxDisplay(const string &nym, const string &acc, const string & srv, bool dryrun);
+		VALID bool RecordCheckIndex(const string &nym, const string &acc, const string & srv);
 
+		EXEC bool RecordClear(const string &acc, const string & srv, bool all, bool dryrun);
+		EXEC bool RecordDisplay(const string &acc, const string & srv, bool dryrun);
+		EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
+		EXEC bool RecordShow(const string &acc, const string & srv, int32_t index, bool dryrun);
 
 		//================= server =================
 

@@ -298,6 +298,21 @@ string cUseOT::AccountGetName(const ID & accountID) {
 	return opentxs::OTAPI_Wrap::GetAccountWallet_Name(accountID);
 }
 
+string cUseOT::AccountGetNym(const string & account) {
+	if(!Init())
+		return "";
+
+	return NymGetName(AccountGetNymID(account));
+}
+
+ID cUseOT::AccountGetNymID(const string & account) {
+	if(!Init())
+		return "";
+
+	return opentxs::OTAPI_Wrap::GetAccountWallet_NymID(AccountGetId(account));
+}
+
+
 bool cUseOT::AccountRemove(const string & account, bool dryrun) { ///<
 	_fact("account rm " << account);
 	if(dryrun) return true;
@@ -1869,9 +1884,10 @@ bool cUseOT::NymSetDefault(const string & nymName, bool dryrun) {
 bool cUseOT::OutpaymentCheckIndex(const string & nymName, const int32_t & index) {
 	if(!Init())
 			return false;
-	if ( index >= 0 && index < opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(NymGetId(nymName)) ) {
+	if(index < 0) return false;
+	if(index < opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(NymGetId(nymName)) )
 		return true;
-	}
+
 	return false;
 }
 
@@ -1884,7 +1900,7 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 
 	auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
-	if(!count) {
+	if(count <= 0) {
 		cout << zkr::cc::fore::lightblue << "No outpayments for nym: " << nym << zkr::cc::console << endl;
 		return true;
 	}
@@ -1952,7 +1968,7 @@ bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
 	const ID nymID = NymGetId(nym);
 	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 
-	if (index <= 0) {
+	if (count <= 0) {
 		cout << zkr::cc::fore::lightred << "Empty outpayment box!" << zkr::cc::console << endl;
 		return false;
 	}
@@ -2398,18 +2414,53 @@ bool cUseOT::PurseDisplay(const string & serverName, const string & asset, const
 	return true;
 }
 
-bool cUseOT::RecordBoxDisplay(const string &nym, const string &acc, const string & srv, bool dryrun) {
-	_fact("recordbox ls " << nym << " " << acc << " " << srv);
+bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool dryrun) {
 	if (dryrun)
 		return true;
 	if (!Init())
 		return false;
 
+	const auto nym = AccountGetNym(acc);
 	const auto nymID = NymGetId(nym);
 	const auto accID = AccountGetId(acc);
 	const auto srvID = ServerGetId(srv);
 
 	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
+
+	cout << endl;
+	cout << "    Nym: " << nym << endl;
+	cout << "Account: " << acc << endl;
+	cout << " Server: " << srv << endl << endl;
+
+	if (recordBox.empty()) {
+		cout << zkr::cc::fore::yellow << "Recordbox is empty" << zkr::cc::console << endl;
+		return false;
+	}
+
+	bool cleared = opentxs::OTAPI_Wrap::ClearExpired(srvID, nymID, 0, true);
+
+
+	return cleared;
+}
+
+bool cUseOT::RecordDisplay(const string &acc, const string & srv, bool dryrun) {
+	_fact("recordbox ls " << acc << " " << srv);
+	if (dryrun) return true;
+	if (!Init()) return false;
+
+	const auto nym = AccountGetNym(acc);
+	const auto nymID = NymGetId(nym);
+	const auto accID = AccountGetId(acc);
+	const auto srvID = ServerGetId(srv);
+
+	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
+
+	_dbg3(recordBox);
+	cout << endl;
+	cout << "    Nym: " << nym << endl;
+	cout << "Account: " << acc << endl;
+	cout << " Server: " << srv << endl << endl;
+
 
 	if(recordBox.empty()) {
 		cout << zkr::cc::fore::yellow << "Recordbox is empty" << zkr::cc::console << endl;
@@ -2420,6 +2471,7 @@ bool cUseOT::RecordBoxDisplay(const string &nym, const string &acc, const string
 
 	_dbg2(count);
 
+	cout << "  RECORDBOX" << endl;
 	bprinter::TablePrinter table(&std::cout);
 	table.SetContentColor(zkr::cc::console);
 
