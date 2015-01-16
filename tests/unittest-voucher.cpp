@@ -5,6 +5,7 @@
 
 #include "../src/base/useot.hpp"
 
+#include "../src/base/cmd.hpp"
 using namespace nOT::nUtils;
 
 class cUseOtVoucherTest: public testing::Test {
@@ -37,22 +38,17 @@ protected:
 	}
 };
 
-TEST_F(cUseOtVoucherTest, OutPayments) {
-	EXPECT_FALSE(useOt->OutpaymentShow(nym1, 200, 0));
-	EXPECT_FALSE(useOt->OutpaymentShow(nym1, -1, 0));
-}
-
 TEST_F(cUseOtVoucherTest, VoucherCreate) {
 	EXPECT_FALSE(useOt->VoucherWithdraw("bitcoins", toNym, -20, "some memo", 0));
 
 	auto accID = useOt->AccountGetId(fromAcc);
 	auto ballance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID);
 
-	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, toNym, ballance + 1, "", false));
+	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, toNym, ballance + 1, "memo", false));
 
-	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "", false));
+	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "memo", false));
 	ASSERT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
-	EXPECT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
+	ASSERT_EQ(ballance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accID));
 }
 
 TEST_F(cUseOtVoucherTest, VoucherCancel) {
@@ -75,7 +71,6 @@ TEST_F(cUseOtVoucherTest, VoucherFullOperation) {
 
 	// send
 	ASSERT_TRUE(useOt->PaymentSend(fromNym, toNym, 0, false));
-	//ASSERT_TRUE(useOt->VoucherSend(fromNym, toNym, 0, false));
 
 	// refresh
 	useOt->NymRefresh(toNym, true, false);
@@ -92,3 +87,10 @@ TEST_F(cUseOtVoucherTest, VoucherFullOperation) {
 	EXPECT_EQ(toNymBalance + amount2, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 }
 
+TEST_F(cUseOtVoucherTest, cmd) {
+	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
+	parser->Init();
+	auto tmp = parser->StartProcessing("ot account ls2", useOt);
+
+	tmp.UseExecute();
+}

@@ -36,6 +36,8 @@ protected:
 	}
 };
 
+
+
 TEST_F(cUseOtChequeTest, CreateCheque) {
 	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, server, "test cheque", false);
 	EXPECT_TRUE(result);
@@ -87,4 +89,31 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 
 }
 
+TEST_F(cUseOtChequeTest, BasketNew) {
+
+	useOt->BasketNew();
+}
+
+TEST_F(cUseOtChequeTest, BasketDisplay) {
+	using namespace opentxs;
+	auto tmp = useOt->Init();
+
+	auto assetCount = OTAPI_Wrap::GetAssetTypeCount();
+	_dbg2("asset count: " << assetCount);
+
+	int32_t index = 0;
+	bool ok = false;
+
+	for (int i = 0; i < assetCount; ++i) {
+		const auto assetID = OTAPI_Wrap::GetAssetType_ID(i);
+		const auto asset = useOt->AssetGetName(assetID);
+
+		_dbg2("asset: " << asset);
+
+		auto isb = OTAPI_Wrap::IsBasketCurrency(assetID);
+		_dbg2(isb);
+		ok = ok || isb;
+	}
+	EXPECT_TRUE(ok);
+}
 
