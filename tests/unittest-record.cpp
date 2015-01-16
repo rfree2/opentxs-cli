@@ -10,14 +10,41 @@ using namespace nOT::nUtils;
 class cUseOtRecordTest: public testing::Test {                                                                                                                                                                                                                                  
 protected:                                                                                                                                                                                                                                                                      
         std::shared_ptr<nOT::nUse::cUseOT> useOt;                                                                                                                                                                                                                               
+        string preCmd;
+        string toNym;
+        string toAcc;
+        string server;
+
+
         virtual void SetUp() {                                                                                                                                                                                     
                 useOt = std::make_shared<nOT::nUse::cUseOT>("test-record");                                                                                                                                        
-                                                                                                                                                                                                                                              
+                preCmd = "ot record ";
+                toNym = "Trader Bob";
+        		toAcc = "Bob's Tokens";
+        		server = "Transactions.com";
+
                 cout << "record test" << endl;                                                                                                                                                                                                
+                useOt->Init();
         }                                                                                                                                                                                                                                     
                                                                                                                                                                                                                                               
         virtual void TearDown() {                                                                                                                                                                                                             
                 cout << "tear down" << endl;                                                                                                                                                                                                  
         }
 };
+
+TEST_F(cUseOtRecordTest, Clear) {
+	EXPECT_TRUE(useOt->RecordClear(toAcc, server, false, false));
+
+	EXPECT_FALSE(useOt->RecordClear("silver issuer", server, false, false));
+
+//	auto acc = useOt->Nym
+
+	EXPECT_TRUE(useOt->RecordDisplay(toAcc, server, false));
+}
+
+TEST_F(cUseOtRecordTest, NymAcc) {
+	useOt->Init();
+	EXPECT_EQ(toNym, useOt->AccountGetNym(toAcc));
+
+}
 
