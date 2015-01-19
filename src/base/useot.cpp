@@ -83,10 +83,6 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	const auto validTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
 	const auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
 
-	const auto valid = opentxs::OTAPI_Wrap::Message_IsTransactionCanceled(serverID, senderNymID, senderAccID, instrument);
-
-	_mark(valid);
-
 	auto col = zkr::cc::fore::cyan;
 	auto col2 = zkr::cc::fore::blue;
 	auto ncol = zkr::cc::console;
@@ -1938,8 +1934,8 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 	return true;
 }
 
-bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool dryrun) {
-	_fact("outpayment remove " << index << " " << nym);
+bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool all, bool dryrun) {
+	_fact("outpayment remove " << index << " " << nym << " all=" << all);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -1951,7 +1947,14 @@ bool cUseOT::OutpaymentRemove(const string & nym, const int32_t & index, bool dr
 		return false;
 	}
 
-	auto ok = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, index);
+	bool ok = true;
+
+	if(all) {
+		for(int32_t i = count - 1; i >= 0; --i)
+			ok = ok && opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, i);
+	}
+	else
+		ok = opentxs::OTAPI_Wrap::Nym_RemoveOutpaymentsByIndex(nymID, index);
 
 	if(ok) cout << zkr::cc::fore::lightgreen << "Operation successful" << zkr::cc::console << endl;
 
@@ -2437,8 +2440,10 @@ bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool d
 		return false;
 	}
 
-	bool cleared = opentxs::OTAPI_Wrap::ClearExpired(srvID, nymID, 0, true);
+	bool cleared;
 
+	(all) ? cleared = opentxs::OTAPI_Wrap::ClearRecord(srvID, nymID, accID, 0, true) :
+			cleared = opentxs::OTAPI_Wrap::ClearExpired(srvID, nymID, 0, true);
 
 	return cleared;
 }

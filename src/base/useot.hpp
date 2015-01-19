@@ -227,7 +227,7 @@ namespace nUse {
 
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
 		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
-		EXEC bool OutpaymentRemove(const string & nym, const int32_t & index, bool dryrun);
+		EXEC bool OutpaymentRemove(const string & nym, const int32_t & index, bool all, bool dryrun);
 
 		//================= payment ==================
 
@@ -244,7 +244,7 @@ namespace nUse {
 
 		//================= recordbox ==================
 
-		VALID bool RecordCheckIndex(const string &nym, const string &acc, const string & srv);
+		VALID bool RecordCheckIndex(const string &acc, const string & srv);
 
 		EXEC bool RecordClear(const string &acc, const string & srv, bool all, bool dryrun);
 		EXEC bool RecordDisplay(const string &acc, const string & srv, bool dryrun);
