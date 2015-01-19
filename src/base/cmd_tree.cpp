@@ -583,8 +583,8 @@ void cCmdParser::Init() {
 	AddFormat("outpayment show", {}, {pNym, pOutpaymentIndex}, NullMap,
 			LAMBDA { auto &D=*d; return U.OutpaymentShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
 
-	AddFormat("outpayment rm", {pNym, pOutpaymentIndex}, {}, NullMap,
-				LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.V(2)) ,  D.has("--dryrun") ); } );
+	AddFormat("outpayment rm", {pNym}, {pOutpaymentIndex}, { {"--all", pBool} },
+				LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
 
 	//======== ot payment ========
 
@@ -599,6 +599,9 @@ void cCmdParser::Init() {
 			
 	AddFormat("payment discard-all", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentDiscardAll( D.has("--dryrun") ); } );
+
+	AddFormat("payment send", {pNymFrom, pNymTo, pInboxIndex}, {}, NullMap,
+			LAMBDA { auto &D=*d; return U.PaymentSend( D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 		
 	//======== ot purse ========
 
