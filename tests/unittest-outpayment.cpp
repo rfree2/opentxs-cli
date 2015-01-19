@@ -58,7 +58,7 @@ TEST_F(cUseOtOutpaymentTest, removeAllCmd) {
 	const string cmdOk = preCmd + "rm \"" + nym1 + "\" --all --dryrun";
 	parser->StartProcessing(cmdOk, useOt).UseExecute() ;
 }
-
+/*
 TEST_F(cUseOtOutpaymentTest, removeAll) {
 
 	EXPECT_TRUE(useOt->OutpaymentRemove(nym1, 0, true, false));
@@ -66,5 +66,5 @@ TEST_F(cUseOtOutpaymentTest, removeAll) {
 
 	useOt->OutpaymentDisplay(nym1, false);
 
-}
+}*/
 

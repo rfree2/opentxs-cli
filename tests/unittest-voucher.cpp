@@ -49,11 +49,9 @@ TEST_F(cUseOtVoucherTest, VoucherCreate) {
 
 	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, toNym, balance + 1, "memo", false));
 
+	sleep(3);
 	EXPECT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "memo", false));
 	EXPECT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
-
-	useOt->NymRefresh(fromNym, false, false);
-	useOt->AccountRefresh(fromAcc, false, false);
 
 	sleep(10);
 	EXPECT_EQ(balance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID));
@@ -95,10 +93,8 @@ TEST_F(cUseOtVoucherTest, Accept) {
 	const auto toNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc));
 
 	// accept
+	sleep(3);
 	EXPECT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
-	sleep(5);
-	useOt->NymRefresh(toNym, true, false);
-	useOt->AccountRefresh(toAcc, true, false);
 
 	sleep(10);
 	EXPECT_EQ(toNymBalance + amount2, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));

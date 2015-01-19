@@ -62,9 +62,9 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
-	sleep(5);
-	useOt->NymRefresh(toNym, true, false);
-	useOt->AccountRefresh(toAcc, true, false);
+//	sleep(5);
+//	useOt->NymRefresh(toNym, true, false);
+//	useOt->AccountRefresh(toAcc, true, false);
 
 	sleep(5);
 	EXPECT_EQ(toNymBalance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
