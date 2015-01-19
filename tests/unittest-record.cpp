@@ -32,15 +32,21 @@ protected:
         }
 };
 
-TEST_F(cUseOtRecordTest, Clear) {
+TEST_F(cUseOtRecordTest, ClearExpired) {
 	EXPECT_TRUE(useOt->RecordClear(toAcc, server, false, false));
 
 	EXPECT_FALSE(useOt->RecordClear("silver issuer", server, false, false));
 
-//	auto acc = useOt->Nym
 
 	EXPECT_TRUE(useOt->RecordDisplay(toAcc, server, false));
 }
+
+TEST_F(cUseOtRecordTest, ClearAll) {
+	EXPECT_TRUE(useOt->RecordClear(toAcc, server, true, false));
+	EXPECT_FALSE(useOt->RecordClear(toAcc, server, true, false));
+
+}
+
 
 TEST_F(cUseOtRecordTest, NymAcc) {
 	useOt->Init();
