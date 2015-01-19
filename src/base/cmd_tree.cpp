@@ -614,7 +614,11 @@ void cCmdParser::Init() {
 	//======== ot recordbox ========
 
 	AddFormat("record ls", {}, {pAccount, pNym, pServer}, NullMap,
-			LAMBDA { auto &D=*d; return U.RecordDisplay( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
+			LAMBDA { auto &D=*d; return U.RecordDisplay( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--dryrun") ); } );
+
+	AddFormat("record clear", {}, {pAccount}, { {"--all", pBool} },
+			LAMBDA { auto &D=*d; return U.RecordClear( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--all"), D.has("--dryrun") ); } );
+
 
 	//======== ot server ========
 
