@@ -244,11 +244,9 @@ namespace nUse {
 
 		//================= recordbox ==================
 
-		VALID bool RecordCheckIndex(const string &acc, const string & srv);
-
-		EXEC bool RecordClear(const string &acc, const string & srv, bool all, bool dryrun);
-		EXEC bool RecordDisplay(const string &acc, const string & srv, bool dryrun);
-		EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
+		EXEC bool RecordClear(const string &acc, bool all, bool dryrun);
+		EXEC bool RecordDisplay(const string &acc, bool dryrun);
+//		EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
 		EXEC bool RecordShow(const string &acc, const string & srv, int32_t index, bool dryrun);
 
 		//================= server =================

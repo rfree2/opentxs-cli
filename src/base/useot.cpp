@@ -1288,7 +1288,7 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t am
 
 	PrintInstrumentInfo(cheque);
 
-	mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
+	mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, true);
 
 	return true;
 }
@@ -1994,13 +1994,15 @@ bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
 }
 
 bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
-	//case ("CHEQUE")
-	//case ("VOUCHER")
-	//case ("INVOICE")
-	//case ("PURSE")
-	// TODO make it work with longer version: asset, server, nym
-	// TODO accept all payments
-	// TODO accept various instruments types
+	/*
+		 case ("CHEQUE")
+		 case ("VOUCHER")
+		 case ("INVOICE")
+		 case ("PURSE")
+		 TODO make it work with longer version: asset, server, nym
+		 TODO accept all payments
+		 TODO accept various instruments types
+	 */
 	_fact("Accept incoming payment nr " << index << " for account " << account);
 	if (dryrun)
 		return false;
@@ -2020,14 +2022,13 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 
 	_dbg1("nym: " << NymGetName(accountNymID) << ", acc: " << account);
 
-
 	/*
-	 payment instrument and myacct must both have same asset type
-	 int32_t nAcceptedPurses = accept_from_paymentbox(strMyAcctID, strIndices, "PURSE");
-	 Voucher is already interpreted as a form of cheque, so this is redundant.
+		 payment instrument and myacct must both have same asset type
+		 int32_t nAcceptedPurses = accept_from_paymentbox(strMyAcctID, strIndices, "PURSE");
+		 Voucher is already interpreted as a form of cheque, so this is redundant.
 
-	 int32_t nAcceptedVouchers = accept_from_paymentbox(strMyAcctID, strIndices, "VOUCHER")
-	 int32_t nAcceptedCheques = accept_from_paymentbox(strMyAcctID, strIndices, "CHEQUE");
+		 int32_t nAcceptedVouchers = accept_from_paymentbox(strMyAcctID, strIndices, "VOUCHER")
+		 int32_t nAcceptedCheques = accept_from_paymentbox(strMyAcctID, strIndices, "CHEQUE");
 	 */
 
 	_dbg3("Loading payment inbox");
@@ -2043,31 +2044,34 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if (nCount < 0)
 		return handleError("Unable to retrieve size of payments inbox ledger. (Failure.)\n");
 
-	if (index == -1) index = nCount - 1;
+	if (index == -1)
+		index = nCount - 1;
 	_info("index = " << index << "nCount = " << nCount);
-	//int32_t nIndicesCount = VerifyStringVal(strIndices) ? opentxs::OTAPI_Wrap::NumList_Count(strIndices) : 0;
+/*
+	int32_t nIndicesCount = VerifyStringVal(strIndices) ? opentxs::OTAPI_Wrap::NumList_Count(strIndices) : 0;
 
-	// Either we loop through all the instruments and accept them all, or
-	// we loop through all the instruments and accept the specified indices.
-	//
-	// (But either way, we loop through all the instruments.)
-	//
-//	for (int32_t nIndex = (nCount - 1); nIndex >= 0; --nIndex) { // Loop from back to front,NymG so if any are removed, the indices remain accurate subsequently.
-//		 bool bContinue = false;
-//
-//		 // - If indices are specified, but the current index is not on
-//		 //   that list, then continue...
-//		 //
-//		 // - If NO indices are specified, accept all the ones matching MyAcct's asset type.
-//		 //
-//		 if ((nIndicesCount > 0) && !opentxs::OTAPI_Wrap::NumList_VerifyQuery(strIndices, ToStr(nIndex))) {
-//				 //          continue  // apparently not supported by the language.
-//				 bContinue = true;
-//		 }
-//		 else if (!bContinue) {
-//				 int32_t nHandled = handle_payment_index(strMyAcctID, nIndex, strPaymentType, paymentInbox);
-//		 }
-//	}
+	 Either we loop through all the instruments and accept them all, or
+	 we loop through all the instruments and accept the specified indices.
+
+	 (But either way, we loop through all the instruments.)
+
+	for (int32_t nIndex = (nCount - 1); nIndex >= 0; --nIndex) { // Loop from back to front,NymG so if any are removed, the indices remain accurate subsequently.
+		 bool bContinue = false;
+
+		 // - If indices are specified, but the current index is not on
+		 //   that list, then continue...
+		 //
+		 // - If NO indices are specified, accept all the ones matching MyAcct's asset type.
+		 //
+		 if ((nIndicesCount > 0) && !opentxs::OTAPI_Wrap::NumList_VerifyQuery(strIndices, ToStr(nIndex))) {
+				 //          continue  // apparently not supported by the language.
+				 bContinue = true;
+		 }
+		 else if (!bContinue) {
+				 int32_t nHandled = handle_payment_index(strMyAcctID, nIndex, strPaymentType, paymentInbox);
+		 }
+	}
+*/
 	_dbg3("Get payment instrument");
 
 	// strInbox is optional and avoids having to load it multiple times. This function will just load it itself, if it has to.
@@ -2076,13 +2080,11 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if (instrument.empty())
 		return handleError("Unable to get payment instrument based on index: " + ToStr(index));
 
-
 	_dbg3("Get type of instrument");
 	string strType = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
 
 	if (strType.empty())
 		return handleError("Unable to determine instrument's type. Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE");
-
 
 	// If there's a payment type,
 	// and it's not "ANY", and it's the wrong type,
@@ -2111,7 +2113,6 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	// sure the Nym matches.
 
 	string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
-
 
 	_dbg1("recNym: " << NymGetName(recipientNymID));
 	/*
@@ -2168,18 +2169,20 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if ("CHEQUE" == strType || "VOUCHER" == strType) {
 		_dbg3("payment type: " << strType);
 
-
 		_dbg2("srv: " << ServerGetName(accountServerID));
 		_dbg2("nym: " << NymGetName(accountNymID));
 		_dbg2("acc: " << AccountGetName(accountID));
 
 		auto deposit = opentxs::OTAPI_Wrap::depositCheque(accountServerID, accountNymID, accountID, instrument);
 		cout << deposit << endl;
-		if(deposit < 0) return false;
-		return true;
+		if (deposit < 0)
+			return false;
+
+		auto ok = mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true);
+		return ok;
 	}
 
-	if("INVOICE" == strType) { // TODO: implement this
+	if ("INVOICE" == strType) { // TODO: implement this
 		return handleError("Not implemented yet");
 
 	}
@@ -2237,6 +2240,8 @@ bool cUseOT::PaymentShow(const string & nym, const string & server, bool dryrun)
 				 return false;
 			}
 			string transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(serverID, nymID, nymID, paymentInbox, index);
+
+
 			int64_t transNumber = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(serverID, nymID, nymID, paymentInbox, index);
 
 			string transactionNumber = ToStr(transNumber);
@@ -2417,7 +2422,7 @@ bool cUseOT::PurseDisplay(const string & serverName, const string & asset, const
 	return true;
 }
 
-bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool dryrun) {
+bool cUseOT::RecordClear(const string &acc, bool all, bool dryrun) {
 	if (dryrun)
 		return true;
 	if (!Init())
@@ -2426,7 +2431,8 @@ bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool d
 	const auto nym = AccountGetNym(acc);
 	const auto nymID = NymGetId(nym);
 	const auto accID = AccountGetId(acc);
-	const auto srvID = ServerGetId(srv);
+	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	const auto srv = ServerGetName(srvID);
 
 	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
 
@@ -2434,6 +2440,7 @@ bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool d
 	cout << "    Nym: " << nym << endl;
 	cout << "Account: " << acc << endl;
 	cout << " Server: " << srv << endl << endl;
+
 
 	if (recordBox.empty()) {
 		cout << zkr::cc::fore::yellow << "Recordbox is empty" << zkr::cc::console << endl;
@@ -2448,15 +2455,16 @@ bool cUseOT::RecordClear(const string &acc, const string & srv, bool all, bool d
 	return cleared;
 }
 
-bool cUseOT::RecordDisplay(const string &acc, const string & srv, bool dryrun) {
-	_fact("recordbox ls " << acc << " " << srv);
+bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
+	_fact("recordbox ls " << acc);
 	if (dryrun) return true;
 	if (!Init()) return false;
 
 	const auto nym = AccountGetNym(acc);
 	const auto nymID = NymGetId(nym);
 	const auto accID = AccountGetId(acc);
-	const auto srvID = ServerGetId(srv);
+	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	const auto srv = ServerGetName(srvID);
 
 	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
 
@@ -2812,7 +2820,7 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 		return err(ToStr(balance), "Not enough money", mess);
 	}
 
-	if (memo == "")
+	if (memo.empty())
 		memo = "(no memo)";
 	_info("memo: " << memo);
 
@@ -2825,23 +2833,29 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 		return err(ToStr(reply), "withdraw voucher (made easy) failed!", "Error from server!");
 
 	auto ledger = opentxs::OTAPI_Wrap::Message_GetLedger(response);
-	if (ledger == "")
+	if (ledger.empty())
 		return err(ledger, "Some error with ledger", "Server error");
 
 	auto transactionReply = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, fromNymID, fromAccID, ledger, 0);
 	if (transactionReply == "")
 		return err(transactionReply, "some error with transaction reply", "Server error");
 
+	_mark(opentxs::OTAPI_Wrap::Transaction_GetSuccess(srvID, fromNymID, fromAccID, transactionReply));
+
 	auto voucher = opentxs::OTAPI_Wrap::Transaction_GetVoucher(srvID, fromNymID, fromAccID, transactionReply);
-	if (voucher == "")
+	if (voucher.empty())
 		return err(voucher, "Error with getting voucher", "Server error");
 
 	cout << voucher << endl;
-	mMadeEasy->send_user_payment(srvID, fromNymID, fromNymID, voucher);
+
+	_mark(opentxs::OTAPI_Wrap::Transaction_GetSuccess(srvID, fromNymID, fromAccID, voucher));
+
+	auto send = mMadeEasy->send_user_payment(srvID, fromNymID, fromNymID, voucher);
+	_dbg1(send);
 	// sending voucher to yourself - saving voucher in my outpayments
 	// after sending this voucher, this copy will be removed automatically
 
-	bool srvAcc = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, false);
+	bool srvAcc = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, true);
 	_dbg3("srvAcc retrv: " << srvAcc);
 
 	if (!srvAcc)
