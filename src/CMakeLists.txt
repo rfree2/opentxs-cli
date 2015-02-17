@@ -29,6 +29,10 @@ else()
   find_library(basket opentxs-basket)
   find_library(cash opentxs-cash)
   find_library(client opentxs-client)
+	  	
+
+    include_directories(${LOCAL_DIR}/include) 
+
 endif(MSVC)
 
 add_subdirectory(base)

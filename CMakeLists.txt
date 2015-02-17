@@ -29,12 +29,22 @@ option(BUILD_TESTS         "Build the unit tests." ON)
 option(KEYRING_FLATFILE    "Build with Flatfile Keyring" OFF)
 option(RPM                 "Build a RPM" OFF)
 option(DEB                 "Build a DEB" OFF)
-
+option(LOCAL		   "Search libraries and install in $HOME/.local" ON)
 option(WITH_TERMCOLORS     "Build with support for unix terminal console colors VT100" ON)
 option(LOCAL_EDITLINE "Use local Editline library ($HOME/.local)" ON) # Always ON because of bugs in Debian libedit package!
 
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/") # Add folder with cmake modules
+
+if(LOCAL) 
+  set(LOCAL_DIR $ENV{HOME}/.local)
+  message("local directory:  ${LOCAL_DIR}")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HOME}/.local/cmake/Modules/")
+  set(opentxsIncludePath  ${LOCAL_DIR}/share/cmake/Modules)
+  	
+  set(CMAKE_INSTALL_PREFIX ${LOCAL_DIR}) 
+  set(CMAKE_PREFIX_PATH ${LOCAL_DIR}) 
+	
+endif()
 
 if(BUILD_VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE true)
@@ -54,6 +64,7 @@ message(STATUS "Testing:                  ${BUILD_TESTS}")
 message(STATUS "Flatfile keyring:         ${KEYRING_FLATFILE}")
 message(STATUS "Build RPM:                ${RPM}")
 message(STATUS "Build DEB:                ${DEB}")
+message(STATUS "Local:                    ${LOCAL}")
 
 message(STATUS "Termcolors:               ${WITH_TERMCOLORS}")
 
