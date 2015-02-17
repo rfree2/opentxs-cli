@@ -3,8 +3,6 @@
 
 #include "useot.hpp"
 
-#include <OTPaths.hpp>
-#include <OTStorage.hpp>
 #include "lib_common3.hpp"
 
 #include "bprinter/table_printer.h"

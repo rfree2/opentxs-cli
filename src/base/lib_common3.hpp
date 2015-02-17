@@ -9,6 +9,9 @@
 #include <opentxs/client/OTAPI.hpp>
 //#include <opentxs/client/OTAPI_Exec.hpp>
 #include <opentxs/client/OT_ME.hpp>
+#include <opentxs/core/util/OTPaths.hpp>
+#include <opentxs/core/OTStorage.hpp>
+
 
 #define INJECT_OT_COMMON_USING_NAMESPACE_COMMON_3 \
 	INJECT_OT_COMMON_USING_NAMESPACE_COMMON_2
