@@ -71,11 +71,11 @@ cUseOT::~cUseOT() {
 
 bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	const auto txn = opentxs::OTAPI_Wrap::Instrmnt_GetTransNum(instrument);
-	const auto assetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
-	const auto serverID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(instrument);
+	const auto assetID = opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instrument);
+	const auto serverID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(instrument);
 	const auto senderAccID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderAcctID(instrument);
-	const auto senderNymID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderUserID(instrument);
-	const auto recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
+	const auto senderNymID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderNymID(instrument);
+	const auto recNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument);
 	const auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instrument);
 	const auto memo = opentxs::OTAPI_Wrap::Instrmnt_GetMemo(instrument);
 	const auto validTo = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(instrument);
@@ -112,7 +112,7 @@ void cUseOT::LoadDefaults() {
 		_dbg1("Cannot open" + mDefaultIDsFile + " file, setting IDs with ID 0 as default"); //TODO check if there is any nym in wallet
 		ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(0);
         ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(0);
-        ID userID = opentxs::OTAPI_Wrap::GetNym_ID(0);
+        ID NymID = opentxs::OTAPI_Wrap::GetNym_ID(0);
         ID serverID = opentxs::OTAPI_Wrap::GetServer_ID(0);
 
 		if ( accountID.empty() )
@@ -121,9 +121,9 @@ void cUseOT::LoadDefaults() {
 		if ( assetID.empty() )
 			_warn("There is no assets in the wallet, can't set default asset");
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Asset, assetID));
-		if ( userID.empty() )
+		if ( NymID.empty() )
 			_warn("There is no nyms in the wallet, can't set default nym");
-		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, userID));
+		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, NymID));
 		if ( serverID.empty() )
 			_warn("There is no servers in the wallet, can't set default server");
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Server, serverID));
@@ -236,7 +236,6 @@ bool cUseOT::CheckIfExists(const nUtils::eSubjectType type, const string & subje
 		_erro("Subject identifier is empty");
 		return false;
 	}
-
 	ID subjectID = (this->*cUseOT::subjectGetIDFunc.at(type))(subject);
 
 	if (!subjectID.empty()) {
@@ -343,7 +342,7 @@ bool cUseOT::AccountRefresh(const string & accountName, bool all, bool dryrun) {
 
 		for (int32_t accountIndex = 0; accountIndex < accountCount; ++accountIndex) {
 			ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(accountIndex);
-			ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+			ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 			ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 			if ( mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, false) ) { // forcing download
 				_info("Account " + AccountGetName(accountID) + "(" + accountID +  ")" + " retrieval success from server " + ServerGetName(accountServerID) + "(" + accountServerID +  ")");
@@ -365,7 +364,7 @@ bool cUseOT::AccountRefresh(const string & accountName, bool all, bool dryrun) {
 	}
 	else {
 		ID accountID = AccountGetId(accountName);
-		ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+		ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 		ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 		if ( mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true) ) { // forcing download
 			_info("Account " + accountName + "(" + accountID +  ")" + " retrieval success from server " + ServerGetName(accountServerID) + "(" + accountServerID +  ")");
@@ -472,7 +471,7 @@ bool cUseOT::AccountDisplayAll(bool dryrun) {
 	for(int32_t i = 0 ; i < opentxs::OTAPI_Wrap::GetAccountCount();i++) {
 		ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(i);
 		int64_t balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accountID);
-		ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
+		ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
 		string accountType = opentxs::OTAPI_Wrap::GetAccountWallet_Type(accountID);
 		if(accountType=="issuer") tp.SetContentColor(zkr::cc::fore::lightred);
 		else if (accountType=="simple") tp.SetContentColor(zkr::cc::fore::lightgreen);
@@ -503,7 +502,7 @@ bool cUseOT::AccountTransfer(const string & accountFrom, const string & accountT
 
 	ID accountFromID = AccountGetId(accountFrom);
 	ID accountToID = AccountGetId(accountTo);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountFromID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountFromID);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountFromID);
 
 	string response = mMadeEasy->send_transfer(accountServerID, accountNymID, accountFromID, accountToID, amount, note);
@@ -522,7 +521,7 @@ bool cUseOT::AccountInDisplay(const string & account, bool dryrun) {
 	if(!Init()) return false;
 
 	ID accountID = AccountGetId(account);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 
 	string inbox = opentxs::OTAPI_Wrap::LoadInbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
@@ -552,9 +551,9 @@ bool cUseOT::AccountInDisplay(const string & account, bool dryrun) {
 			int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(accountServerID, accountNymID, accountID, transaction);
 			int64_t amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(accountServerID, accountNymID, accountID, transaction);
 			string transactionType = opentxs::OTAPI_Wrap::Transaction_GetType(accountServerID, accountNymID, accountID, transaction);
-			string senderNymID = opentxs::OTAPI_Wrap::Transaction_GetSenderUserID(accountServerID, accountNymID, accountID, transaction);
+			string senderNymID = opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(accountServerID, accountNymID, accountID, transaction);
 			string senderAcctID = opentxs::OTAPI_Wrap::Transaction_GetSenderAcctID(accountServerID, accountNymID, accountID, transaction);
-			string recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientUserID(accountServerID, accountNymID, accountID, transaction);
+			string recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(accountServerID, accountNymID, accountID, transaction);
 			string recipientAcctID = opentxs::OTAPI_Wrap::Transaction_GetRecipientAcctID(accountServerID, accountNymID, accountID, transaction);
 
 			//TODO Check if Transaction information needs to be verified!!!
@@ -583,7 +582,7 @@ bool cUseOT::AccountInAccept(const string & account, const int index, bool all, 
 	if (all) {
 		int32_t transactionsAccepted = 0;
 
-		ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+		ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 		ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 
 		string inbox = opentxs::OTAPI_Wrap::LoadInbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
@@ -652,7 +651,7 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 	if(!Init()) return false;
 
 	ID accountID = AccountGetId(account);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
 
 	string outbox = opentxs::OTAPI_Wrap::LoadOutbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
@@ -681,7 +680,7 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 			int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(accountServerID, accountNymID, accountID, transaction);
 			int64_t amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(accountServerID, accountNymID, accountID, transaction);
 			string transactionType = opentxs::OTAPI_Wrap::Transaction_GetType(accountServerID, accountNymID, accountID, transaction);
-			string recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientUserID(accountServerID, accountNymID, accountID, transaction); //FIXME transaction recipientID=NULL
+			string recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(accountServerID, accountNymID, accountID, transaction); //FIXME transaction recipientID=NULL
 			string recipientAcctID = opentxs::OTAPI_Wrap::Transaction_GetRecipientAcctID(accountServerID, accountNymID, accountID, transaction);
 
 			//TODO Check if Transaction information needs to be verified!!!
@@ -881,8 +880,8 @@ string cUseOT::CashExport(const ID & nymSenderID, const ID & nymRecipientID, con
 	_fact("cash export from " << nymSenderID << " to " << nymRecipientID << " account " << account << " indices: " << indices << "passwordProtected: " << passwordProtected);
 
 	ID accountID = AccountGetId(account);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	string contract = mMadeEasy->load_or_retrieve_contract(accountServerID, nymSenderID, accountAssetID);
 
@@ -915,7 +914,7 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 		return false;
 	}
 
-	string serverID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(instrument);
+	string serverID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(instrument);
 
 	if (serverID.empty()) {
 			opentxs::OTAPI_Wrap::Output(0, "\n\nFailure: Unable to determine server ID from purse.\n");
@@ -953,14 +952,14 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 
 	// Even if the Purse is owned by a Nym, that Nym's ID may not necessarily
 	// be present on the purse itself (it's optional to list it there.)
-	// opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID tells us WHAT the recipient User ID
+	// opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID tells us WHAT the recipient User ID
 	// is, IF it's on the purse. (But does NOT tell us WHETHER there is a
 	// recipient. The above function is for that.)
 	//
 	ID purseOwner = "";
 
 	if (!hasPassword) {
-			purseOwner = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument); // TRY and get the Nym ID (it may have been left blank.)
+			purseOwner = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument); // TRY and get the Nym ID (it may have been left blank.)
 	}
 
 	// Whether the purse was password-protected (and thus had no Nym ID)
@@ -986,7 +985,7 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 			purseOwner = nymID;
 	}
 
-	string assetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
+	string assetID = opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instrument);
 
 	if (assetID.empty()) {
 			opentxs::OTAPI_Wrap::Output(0, "\n\nFailure: Unable to determine asset type ID from purse.\n");
@@ -1007,7 +1006,7 @@ bool cUseOT::CashDeposit(const string & accountID, const string & nymFromID, con
 	if(!Init()) return false;
 
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
 
 	string purseValue = instrument;
 
@@ -1041,8 +1040,8 @@ bool cUseOT::CashDepositWrap(const string & account, bool dryrun) {
 	ID accountID = AccountGetId(account);
 
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	_dbg3("Open text editor for user to paste payment instrument");
 	nUtils::cEnvUtils envUtils;
@@ -1058,8 +1057,8 @@ bool cUseOT::CashSend(const string & nymSender, const string & nymRecipient, con
 
 	ID accountID = AccountGetId(account);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	ID nymSenderID = NymGetId(nymSender);
 	ID nymRecipientID = NymGetId(nymRecipient);
@@ -1109,8 +1108,8 @@ bool cUseOT::CashShow(const string & account, bool dryrun) { // TODO make it wor
 
 	ID accountID = AccountGetId(account);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
+	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	int alignCenter = 15;
 
@@ -1215,7 +1214,7 @@ bool cUseOT::CashWithdraw(const string & account, int64_t amount, bool dryrun) {
 
 	ID accountID = AccountGetId(account);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
+	ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
 
 	// Make sure the appropriate asset contract is available.
 	string assetContract = opentxs::OTAPI_Wrap::LoadAssetContract(accountAssetID);
@@ -1305,7 +1304,7 @@ bool cUseOT::ChequeDiscard(const string & acc, const string & nym, const int32_t
 
 	const auto cheque = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
 
-	const auto srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(cheque);
+	const auto srvID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(cheque);
 
 	auto discard = opentxs::OTAPI_Wrap::DiscardCheque(srvID, nymID, accID, cheque);
 	_info(discard);
@@ -1444,7 +1443,7 @@ bool cUseOT::MsgDisplayForNymBox(eBoxType boxType, const string & nymName, int m
 		}
 
 		const string& data_from = NymGetName(opentxs::OTAPI_Wrap::GetNym_MailSenderIDByIndex(nymID, msg_index));
-		const string& data_server = ServerGetName(opentxs::OTAPI_Wrap::GetNym_MailServerIDByIndex(nymID, msg_index));
+		const string& data_server = ServerGetName(opentxs::OTAPI_Wrap::GetNym_MailNotaryIDByIndex(nymID, msg_index));
 
 		cout << col1 << "          To: " << col2 << nymName << endl;
 		cout << col1 << "        From: " << col2 << data_from << endl;
@@ -1460,7 +1459,7 @@ bool cUseOT::MsgDisplayForNymBox(eBoxType boxType, const string & nymName, int m
 		}
 
 		const string& data_to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutmailRecipientIDByIndex(nymID, msg_index));
-		const string& data_server = ServerGetName(opentxs::OTAPI_Wrap::GetNym_OutmailServerIDByIndex(nymID, msg_index));
+		const string& data_server = ServerGetName(opentxs::OTAPI_Wrap::GetNym_OutmailNotaryIDByIndex(nymID, msg_index));
 
 		// printing
 		cout << col1 << "          To: " << col2 << nymName << endl;
@@ -1570,7 +1569,7 @@ bool cUseOT::NymCheck(const string & nymName, bool dryrun) { // wip
 
 	ID nymID = NymGetId(nymName);
 
-	string strResponse = mMadeEasy->check_user( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User), nymID );
+	string strResponse = mMadeEasy->check_nym( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User), nymID );
 	// -1 error, 0 failure, 1 success.
 	if (1 != mMadeEasy->VerifyMessageSuccess(strResponse)) {
 		_erro("Failed trying to download public key for nym: " << nymName << "(" << nymID << ")" );
@@ -1593,7 +1592,7 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 	int32_t nKeybits = 1024;
 	string NYM_ID_SOURCE = ""; //TODO: check
 	string ALT_LOCATION = "";
-	string nymID = mMadeEasy->create_pseudonym(nKeybits, NYM_ID_SOURCE, ALT_LOCATION);
+	string nymID = mMadeEasy->create_nym(nKeybits, NYM_ID_SOURCE, ALT_LOCATION);
 
 	if (nymID.empty()) {
 		_erro("Failed trying to create new Nym: " << nymName);
@@ -1918,7 +1917,7 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 		auto instr = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
 		auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
 		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
-		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instr));
+		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instr));
 		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
 
 		if(to == nym) table.SetContentColor(color);
@@ -1975,7 +1974,7 @@ bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
 	}
 
 	auto outpayment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
-	auto srv = opentxs::OTAPI_Wrap::GetNym_OutpaymentsServerIDByIndex(nymID, index);
+	auto srv = opentxs::OTAPI_Wrap::GetNym_OutpaymentsNotaryIDByIndex(nymID, index);
 	auto rec = opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID, index);
 
 	cout << zkr::cc::fore::lightblue << outpayment << zkr::cc::console << endl;
@@ -2009,8 +2008,8 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 
 	const ID accountID = AccountGetId(account);
 	const ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	const ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accountID);
-	const ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accountID);
+	const ID accountAssetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
+	const ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	auto handleError = [] (string message)->bool {
 		_erro(message);
@@ -2110,7 +2109,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	// Not all instruments have a specified recipient. But if they do, let's make
 	// sure the Nym matches.
 
-	string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
+	string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument);
 
 	_dbg1("recNym: " << NymGetName(recipientNymID));
 	/*
@@ -2123,7 +2122,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	 return false;
 	 }*/
 	_dbg3("Get instrument assetID");
-	string instrumentAssetType = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
+	string instrumentAssetType = opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instrument);
 
 	if (accountAssetID != instrumentAssetType) {
 		return handleError(
@@ -2248,10 +2247,10 @@ bool cUseOT::PaymentShow(const string & nym, const string & server, bool dryrun)
 
 			int64_t amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instrument);
 			string instrumentType = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
-			string instrAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(instrument);
-			string senderNymID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderUserID(instrument);
+			string instrAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instrument);
+			string senderNymID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderNymID(instrument);
 			string senderAccountID = opentxs::OTAPI_Wrap::Instrmnt_GetSenderAcctID(instrument);
-			string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientUserID(instrument);
+			string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument);
 			string recipientAccountID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientAcctID(instrument);
 
 			string finalNymID = senderNymID.empty() ? senderNymID : recipientNymID;
@@ -2389,7 +2388,7 @@ bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, 
 	cout << endl << endl;
 	PrintInstrumentInfo(payment);
 
-	const ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetServerID(payment);
+	const ID srvID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(payment);
 
 	cout << zkr::cc::fore::yellow << "\n\n Sending to nym: " << recipientNym << zkr::cc::fore::console << endl;
 
@@ -2429,7 +2428,7 @@ bool cUseOT::RecordClear(const string &acc, bool all, bool dryrun) {
 	const auto nym = AccountGetNym(acc);
 	const auto nymID = NymGetId(nym);
 	const auto accID = AccountGetId(acc);
-	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
 	const auto srv = ServerGetName(srvID);
 
 	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
@@ -2461,7 +2460,7 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 	const auto nym = AccountGetNym(acc);
 	const auto nymID = NymGetId(nym);
 	const auto accID = AccountGetId(acc);
-	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
 	const auto srv = ServerGetName(srvID);
 
 	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
@@ -2500,9 +2499,9 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 		const auto id = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(srvID, nymID, accID, recordBox, i);
 		const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
 		const auto senderNym = NymGetName(
-				opentxs::OTAPI_Wrap::Transaction_GetSenderUserID(srvID, nymID, accID, transaction));
+				opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction));
 		const auto recipientNym = NymGetName(
-				opentxs::OTAPI_Wrap::Transaction_GetRecipientUserID(srvID, nymID, accID, transaction));
+				opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID, transaction));
 		const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
 
 		(opentxs::OTAPI_Wrap::Transaction_IsCanceled(srvID, nymID, accID, transaction)) ?
@@ -2566,10 +2565,10 @@ bool cUseOT::ServerCreate(const string & nym, bool dryrun) {
 
 void cUseOT::ServerCheck() {
 	if(!Init()) return;
-
-	if( !opentxs::OTAPI_Wrap::checkServerID( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User) ) ) {
-		_erro( "No response from server: " + mDefaultIDs.at(nUtils::eSubjectType::Server) );
-	}
+// FIXME:
+//	if( !opentxs::OTAPI_Wrap::checkServerID( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User) ) ) {
+//		_erro( "No response from server: " + mDefaultIDs.at(nUtils::eSubjectType::Server) );
+//	}
 	_info("Server " + mDefaultIDs.at(nUtils::eSubjectType::Server) + " is OK");
 }
 
@@ -2751,9 +2750,9 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 	if(!Init()) return false;
 
 	ID accID = AccountGetId(acc);
-	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(accID);
+	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
 	ID nymID = NymGetId(nym);
-	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(accID);
+	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accID);
 
 	string voucher = "" ;
 
@@ -2771,7 +2770,7 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 		return false;
 	}
 
-	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetAssetID(voucher);
+	ID vAssetID = opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(voucher);
 
 	auto valid = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(voucher);
 	_mark(valid);
@@ -2795,8 +2794,8 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 	const ID fromAccID = AccountGetId(fromAcc);
 	const ID toNymID = NymGetId(toNym);
 
-	const ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_AssetTypeID(fromAccID);
-	const ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_ServerID(fromAccID);
+	const ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(fromAccID);
+	const ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(fromAccID);
 	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
 
 	// comfortable lambda function, reports errors, returns false
