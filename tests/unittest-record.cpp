@@ -19,8 +19,8 @@ protected:
         virtual void SetUp() {                                                                                                                                                                                     
                 useOt = std::make_shared<nOT::nUse::cUseOT>("test-record");                                                                                                                                        
                 preCmd = "ot record ";
-                toNym = "Trader Bob";
-        		toAcc = "Bob's Tokens";
+                toNym = "trader bob";
+        		toAcc = "Bob's bitcoin";
         		server = "Transactions.com";
 
                 cout << "record test" << endl;                                                                                                                                                                                                
@@ -35,7 +35,7 @@ protected:
 TEST_F(cUseOtRecordTest, ClearExpired) {
 //	EXPECT_TRUE(useOt->RecordClear(toAcc, server, false, false));
 
-	EXPECT_FALSE(useOt->RecordClear("silver issuer", false, false));
+//	EXPECT_FALSE(useOt->RecordClear("silver issuer", false, false));
 
 
 //	EXPECT_TRUE(useOt->RecordDisplay(toAcc, server, false));

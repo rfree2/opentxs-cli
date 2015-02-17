@@ -44,11 +44,6 @@ TEST_F(cUseOtChequeTest, CreateCheque) {
 	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, server, "test cheque", false);
 	EXPECT_TRUE(result);
 }
-/*
-TEST_F(cUseOtChequeTest, VoucherCancel) {
-	EXPECT_FALSE(useOt->VoucherCancel(fromAcc, fromNym, 0, false));
-
-}*/
 
 TEST_F(cUseOtChequeTest, SendCheque) {
 	//EXPECT_FALSE(useOt->PaymentSend("Alice", toNym, 0, false));
@@ -64,11 +59,12 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 
-//	sleep(5);
-//	useOt->NymRefresh(toNym, true, false);
-//	useOt->AccountRefresh(toAcc, true, false);
+	sleep(15);
+	useOt->NymRefresh(toNym, true, false);
+	useOt->AccountRefresh(toAcc, true, false);
 
-	sleep(5);
+	sleep(90);
+
 	EXPECT_EQ(toNymBalance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 	EXPECT_EQ(fromNymBalance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)));
 
