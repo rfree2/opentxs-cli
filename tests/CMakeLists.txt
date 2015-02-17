@@ -30,6 +30,7 @@ target_link_libraries(${NAME}
   ${GTEST_BOTH_LIBRARIES}
   otx-base
 )
+include_directories(${LOCAL_DIR}/include)
 
 set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${opentxs-cli_BINARY_DIR}/tests)
 
