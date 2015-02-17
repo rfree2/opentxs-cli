@@ -21,10 +21,12 @@ protected:
 	virtual void SetUp() {
 		useOt = std::make_shared<nOT::nUse::cUseOT>("test-cheque");
 
-		fromAcc = "FT's Tokens";
-		fromNym = "FT's Test Nym";
-		toNym = "Trader Bob";
-		toAcc = "Bob's Tokens";
+		toNym = "fellowtraveler";
+		toAcc = "FT's dollars";
+
+		fromNym = "trader bob";
+		fromAcc = "Bob's dollars";
+
 		server = "Transactions.com";
 		amount = 2;
 

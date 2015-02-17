@@ -18,7 +18,7 @@ protected:
 
 	virtual void SetUp() {
 		useOt = std::make_shared<nOT::nUse::cUseOT>("outpayment-cheque");
-		nym1 = "FT's Test Nym";
+		nym1 = "";
 		nym2 = "Trader Bob";
 		preCmd = "ot outpayment ";
 

@@ -20,13 +20,13 @@ protected:
 	int32_t amount2;
 
 	virtual void SetUp() {
-		nym1 = "Trader Bob";
+		nym1 = "trader bob";
 
-		toNym = "FT's Test Nym";
-		toAcc = "FT's Tokens";
+		toNym = "fellowtraveler";
+		toAcc = "FT's dollars";
 
-		fromNym = "Trader Bob";
-		fromAcc = "Bob's Tokens";
+		fromNym = "trader bob";
+		fromAcc = "Bob's dollars";
 
 		amount = 3;
 		amount2 = 5;
