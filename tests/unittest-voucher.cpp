@@ -100,11 +100,10 @@ TEST_F(cUseOtVoucherTest, Accept) {
 	sleep(30);
 	EXPECT_EQ(toNymBalance + amount2, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 }
-/*
- TEST_F(cUseOtVoucherTest, cmd) {
- shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
- parser->Init();
- auto tmp = parser->StartProcessing("ot account ls2", useOt);
 
- tmp.UseExecute();
- }*/
+TEST_F(cUseOtVoucherTest, OutpaymentRemove) {
+	EXPECT_TRUE(useOt->OutpaymentRemove(fromNym, 0, true, false));
+	EXPECT_FALSE(useOt->OutpaymentShow(fromNym, 0, false));
+
+	useOt->OutpaymentDisplay(nym1, false);
+}

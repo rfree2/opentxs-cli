@@ -18,7 +18,7 @@ protected:
 
 	virtual void SetUp() {
 		useOt = std::make_shared<nOT::nUse::cUseOT>("outpayment-cheque");
-		nym1 = "";
+		nym1 = "fellowtraveler";
 		nym2 = "trader bob";
 		preCmd = "ot outpayment ";
 
@@ -36,36 +36,19 @@ TEST_F(cUseOtOutpaymentTest, cmdDisplayOk) {
 	parser->StartProcessing("ot outpayment ls", useOt).UseExecute();
 }
 
-// TODO:
-//TEST_F(cUseOtOutpaymentTest, cmdShowFail) {
-//	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
-//	parser->Init();
-//
-//	string cmd = preCmd + "show " + nym1 + " -1";
-//	_fact(cmd);
-//	EXPECT_ANY_THROW(parser->StartProcessing(cmd, useOt).UseExecute());
-//
-//	cmd = preCmd + "show " + nym1 + " 1000";
-//	_fact(cmd);
-//	EXPECT_ANY_THROW(parser->StartProcessing(cmd, useOt).UseExecute());
-//
-//}
-/*
-TEST_F(cUseOtOutpaymentTest, removeAllCmd) {
+TEST_F(cUseOtOutpaymentTest, cmdIncorrectIndex) {
+	const string incorrectIndex1 = "-1";
+	const string incorrectIndex2 = "1000";
+	const string showCmdForNym = preCmd + "show " + nym1 + " ";
+
 	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
 	parser->Init();
-	useOt->Init();
 
-	const string cmdOk = preCmd + "rm \"" + nym1 + "\" --all --dryrun";
-	parser->StartProcessing(cmdOk, useOt).UseExecute() ;
-} */
-/*
-TEST_F(cUseOtOutpaymentTest, removeAll) {
+	auto execute = [&, parser](const string &cmd)-> void {
+		_fact(cmd);
+		parser->StartProcessing(cmd, useOt).UseExecute();
+	};
 
-	EXPECT_TRUE(useOt->OutpaymentRemove(nym1, 0, true, false));
-	EXPECT_FALSE(useOt->OutpaymentShow(nym1, 0, false));
-
-	useOt->OutpaymentDisplay(nym1, false);
-
-}*/
-
+	EXPECT_ANY_THROW(execute(showCmdForNym + incorrectIndex1));
+	EXPECT_ANY_THROW(execute(showCmdForNym + incorrectIndex2));
+}
