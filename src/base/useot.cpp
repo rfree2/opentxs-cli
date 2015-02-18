@@ -465,7 +465,7 @@ bool cUseOT::AccountDisplayAll(bool dryrun) {
   tp.AddColumn("Type", 10);
   tp.AddColumn("Account", 60);
   tp.AddColumn("Asset", 60);
-  tp.AddColumn("Balance", 10);
+  tp.AddColumn("Balance", 12);
 
   tp.PrintHeader();
 	for(int32_t i = 0 ; i < opentxs::OTAPI_Wrap::GetAccountCount();i++) {
@@ -822,9 +822,13 @@ bool cUseOT::AssetSetDefault(const std::string & asset, bool dryrun){
 	return true;
 }
 // testing
-bool cUseOT::BasketNew() {
+bool cUseOT::BasketNew(const string & nym, const string & server, const string & assets, bool dryrun) {
+	_fact("ot basket new " << nym << " " << server << " " << assets);
+	if(dryrun) return true;
 	if(!Init()) return false;
 
+	// TODO:
+	/*
 	int32_t basketCount = 2;
 	int64_t amount = 100;
 	auto fromNym = "Trader Bob";
@@ -849,7 +853,7 @@ bool cUseOT::BasketNew() {
 	basket = tmpBasket;
 
 	auto response = mMadeEasy->issue_basket_currency(ServerGetDefault(), NymGetId(fromNym), basket);
-
+*/
 	return true;
 }
 
@@ -2181,12 +2185,12 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 
 	if ("INVOICE" == strType) { // TODO: implement this
 		return handleError("Not implemented yet");
-
 	}
 
 	if ("PURSE" == strType) {
 		_dbg3("Type of instrument: " << strType);
-		int32_t nDepositPurse = CashDeposit(accountID, accountNymID, accountServerID, instrument); // strIndices is left blank in this case
+		int32_t nDepositPurse = CashDeposit(accountID, accountNymID, accountServerID, instrument);
+		// strIndices is left blank in this case
 		// if nIndex !=  -1, go ahead and call RecordPayment on the purse at that index, to
 		// remove it from payments inbox and move it to the recordbox.
 		//

@@ -149,7 +149,7 @@ namespace nUse {
 		//================= basket =================
 
 		EXEC bool BasketDisplay();
-		EXEC bool BasketNew();
+		EXEC bool BasketNew(const string & nym, const string & server, const string & assets, bool dryrun);
 
 
 		//================= cash =================

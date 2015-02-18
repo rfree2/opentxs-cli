@@ -141,6 +141,17 @@ void cCmdParser::Init() {
 		}
 	);
 
+	// TODO:
+//	cParamInfo pAssets( "assets", [] () -> string { return Tr(eDictType::help, "assets") },
+//			[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+//				return true;
+//
+//			} ,
+//			[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+//
+//			}
+//		);
+
 	cParamInfo pServer( "server", [] () -> string { return Tr(eDictType::help, "server") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Server validation");
@@ -466,6 +477,11 @@ void cCmdParser::Init() {
 
 	AddFormat("asset set-default", {pAsset}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetSetDefault( D.V(1), D.has("--dryrun") ); } );
+
+	//======== ot basket ======
+
+//	AddFormat("basket new", {pNym, pServer}, {}, { {"--assets",pAssets} },
+//			LAMBDA { auto &D=*d; return U.AssetNew(D.V(1), D.has("--dryrun") ); } );
 
 	//======== ot cash ========
 
