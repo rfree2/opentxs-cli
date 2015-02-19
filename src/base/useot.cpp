@@ -722,6 +722,35 @@ string cUseOT::AssetGetName(const ID & assetID) {
 	return opentxs::OTAPI_Wrap::GetAssetType_Name(assetID);
 }
 
+bool cUseOT::AssetAdd(bool dryrun) {
+	_fact("asset add");
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	string contract;
+	nUtils::cEnvUtils envUtils;
+	contract = envUtils.Compose();
+
+	if (contract.empty()) {
+		cout << "Aborted" << endl;
+		_warn("empty contract, aborting");
+		return false;
+	}
+
+	auto result = opentxs::OTAPI_Wrap::AddAssetContract(contract);
+
+	if (result != 1) {
+		cout << zkr::cc::fore::lightred << "You must input a currency contract, in order to add it to your wallet"
+				<< zkr::cc::console << endl;
+		_erro("adding asset failed, result= " << result);
+		return false;
+	}
+
+	cout << zkr::cc::fore::lightgreen << "Success adding asset contract to your wallet" << zkr::cc::console << endl;
+	return true;
+
+}
+
 bool cUseOT::AssetDisplayAll(bool dryrun) {
 	_fact("asset ls");
 	if(dryrun) return true;

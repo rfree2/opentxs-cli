@@ -460,6 +460,8 @@ void cCmdParser::Init() {
 	AddFormat("asset", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.DisplayDefaultSubject(nUtils::eSubjectType::Asset, D.has("--dryrun") ); } );
 
+	AddFormat("asset add", {}, {}, NullMap,
+		LAMBDA { auto &D=*d; return U.AssetAdd(D.has("--dryrun") ); } );
 
 	AddFormat("asset ls", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetDisplayAll( D.has("--dryrun") ); } );
