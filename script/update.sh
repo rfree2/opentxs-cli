@@ -4,7 +4,7 @@
 echo "updating" 
 git pull 
 git log -1 
-echo "press [enter] to continue"
+sleep 3
 read _ 
 cd build/
 

@@ -265,6 +265,7 @@ namespace nUse {
 		EXEC bool ServerSetDefault(const string & serverName, bool dryrun);
 		EXEC bool ServerShowContract(const string & serverName, bool dryrun);
 		EXEC bool ServerDisplayAll(bool dryrun);
+		EXEC bool ServerPing(const string & server, const string & nym, bool dryrun);
 
 		//================= text =================
 

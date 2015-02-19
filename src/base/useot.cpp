@@ -458,15 +458,22 @@ bool cUseOT::AccountDisplayAll(bool dryrun) {
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	bprinter::TablePrinter tp(&std::cout);
-  tp.AddColumn("ID", 4);
-  tp.AddColumn("Type", 10);
-  tp.AddColumn("Account", 60);
-  tp.AddColumn("Asset", 60);
-  tp.AddColumn("Balance", 12);
+	const int32_t count = opentxs::OTAPI_Wrap::GetAccountCount();
 
-  tp.PrintHeader();
-	for(int32_t i = 0 ; i < opentxs::OTAPI_Wrap::GetAccountCount();i++) {
+	if (count < 1) {
+		cout << zkr::cc::fore::yellow << "no accounts to display" << zkr::cc::console << endl;
+		return false;
+	}
+
+	bprinter::TablePrinter tp(&std::cout);
+	tp.AddColumn("ID", 4);
+	tp.AddColumn("Type", 10);
+	tp.AddColumn("Account", 55);
+	tp.AddColumn("Asset", 55);
+	tp.AddColumn("Balance", 12);
+
+	tp.PrintHeader();
+	for (int32_t i = 0; i < count; i++) {
 		ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(i);
 		int64_t balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(accountID);
 		ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accountID);
@@ -474,11 +481,11 @@ bool cUseOT::AccountDisplayAll(bool dryrun) {
 		if(accountType=="issuer") tp.SetContentColor(zkr::cc::fore::lightred);
 		else if (accountType=="simple") tp.SetContentColor(zkr::cc::fore::lightgreen);
 
-        tp << std::to_string(i) << "(" + accountType + ")" << AccountGetName(accountID) + "(" + accountID + ")" << AssetGetName(assetID) + "(" + assetID + ")" << std::to_string(balance);
+		tp << std::to_string(i) << "(" + accountType + ")" << AccountGetName(accountID) + " (" + accountID + ")"
+				<< AssetGetName(assetID) + " (" + assetID + ")" << std::to_string(balance);
 	}
 
 	tp.PrintFooter();
-
 	return true;
 }
 
@@ -1953,7 +1960,7 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 
 	table.AddColumn("Index", 5);
 	table.AddColumn("Recipient", 20);
-	table.AddColumn("Type", 20);
+	table.AddColumn("Type", 10);
 	table.AddColumn("Asset", 20);
 	table.AddColumn("Amount", 10);
 	table.PrintHeader();
@@ -2673,6 +2680,35 @@ bool cUseOT::ServerSetDefault(const string & serverName, bool dryrun) {
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
 }
+
+bool cUseOT::ServerPing(const string & server, const string & nym, bool dryrun) {
+	_fact("server ping " << server << " " << nym);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	cout << "Checking connection (" << server << ") for nym: " << nym << endl;
+
+	auto ping = opentxs::OTAPI_Wrap::pingNotary(ServerGetId(server), NymGetId(nym));
+
+
+	if(ping == -1) {
+		_erro("ping= " << ping << ", no message sent");
+		cout << zkr::cc::fore::lightred << "Connection failed" << zkr::cc::console << endl;
+		return false;
+	}
+
+	if(ping == 0) {
+		_info("ping= " << ping << ", no errors, but also: no message was sent");
+		cout << "Seems to works" << endl;
+		return true;
+	}
+
+	_note("ping= " << ping << " OK");
+	cout << zkr::cc::fore::lightgreen << "Connection succesfull" << zkr::cc::console << endl;
+
+	return true;
+}
+
 bool cUseOT::ServerShowContract(const string & serverName, bool dryrun) {
 	_fact("server show-contract " << serverName);
 	if(dryrun) return true;
