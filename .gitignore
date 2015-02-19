@@ -19,3 +19,4 @@ otcli-history.txt
 /build
 run.sh
 run-test.sh
+*.test

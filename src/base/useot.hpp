@@ -145,7 +145,7 @@ namespace nUse {
 		EXEC bool AssetIssue(const string & serverID, const string & nymID, bool dryrun) ;
 		EXEC bool AssetNew(const string & nym, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
-
+		EXEC bool AssetShowContract(const string & asset, bool dryrun);
 		//================= basket =================
 
 		EXEC bool BasketDisplay();

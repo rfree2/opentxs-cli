@@ -99,8 +99,6 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 
 	if(validTo - now < 0) cout << err << "\n\nexpired" << ncol << endl;
 
-
-
 	return true;
 }
 
@@ -821,6 +819,20 @@ bool cUseOT::AssetSetDefault(const std::string & asset, bool dryrun){
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
 }
+
+bool cUseOT::AssetShowContract(const string & asset, bool dryrun) {
+	_fact("asset show-contract " << asset);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	const ID assetID = AssetGetId(asset);
+	const auto contract = opentxs::OTAPI_Wrap::GetAssetType_Contract(assetID);
+	cout << zkr::cc::fore::lightblue << asset << zkr::cc::fore::blue << " (" << assetID << ")" << zkr::cc::console << endl << endl;
+	cout << contract << endl;
+
+	return true;
+}
+
 // testing
 bool cUseOT::BasketNew(const string & nym, const string & server, const string & assets, bool dryrun) {
 	_fact("ot basket new " << nym << " " << server << " " << assets);

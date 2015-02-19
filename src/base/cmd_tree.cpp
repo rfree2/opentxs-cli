@@ -478,6 +478,9 @@ void cCmdParser::Init() {
 	AddFormat("asset set-default", {pAsset}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetSetDefault( D.V(1), D.has("--dryrun") ); } );
 
+	AddFormat("asset show-contract", {pAsset}, {}, NullMap,
+		LAMBDA { auto &D=*d; return U.AssetShowContract(D.V(1), D.has("--dryrun") ); } );
+
 	//======== ot basket ======
 
 //	AddFormat("basket new", {pNym, pServer}, {}, { {"--assets",pAssets} },
