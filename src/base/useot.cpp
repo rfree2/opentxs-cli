@@ -2699,7 +2699,7 @@ bool cUseOT::ServerPing(const string & server, const string & nym, bool dryrun) 
 
 	if(ping == 0) {
 		_info("ping= " << ping << ", no errors, but also: no message was sent");
-		cout << "Seems to works" << endl;
+		cout << "No errors reported" << endl;
 		return true;
 	}
 

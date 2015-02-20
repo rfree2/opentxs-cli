@@ -655,6 +655,9 @@ void cCmdParser::Init() {
 	AddFormat("server new", {}, {pNymMy}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerCreate(D.v(1, U.NymGetName( U.NymGetDefault())), D.has("--dryrun") ); } );
 
+	AddFormat("server ping", {}, {pServer, pNym}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerPing(D.v(1, U.ServerGetName( U.ServerGetDefault())), D.v(2, U.NymGetName( U.NymGetDefault())), D.has("--dryrun") ); } );
+
 	AddFormat("server rm", {pServer}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerRemove(D.V(1), D.has("--dryrun") ); } );
 

@@ -717,7 +717,7 @@ void cInteractiveShell::_RunEditline(shared_ptr<nUse::cUseOT> use) {
 
 	while (true) {
 		try {
-			_fact("Waiting for user input via readline (time "<<time(NULL)<<")");
+			_dbg2("Waiting for user input via readline (time "<<time(NULL)<<")");
 			buf  = readline("ot command> "); // <=== READLINE
 			_dbg3("Readline returned");
 			if (buf==NULL) break;
