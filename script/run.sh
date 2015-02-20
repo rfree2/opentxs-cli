@@ -10,7 +10,6 @@ function checkExist() {
     fi
 }
 
-
 function removePid() { 
 	rm -f $HOME/.ot/client_data/ot.pid 
 }
@@ -20,7 +19,6 @@ function checkSrv() {
         echo "ok server is running" 
     else
         echo "server not found!" 
-        exit 1
     fi 
 }
 
@@ -29,7 +27,12 @@ checkExist
 checkSrv
 removePid
 
-$executable ./build/bin/otx +normal +debugfile --complete-shell	
-# gdb -return-child-result -ex run -ex "thread apply all bt" -ex "quit" --args ./build/bin/otx +normal +debugfile --complete-shell	
+if [[ $# -eq 1 ]]; then 
+    if [[ $1 -eq "gdb" ]]; then 
+        gdb -return-child-result -ex run -ex "thread apply all bt" -ex "quit" --args ./build/bin/otx +normal +debugfile --complete-shell	
+    fi
+else 
+    $executable ./build/bin/otx +normal +debugfile --complete-shell  
+fi
 
 removePid
