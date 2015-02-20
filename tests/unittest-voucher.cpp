@@ -53,7 +53,7 @@ TEST_F(cUseOtVoucherTest, VoucherCreate) {
 	EXPECT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "memo", false));
 	EXPECT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
 
-	sleep(30);
+	sleep(60);
 	EXPECT_EQ(balance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID));
 }
 

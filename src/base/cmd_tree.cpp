@@ -2,7 +2,7 @@
 #include "cmd.hpp"
 #include "cmd_detail.hpp"
 
-#include "lib_common2.hpp"
+#include "lib_common3.hpp"
 #include "ccolor.hpp"
 
 //#if CFG_USE_EDITLINE
@@ -12,6 +12,7 @@
 		// TODO: do support MinGWEditline for windows)
 	#endif // not unix
 //#endif // not use editline
+
 
 namespace nOT {
 namespace nNewcli {
@@ -303,10 +304,27 @@ void cCmdParser::Init() {
 		}
 	);
 
-	cParamInfo pReadFile( "file", [] () -> string { return Tr(eDictType::help, "file") },
+	cParamInfo pReadFile( "from-file", [] () -> string { return Tr(eDictType::help, "from-file") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			return true; //TODO
+			auto filename = data.Var(nr);
+			auto exist = opentxs::OTPaths::PathExists(filename);
+			_dbg2("file: " << filename << " exist: " << exist);
+			return exist;
+		} ,
+		[this] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			mEnableFilenameCompletion = true; // Enable filename autocompletion
+			return vector<string> {};
+		}
+	);
+
+	cParamInfo pWriteFile( "to-file", [] () -> string { return Tr(eDictType::help, "to-file") },
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			const int nr = curr_word_ix+1;
+			auto filename = data.Var(nr);
+			auto fileExist = opentxs::OTPaths::PathExists(filename);
+			_dbg2("file: " << filename << " exist: " << fileExist);
+			return !fileExist; // if this file exist, return false
 		} ,
 		[this] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			mEnableFilenameCompletion = true; // Enable filename autocompletion
@@ -566,11 +584,11 @@ void cCmdParser::Init() {
 	AddFormat("nym check", {pNym}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.NymCheck( D.V(1), D.has("--dryrun") ); } );
 
-	AddFormat("nym export", {pNym}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.NymExport( D.V(1), D.has("--dryrun") ); } );
+	AddFormat("nym export", {pNym}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.NymExport( D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
 
-	AddFormat("nym import", {}, {}, {{"--file",pReadFile}},
-		LAMBDA { auto &D=*d; return U.NymImport( D.o1("--file",""), D.has("--dryrun") ); } );
+	AddFormat("nym import", {}, {pReadFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.NymImport(D.v(1, ""), D.has("--dryrun") ); } );
 
 	AddFormat("nym info", {}, {pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.NymDisplayInfo( D.v(1, U.NymGetName( U.NymGetDefault() )), D.has("--dryrun") ); } );

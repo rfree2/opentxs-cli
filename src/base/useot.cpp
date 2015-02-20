@@ -1667,7 +1667,7 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 	return true;
 }
 
-bool cUseOT::NymExport(const string & nymName, bool dryrun) {
+bool cUseOT::NymExport(const string & nymName, const string & filename, bool dryrun) {
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -1676,7 +1676,31 @@ bool cUseOT::NymExport(const string & nymName, bool dryrun) {
 
 	std::string exported = opentxs::OTAPI_Wrap::Wallet_ExportNym(nymID);
 	// FIXME Bug in OTAPI? Can't export nym twice
-	std::cout << zkr::cc::fore::lightblue << exported << zkr::cc::console ;
+
+	auto print = [&, exported] ()->bool {
+		// TODO: handling errors??
+		std::cout << zkr::cc::fore::lightblue << exported << zkr::cc::console << endl;
+		return true;
+	};
+
+	if(filename.empty()) return print();
+
+	// saving to file TODO: move this to utils?
+	std::fstream file;
+	file.exceptions ( std::fstream::failbit | std::fstream::badbit );
+	try {
+		file.open(filename.c_str(), std::ios::out | std::ios::trunc);
+		file << exported;
+		file.close();
+
+	} catch(std::fstream::failure e) {
+		_erro("Exception opening/reading/closing file: " << e.what());
+		cout << "Error writing to file: " << filename << endl;
+		print();
+		return false; // means export is ok, but can't save to file
+	} // saving ok
+
+	cout << "Saved" << endl;
 
 	return true;
 }
