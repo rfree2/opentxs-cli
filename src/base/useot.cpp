@@ -389,8 +389,8 @@ bool cUseOT::AccountRename(const string & account, const string & newAccountName
 	return false;
 }
 
-bool cUseOT::AccountCreate(const string & nym, const string & asset, const string & newAccountName, bool dryrun) {
-	_fact("account new nym=" << nym << " asset=" << asset << " accountName=" << newAccountName);
+bool cUseOT::AccountCreate(const string & nym, const string & asset, const string & newAccountName, const string & server, bool dryrun) {
+	_fact("account new nym=" << nym << " asset=" << asset << " accountName=" << newAccountName << " serverName=" << server);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -401,9 +401,10 @@ bool cUseOT::AccountCreate(const string & nym, const string & asset, const strin
 
 	ID nymID = NymGetId(nym);
 	ID assetID = AssetGetId(asset);
+	ID serverID = ServerGetId(server);
 
 	string response;
-	response = mMadeEasy->create_asset_acct(mDefaultIDs.at(nUtils::eSubjectType::Server), nymID, assetID); //TODO server as argument
+	response = mMadeEasy->create_asset_acct(serverID, nymID, assetID);
 
 	// -1 error, 0 failure, 1 success.
 	if (1 != mMadeEasy->VerifyMessageSuccess(response)) {
