@@ -30,11 +30,11 @@ protected:
 	}
 };
 
-TEST_F(cUseOtOutpaymentTest, cmdDisplayOk) {
-	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
-	parser->Init();
-	parser->StartProcessing("ot outpayment ls", useOt).UseExecute();
-}
+//TEST_F(cUseOtOutpaymentTest, cmdDisplayOk) {
+//	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
+//	parser->Init();
+//	parser->StartProcessing("ot outpayment ls", useOt).UseExecute();
+//}
 
 TEST_F(cUseOtOutpaymentTest, cmdIncorrectIndex) {
 	const string incorrectIndex1 = "-1";

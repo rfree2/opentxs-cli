@@ -876,7 +876,7 @@ bool cUseOT::BasketNew(const string & nym, const string & server, const string &
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	// TODO:
+	// TODO: basket
 	/*
 	int32_t basketCount = 2;
 	int64_t amount = 100;
@@ -1322,7 +1322,7 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t am
 	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
 	const ID srvID = ServerGetId(srv);
 
-	// Cheque is valid 6 months TODO
+	// TODO: Cheque is valid 6 months, time as param?
 	auto now = OTTimeGetCurrentTime();
 	const time64_t validFrom = now;
 	const time64_t validTo = now + OT_TIME_SIX_MONTHS_IN_SECONDS;
@@ -1677,6 +1677,11 @@ bool cUseOT::NymExport(const string & nymName, const string & filename, bool dry
 	std::string exported = opentxs::OTAPI_Wrap::Wallet_ExportNym(nymID);
 	// FIXME Bug in OTAPI? Can't export nym twice
 
+	if(exported.empty()) {
+		cout << zkr::cc::fore::lightred << "Can't export nym" << zkr::cc::console << endl;
+		return false;
+	}
+
 	auto print = [&, exported] ()->bool {
 		// TODO: handling errors??
 		std::cout << zkr::cc::fore::lightblue << exported << zkr::cc::console << endl;
@@ -1723,9 +1728,14 @@ bool cUseOT::NymImport(const string & filename, bool dryrun) {
 		_warn("Can't import, empty input");
 		return false;
 	}
+	// FIXME: segfault!
+	auto nym = opentxs::OTAPI_Wrap::Wallet_ImportNym(toImport);
 
-	std::string nym = opentxs::OTAPI_Wrap::Wallet_ImportNym(toImport);
+
+
 	//cout << nym << endl;
+
+
 	return true;
 }
 
