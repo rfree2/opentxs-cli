@@ -478,8 +478,8 @@ void cCmdParser::Init() {
 	AddFormat("asset", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.DisplayDefaultSubject(nUtils::eSubjectType::Asset, D.has("--dryrun") ); } );
 
-	AddFormat("asset add", {}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.AssetAdd(D.has("--dryrun") ); } );
+	AddFormat("asset add", {}, {pReadFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.AssetAdd(D.v(1, ""), D.has("--dryrun") ); } );
 
 	AddFormat("asset ls", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetDisplayAll( D.has("--dryrun") ); } );
@@ -498,8 +498,8 @@ void cCmdParser::Init() {
 	AddFormat("asset set-default", {pAsset}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetSetDefault( D.V(1), D.has("--dryrun") ); } );
 
-	AddFormat("asset show-contract", {pAsset}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.AssetShowContract(D.V(1), D.has("--dryrun") ); } );
+	AddFormat("asset show-contract", {pAsset}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.AssetShowContract(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
 
 	//======== ot basket ======
 

@@ -140,13 +140,13 @@ namespace nUse {
 
 		HINT vector<string> AssetGetAllNames();
 
-		EXEC bool AssetAdd(bool dryrun);
+		EXEC bool AssetAdd(const string & filename, bool dryrun);
 		EXEC bool AssetSetDefault(const std::string & asset, bool dryrun); // Set default asset, also known as purse
 		EXEC bool AssetDisplayAll(bool dryrun);
 		EXEC bool AssetIssue(const string & serverID, const string & nymID, bool dryrun) ;
 		EXEC bool AssetNew(const string & nym, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
-		EXEC bool AssetShowContract(const string & asset, bool dryrun);
+		EXEC bool AssetShowContract(const string & asset, const string & filename, bool dryrun);
 		//================= basket =================
 
 		EXEC bool BasketDisplay();

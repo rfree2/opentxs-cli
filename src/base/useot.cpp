@@ -730,14 +730,20 @@ string cUseOT::AssetGetName(const ID & assetID) {
 	return opentxs::OTAPI_Wrap::GetAssetType_Name(assetID);
 }
 
-bool cUseOT::AssetAdd(bool dryrun) {
+bool cUseOT::AssetAdd(const string & filename, bool dryrun) {
 	_fact("asset add");
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	string contract;
+	string contract = "";
 	nUtils::cEnvUtils envUtils;
-	contract = envUtils.Compose();
+
+	if(!filename.empty()) {
+		contract = envUtils.ReadFromFile(filename);
+	}
+
+	if(contract.empty())
+		contract = envUtils.Compose();
 
 	if (contract.empty()) {
 		cout << "Aborted" << endl;
@@ -857,13 +863,24 @@ bool cUseOT::AssetSetDefault(const std::string & asset, bool dryrun){
 	return true;
 }
 
-bool cUseOT::AssetShowContract(const string & asset, bool dryrun) {
+bool cUseOT::AssetShowContract(const string & asset, const string & filename, bool dryrun) {
 	_fact("asset show-contract " << asset);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	const ID assetID = AssetGetId(asset);
 	const auto contract = opentxs::OTAPI_Wrap::GetAssetType_Contract(assetID);
+
+	if(!filename.empty()) {
+		try {
+			nUtils::cEnvUtils envUtils;
+			envUtils.WriteToFile(filename, contract);
+			return true;
+		} catch(...) {
+			_warn("can't save to file");
+		}
+	}
+
 	cout << zkr::cc::fore::lightblue << asset << zkr::cc::fore::blue << " (" << assetID << ")" << zkr::cc::console << endl << endl;
 	cout << contract << endl;
 
