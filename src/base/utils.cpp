@@ -635,6 +635,22 @@ const string cEnvUtils::ReadFromFile(const string path) {
 	return msg;
 }
 
+void cEnvUtils::WriteToFile(const string path, const string content) {
+	std::fstream file;
+	file.exceptions(std::fstream::failbit | std::fstream::badbit);
+	try {
+		file.open(path.c_str(), std::ios::out | std::ios::trunc);
+		file << content;
+		file.close();
+		_info("saving to file: " << path << " ok");
+
+	} catch (std::fstream::failure e) {
+		_erro("Exception opening/reading/closing file: " << e.what());
+		cout << "Error writing to file: " << path << endl;
+		throw e;
+	} // saving ok
+}
+
 void hintingToTxt(std::fstream & file, string command, vector<string> &commands) {
 	if(file.good()) {
 		file<<command<<"~"<<endl;

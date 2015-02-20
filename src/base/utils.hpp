@@ -287,6 +287,7 @@ class cEnvUtils {
 public:
 	const string Compose();
 	const string ReadFromFile(const string path);
+	void WriteToFile(const string path, const string content);
 };
 void hintingToTxt(std::fstream & file, string command, vector<string> &commands);
 void generateQuestions (std::fstream & file, string command);

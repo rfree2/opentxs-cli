@@ -1690,20 +1690,13 @@ bool cUseOT::NymExport(const string & nymName, const string & filename, bool dry
 
 	if(filename.empty()) return print();
 
-	// saving to file TODO: move this to utils?
-	std::fstream file;
-	file.exceptions ( std::fstream::failbit | std::fstream::badbit );
-	try {
-		file.open(filename.c_str(), std::ios::out | std::ios::trunc);
-		file << exported;
-		file.close();
+	nUtils::cEnvUtils envUtils;
 
-	} catch(std::fstream::failure e) {
-		_erro("Exception opening/reading/closing file: " << e.what());
-		cout << "Error writing to file: " << filename << endl;
-		print();
-		return false; // means export is ok, but can't save to file
-	} // saving ok
+	try {
+		envUtils.WriteToFile(filename, exported);
+	} catch(...) {
+		return false;
+	}
 
 	cout << "Saved" << endl;
 
