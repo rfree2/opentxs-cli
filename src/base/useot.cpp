@@ -2617,10 +2617,11 @@ bool cUseOT::ServerCreate(const string & nym, bool dryrun) {
 
 void cUseOT::ServerCheck() {
 	if(!Init()) return;
-// FIXME:
-//	if( !opentxs::OTAPI_Wrap::checkServerID( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User) ) ) {
-//		_erro( "No response from server: " + mDefaultIDs.at(nUtils::eSubjectType::Server) );
-//	}
+	if (opentxs::OTAPI_Wrap::pingNotary(mDefaultIDs.at(nUtils::eSubjectType::Server),
+			mDefaultIDs.at(nUtils::eSubjectType::User)) == -1) {
+		_erro("No response from server: " + mDefaultIDs.at(nUtils::eSubjectType::Server));
+	}
+
 	_info("Server " + mDefaultIDs.at(nUtils::eSubjectType::Server) + " is OK");
 }
 
