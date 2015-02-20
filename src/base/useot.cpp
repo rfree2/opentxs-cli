@@ -2594,14 +2594,20 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 	return true;
 }
 
-bool cUseOT::ServerAdd(bool dryrun) {
-	_fact("server ls");
+bool cUseOT::ServerAdd(const string &filename, bool dryrun) {
+	_fact("server add " << filename);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	string contract;
+	string contract = "";
 	nUtils::cEnvUtils envUtils;
-	contract = envUtils.Compose();
+
+	if(!filename.empty()) {
+		contract = envUtils.ReadFromFile(filename);
+	}
+
+	if(contract.empty())
+		contract = envUtils.Compose();
 
 	if (!contract.empty()) {
 		if( opentxs::OTAPI_Wrap::AddServerContract(contract) ) {
@@ -2738,15 +2744,29 @@ bool cUseOT::ServerPing(const string & server, const string & nym, bool dryrun) 
 	return true;
 }
 
-bool cUseOT::ServerShowContract(const string & serverName, bool dryrun) {
-	_fact("server show-contract " << serverName);
+bool cUseOT::ServerShowContract(const string & serverName, const string &filename, bool dryrun) {
+	_fact("server show-contract " << serverName << " " << filename);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	string serverID = ServerGetId(serverName);
 	nUtils::DisplayStringEndl(cout, zkr::cc::fore::lightblue + serverName + zkr::cc::fore::console);
 	nUtils::DisplayStringEndl(cout, "ID: " + serverID);
-	nUtils::DisplayStringEndl(cout, opentxs::OTAPI_Wrap::GetServer_Contract(serverID));
+
+	const auto contract = opentxs::OTAPI_Wrap::GetServer_Contract(serverID);
+	if(!filename.empty()) {
+		try {
+			nUtils::cEnvUtils envUtils;
+			envUtils.WriteToFile(filename, contract);
+			return true;
+		} catch(...) {
+			nUtils::DisplayStringEndl(cout, contract);
+			return false;
+		}
+	}
+	nUtils::DisplayStringEndl(cout, contract);
+
+
 	return true;
 
 }

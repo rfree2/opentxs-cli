@@ -259,11 +259,11 @@ namespace nUse {
 
 		HINT vector<string> ServerGetAllNames();
 
-		EXEC bool ServerAdd(bool dryrun); ///< Add new server contract
+		EXEC bool ServerAdd(const string &filename, bool dryrun); ///< Add new server contract
 		EXEC bool ServerCreate(const string & nymName, bool dryrun); ///< Create new server contract
 		EXEC bool ServerRemove(const string & serverName, bool dryrun);
 		EXEC bool ServerSetDefault(const string & serverName, bool dryrun);
-		EXEC bool ServerShowContract(const string & serverName, bool dryrun);
+		EXEC bool ServerShowContract(const string & serverName, const string &filename, bool dryrun);
 		EXEC bool ServerDisplayAll(bool dryrun);
 		EXEC bool ServerPing(const string & server, const string & nym, bool dryrun);
 

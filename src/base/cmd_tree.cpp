@@ -667,8 +667,8 @@ void cCmdParser::Init() {
 	AddFormat("server ls", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerDisplayAll(D.has("--dryrun") ); } );
 
-	AddFormat("server add", {}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.ServerAdd(D.has("--dryrun") ); } );
+	AddFormat("server add", {}, {pReadFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerAdd( D.v(1, ""), D.has("--dryrun") ); } );
 
 	AddFormat("server new", {}, {pNymMy}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerCreate(D.v(1, U.NymGetName( U.NymGetDefault())), D.has("--dryrun") ); } );
@@ -682,8 +682,8 @@ void cCmdParser::Init() {
 	AddFormat("server set-default", {pServer}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerSetDefault( D.V(1), D.has("--dryrun") ); } );
 
-	AddFormat("server show-contract", {pServer}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.ServerShowContract(D.V(1), D.has("--dryrun") ); } );
+	AddFormat("server show-contract", {pServer}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerShowContract(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
 
 	//======== ot text ========
 
