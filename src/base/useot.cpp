@@ -793,8 +793,7 @@ string cUseOT::AssetGetId(const string & assetName) {
 }
 
 string cUseOT::AssetGetContract(const string & asset){
-	if(!Init())
-		return "";
+	if(!Init()) return "";
 	string strContract = opentxs::OTAPI_Wrap::GetAssetType_Contract( AssetGetId(asset) );
 	return strContract;
 }
@@ -2267,10 +2266,12 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 		_dbg2("nym: " << NymGetName(accountNymID));
 		_dbg2("acc: " << AccountGetName(accountID));
 
-		auto deposit = opentxs::OTAPI_Wrap::depositCheque(accountServerID, accountNymID, accountID, instrument);
+		auto deposit = mMadeEasy->deposit_cheque(accountServerID, accountNymID, accountID, instrument);
 		cout << deposit << endl;
-		if (deposit < 0)
-			return false;
+
+//		if (deposit < 0) {
+//			return handleError("Problem with deposit");
+//		}
 
 		auto ok = mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true);
 		return ok;
