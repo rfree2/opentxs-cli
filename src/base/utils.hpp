@@ -271,7 +271,12 @@ class cFilesystemUtils { // if we do not want to use boost in given project (or 
 class cConfigManager {
 public:
 	bool Load(const string & fileName, map<eSubjectType, string> & configMap);
+	bool Load(const string & fileName, map<string, string> & strMap);
 	void Save(const string & fileName, const map<eSubjectType, string> & configMap);
+	void Save(const string & fileName, const std::pair<eSubjectType, string> & config);
+	void SaveStr(const string & fileName, const map<string, string> & strMap);
+	void SaveStr(const string & fileName, const std::pair<string, string> & str);
+
 };
 
 extern cConfigManager configManager;

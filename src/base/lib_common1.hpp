@@ -17,6 +17,7 @@
 #include <set>
 #include <iterator>
 #include <stdexcept>
+#include <utility>
 
 #include <functional>
 #include <memory>

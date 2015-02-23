@@ -560,8 +560,37 @@ bool cConfigManager::Load(const string & fileName, map<eSubjectType, string> & c
 	return false;
 }
 
+bool cConfigManager::Load(const string & fileName, map<string, string> & str){
+	_dbg1("Loading from file " << fileName);
+
+	std::ifstream inFile(fileName.c_str());
+	if( inFile.good() && !(inFile.peek() == std::ifstream::traits_type::eof()) ) {
+		string line;
+		while( std::getline (inFile, line) ) {
+			_dbg2("Line: ["<<line<<"]");
+			vector<string> vec = SplitString(line);
+			if (vec.size() == 2) {
+				_dbg3("config2:"<<vec.at(0)<<","<<vec.at(1));
+				str.insert ( std::pair<string, string>( vec.at(0) , vec.at(1) ) );
+			}
+			else {
+				_dbg3("config1:"<<vec.at(0));
+				string all = "";
+				for(auto i=1; i<vec.size(); ++i) all += vec.at(i);
+
+				str.insert ( std::pair<string, string>(vec.at(0) , all ) );
+			}
+		}
+		_dbg1("Finished loading");
+		return true;
+	}
+	_dbg1("Unable to load");
+	return false;
+}
+
+
 void cConfigManager::Save(const string & fileName, const map<eSubjectType, string> & configMap) {
-	_dbg1("Will save config");
+	_dbg1("Will save map of config");
 
 	std::ofstream outFile(fileName.c_str());
 	for (auto pair : configMap) {
@@ -574,6 +603,45 @@ void cConfigManager::Save(const string & fileName, const map<eSubjectType, strin
 	_dbg1("All saved");
 }
 
+void cConfigManager::Save(const string & fileName, const std::pair<eSubjectType, string> & config) {
+	_dbg1("Will save config");
+
+	std::ofstream outFile(fileName.c_str(), std::ios::app);
+
+	_dbg2("Got: "<<SubjectType2String(config.first)<<","<<config.second);
+	outFile << SubjectType2String(config.first) << " ";
+	outFile << config.second;
+	outFile << endl;
+	_dbg3("line saved");
+
+}
+
+void cConfigManager::SaveStr(const string & fileName, const map<string, string> & str) {
+	_dbg1("Will save map of config");
+
+	std::ofstream outFile(fileName.c_str());
+	for (auto pair : str) {
+		_dbg2("Got: "<<pair.first<<","<<pair.second);
+		outFile << pair.first << " ";
+		outFile << pair.second;
+		outFile << endl;
+		_dbg3("line saved");
+	}
+	_dbg1("All saved");
+}
+
+void cConfigManager::SaveStr(const string & fileName, const std::pair<string, string> & str) {
+	_dbg1("Will save config");
+
+	std::ofstream outFile(fileName.c_str(), std::ios::app);
+
+	_dbg2("Got: "<<str.first<<","<<str.second);
+	outFile << str.first << " ";
+	outFile << str.second;
+	outFile << endl;
+	_dbg3("line saved");
+
+}
 cConfigManager configManager;
 
 #ifdef OS_TYPE_POSIX

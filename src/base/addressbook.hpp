@@ -12,9 +12,11 @@ class AddressBook {
 public:
 	static AddressBook Load(const string &nymID);
 	size_t getCount() { return contacts.size(); };
+
 	void add(const string & nymName, const string & nymID);
 //	void remove();
 
+	void display();
 	virtual ~AddressBook();
 
 private:

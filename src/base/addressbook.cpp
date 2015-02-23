@@ -1,5 +1,6 @@
 #include "addressbook.hpp"
 #include "lib_common3.hpp"
+#include "bprinter/table_printer.h"
 
 namespace nOT {
 
@@ -77,6 +78,24 @@ bool AddressBook::checkExistance(const string &nymID) {
 		throw "duplicate entry in AddressBook!";
 		return false;
 	}
+}
+
+void AddressBook::display() {
+	if(getCount() == 0) return;
+	bprinter::TablePrinter tp(&std::cout);
+	tp.AddColumn("Nr", 5);
+	tp.AddColumn("Nym", 20);
+	tp.AddColumn("ID", 40);
+
+	tp.PrintHeader();
+
+	int i=0;
+	for (auto pair : contacts) {
+		tp << i << pair.second << pair.first;
+		++i;
+	}
+	tp.PrintFooter();
+
 }
 
 AddressBook::~AddressBook() {

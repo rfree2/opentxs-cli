@@ -4,6 +4,9 @@
 #include "../src/base/lib_common3.hpp"
 
 #include "../src/base/useot.hpp"
+#include <typeinfo>
+
+#include "../src/base/addressbook.hpp"
 
 using namespace nOT::nUtils;
 
@@ -66,3 +69,19 @@ TEST_F(cUseOtRecordTest, Basket) {
 	}
 }
 
+TEST_F(cUseOtRecordTest, Addressbook) {
+	useOt->Init();
+
+	const string nym = "Alice";
+	const auto nymID = useOt->NymGetId(nym);
+
+	const string nym2 = "issuer";
+	const auto nymID2 = useOt->NymGetId(nym2);
+
+	auto addressbook = nOT::AddressBook::Load(nymID);
+
+	addressbook.add(toNym, useOt->NymGetId(toNym));
+	addressbook.add(nym2, nymID2);
+
+	addressbook.display();
+}
