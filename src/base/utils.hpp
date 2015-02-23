@@ -251,7 +251,7 @@ bool checkPrefix(const string & str, char prefix = '^');
 // ====================================================================
 // nUse utils
 
-enum class eSubjectType {Account, Asset, User, Server, Unknown};
+enum class eSubjectType {Account, AddressBook, Asset, User, Server, Unknown};
 
 string SubjectType2String(const eSubjectType & type);
 eSubjectType String2SubjectType(const string & type);

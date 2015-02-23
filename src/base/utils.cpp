@@ -501,6 +501,8 @@ string SubjectType2String(const eSubjectType & type) {
 	switch (type) {
 	case subject::Account:
 		return "Account";
+	case subject::AddressBook:
+			return "AddressBook";
 	case subject::Asset:
 			return "Asset";
 	case subject::User:
@@ -518,6 +520,8 @@ eSubjectType String2SubjectType(const string & type) {
 
 	if (type == "Account")
 		return subject::Account;
+	if (type == "AddressBook")
+			return subject::AddressBook;
 	if (type == "Asset")
 			return subject::Asset;
 	if (type == "User")
