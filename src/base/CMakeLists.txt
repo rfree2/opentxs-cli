@@ -3,6 +3,7 @@
 set(name otx-base)
 
 set(cxx-sources
+  addressbook.cpp
   ccolor.cpp
   cmd.cpp
   cmd_tests.cpp
