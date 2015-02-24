@@ -2756,10 +2756,14 @@ bool cUseOT::ServerPing(const string & server, const string & nym, bool dryrun) 
 		return true;
 	}
 
-	_note("ping= " << ping << " OK");
-	cout << zkr::cc::fore::lightgreen << "Connection succesfull" << zkr::cc::console << endl;
+	else {
+		_note("ping= " << ping << " OK");
+		cout << zkr::cc::fore::lightgreen << "Connection succesfull" << zkr::cc::console << endl;
 
-	return true;
+		return true;
+	}
+
+	return false;
 }
 
 bool cUseOT::ServerShowContract(const string & serverName, const string &filename, bool dryrun) {

@@ -50,10 +50,10 @@ void AddressBook::createDirectory() {
 		throw "Can't create file!";
 }
 
-void AddressBook::add(const string & nymName, const string & nymID) {
+bool AddressBook::add(const string & nymName, const string & nymID) {
 	if(checkExistance(nymID)) {
 		_warn("This nym: " << nymName << "(" << nymID << ") already exist in address book, aborting");
-		return;
+		return false;
 	}
 	_info("adding to address book: " << nymName << " (" << nymID << ")");
 	AddressBook::Entry entry(nymName);
@@ -66,7 +66,9 @@ void AddressBook::add(const string & nymName, const string & nymID) {
 		utils.SaveStr(path, contact);
 	} catch(...) {
 		_erro("Problem with saving to file");
+		return false;
 	}
+	return true;
 }
 
 bool AddressBook::checkExistance(const string &nymID) {
@@ -81,7 +83,10 @@ bool AddressBook::checkExistance(const string &nymID) {
 }
 
 void AddressBook::display() {
-	if(getCount() == 0) return;
+	if(getCount() == 0) {
+		cout << "Empty address book" << endl;
+		return;
+	}
 	bprinter::TablePrinter tp(&std::cout);
 	tp.AddColumn("Nr", 5);
 	tp.AddColumn("Nym", 20);
@@ -95,7 +100,6 @@ void AddressBook::display() {
 		++i;
 	}
 	tp.PrintFooter();
-
 }
 
 AddressBook::~AddressBook() {

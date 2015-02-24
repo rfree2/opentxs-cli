@@ -29,9 +29,9 @@ option(BUILD_TESTS         "Build the unit tests." ON)
 option(KEYRING_FLATFILE    "Build with Flatfile Keyring" OFF)
 option(RPM                 "Build a RPM" OFF)
 option(DEB                 "Build a DEB" OFF)
-option(LOCAL		   "Search libraries and install in $HOME/.local" ON)
+option(LOCAL		       "Search libraries and install in $HOME/.local" ON)
 option(WITH_TERMCOLORS     "Build with support for unix terminal console colors VT100" ON)
-option(LOCAL_EDITLINE "Use local Editline library ($HOME/.local)" ON) # Always ON because of bugs in Debian libedit package!
+option(LOCAL_EDITLINE      "Use local Editline library ($HOME/.local)" ON) # Always ON because of bugs in Debian libedit package!
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/") # Add folder with cmake modules
 
@@ -67,7 +67,6 @@ message(STATUS "Build DEB:                ${DEB}")
 message(STATUS "Local:                    ${LOCAL}")
 
 message(STATUS "Termcolors:               ${WITH_TERMCOLORS}")
-
 
 #-----------------------------------------------------------------------------
 # Collect all binaries into bin subdirectory
@@ -118,7 +117,6 @@ message(STATUS "C++ link flags:  ${CMAKE_CXX_LINK_FLAGS}")
 execute_process(COMMAND git "submodule" "update" "--init" "--recursive" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 
-
 #-----------------------------------------------------------------------------
 # System libraries used for linking.
 
@@ -167,6 +165,14 @@ if(BUILD_TESTS)
   set(GTEST_BOTH_LIBRARIES ${GTEST_LIBRARIES} ${GTEST_MAIN_LIBRARIES})
 endif()
 
+#-----------------------------------------------------------------------------
+# Eclipse Project
+
+if (${CMAKE_EXTRA_GENERATOR} MATCHES "Eclipse CDT4")  
+  add_definitions (-DCMAKE_CXX_COMPILER_ARG1=-std=c++11)
+  add_definitions (-DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE)
+  add_definitions (-DCMAKE_ECLIPSE_MAKE_ARGUMENTS=-j2)
+endif (${CMAKE_EXTRA_GENERATOR} MATCHES "Eclipse CDT4") 
 
 #-----------------------------------------------------------------------------
 # Build Documentation
@@ -183,11 +189,6 @@ endif()
 #    endif(DOXYGEN_FOUND)
 # endif(BUILD_DOCUMENTATION)
 
-
-#-----------------------------------------------------------------------------
-# Get submodules
-
-#execute_process(COMMAND git "submodule" "update" "--init" "--recursive")
 
 
 #-----------------------------------------------------------------------------
