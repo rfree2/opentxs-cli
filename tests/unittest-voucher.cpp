@@ -34,6 +34,8 @@ protected:
 
 		_note("amount1 " << amount);
 		_note("amount2 " << amount2);
+
+		useOt->Refresh(true);
 	}
 
 	virtual void TearDown() {
@@ -45,11 +47,14 @@ TEST_F(cUseOtVoucherTest, VoucherCreate) {
 	EXPECT_FALSE(useOt->VoucherWithdraw("bitcoins", toNym, -20, "some memo", 0));
 
 	auto fromAccID = useOt->AccountGetId(fromAcc);
-	const auto balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID);
 
-	EXPECT_FALSE(useOt->VoucherWithdraw(fromAcc, toNym, balance + 1, "memo", false));
+	EXPECT_FALSE(
+			useOt->VoucherWithdraw(fromAcc, toNym, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID) + 1, "memo",
+					false));
 
 	sleep(3);
+	const auto balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID);
+
 	EXPECT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "memo", false));
 	EXPECT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
 

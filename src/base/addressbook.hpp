@@ -7,8 +7,6 @@ namespace nOT {
 class AddressBook {
 	AddressBook(const string & nymID);
 
-
-
 public:
 	static AddressBook Load(const string &nymID);
 	size_t getCount() { return contacts.size(); };
@@ -16,6 +14,8 @@ public:
 	bool add(const string & nymName, const string & nymID);
 	bool nymExist(const string & nymID) const;
 	bool remove(const string & nymID);
+
+	vector<string> getAllNames();
 
 	void display();
 	virtual ~AddressBook();
@@ -32,7 +32,6 @@ private:
 		static Entry fromString(string strEntry);
 	};
 
-
 	void createDirectory();
 	bool loadFromFile();
 
@@ -44,6 +43,13 @@ private:
 	map<string, string> contacts;
 };
 
+class AddressBookStorage {
+public:
+	static AddressBook Get(const string & nymID);
+private:
+	static map <string, shared_ptr<AddressBook>> saved;
+
+};
 
 
 } // nOT

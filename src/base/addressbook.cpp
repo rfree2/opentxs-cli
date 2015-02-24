@@ -18,6 +18,7 @@ AddressBook ::AddressBook(const string & nymID) :
 }
 
 AddressBook AddressBook::Load(const string &nymID) {
+	_info("loading address book for nym: " << nymID);
 	try {
 		AddressBook addressBook(nymID);
 		return addressBook;
@@ -140,8 +141,18 @@ void AddressBook::saveContacts() {
 	saveContacts(this->contacts);
 }
 
+vector<string> AddressBook::getAllNames() {
+	vector<string> nyms;
+	nyms.reserve(contacts.size());
+	for (auto pair : contacts) {
+		nyms.push_back(pair.second);
+	}
+	return nyms;
+}
+
+
 AddressBook::~AddressBook() {
-	_info("");
+	_dbg3(ownerNymID);
 }
 
 AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
@@ -150,6 +161,18 @@ AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
 	return entry;
 }
 
+map<string, shared_ptr<AddressBook>> AddressBookStorage::saved;
+
+AddressBook AddressBookStorage::Get(const string & nymID) {
+	try {
+		return *saved.at(nymID);
+	}  catch (const std::out_of_range& e) {
+		_note("can't find in map, creating the new one for nym: " << nymID);
+		auto addressBook = std::make_shared<AddressBook>(AddressBook::Load(nymID));
+		saved.insert(std::make_pair(nymID, addressBook));
+		return *addressBook;
+	}
+}
 
 }
 // nOT
