@@ -87,14 +87,14 @@ void cCmdParser::Init() {
 			auto nym = data.Var(curr_word_ix - 1);
 
 			bool exist = use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1))
-					|| AddressBookStorage::Get(use.NymGetId(nym)).nymExist(use.NymGetId(nym));
+					|| AddressBookStorage::Get(use.NymGetId(nym))->nymExist(use.NymGetId(nym));
 			return exist;
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting");
 			auto nym = data.Var(curr_word_ix-1);
 			auto walletNyms =  use.NymGetAllNames();
-			auto addressBookNyms = AddressBookStorage::Get(use.NymGetId(nym)).getAllNames();
+			auto addressBookNyms = AddressBookStorage::Get(use.NymGetId(nym))->getAllNames();
 			vector <string> nyms;
 			nyms.reserve(walletNyms.size() + addressBookNyms.size());
 			nyms.insert(nyms.end(), addressBookNyms.begin(), addressBookNyms.end());
@@ -505,6 +505,9 @@ void cCmdParser::Init() {
 
 	AddFormat("addressbook add", {pNym, pText, pText}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookAdd(D.V(1), D.V(2), D.V(3), D.has("--dryrun") ); } );
+
+	AddFormat("addressbook rm", {pNym, pText}, {}, NullMap,
+		LAMBDA { auto &D=*d; return U.AddressBookRemove(D.V(1), D.V(2), D.has("--dryrun") ); } );
 
 	//======== ot asset ========
 

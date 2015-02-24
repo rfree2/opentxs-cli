@@ -719,7 +719,7 @@ bool cUseOT::AddressBookAdd(const string & nym, const string & newNym, const ID 
 
 
 	auto addressbook = AddressBookStorage::Get(NymGetId(nym));
-	auto added = addressbook.add(newNym, newNymID);
+	auto added = addressbook->add(newNym, newNymID);
 
 	return added;
 }
@@ -730,8 +730,18 @@ bool cUseOT::AddressBookDisplay(const string & nym, bool dryrun) {
 
 	cout << "owner nym: " << nym << endl;
 	auto addressbook = AddressBookStorage::Get(NymGetId(nym));
-	addressbook.display();
+	addressbook->display();
 	return true;
+}
+
+bool cUseOT::AddressBookRemove(const string & ownerNym, const ID & toRemoveNymID, bool dryrun) {
+	_fact("addressbook remove " << ownerNym << " " << toRemoveNymID);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	auto addressbook = AddressBookStorage::Get(NymGetId(ownerNym));
+	auto removed = addressbook->remove(toRemoveNymID);
+	return removed;
 }
 
 vector<string> cUseOT::AssetGetAllNames() {

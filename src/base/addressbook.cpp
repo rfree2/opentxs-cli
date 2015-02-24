@@ -6,8 +6,9 @@ namespace nOT {
 
 INJECT_OT_COMMON_USING_NAMESPACE_COMMON_3
 
-AddressBook ::AddressBook(const string & nymID) :
+AddressBook::AddressBook(const string & nymID) :
 		ownerNymID(nymID) {
+	_mark("constructor");
 	this->path = string(opentxs::OTPaths::AppDataFolder().Get()) + "client_data/" + "addressbook/" + ownerNymID;
 	_dbg2("owner: " << ownerNymID);
 	_dbg3(path);
@@ -17,16 +18,19 @@ AddressBook ::AddressBook(const string & nymID) :
 	}
 }
 
-AddressBook AddressBook::Load(const string &nymID) {
+shared_ptr<AddressBook> AddressBook::Load(const string &nymID) {
 	_info("loading address book for nym: " << nymID);
+	shared_ptr<AddressBook> addressBookPointer(nullptr);
 	try {
-		AddressBook addressBook(nymID);
-		return addressBook;
+		//AddressBook addressBook(nymID);
+
+		addressBookPointer = std::make_shared<AddressBook>(nymID);
 	} catch(std::exception &e) {
 		cout << zkr::cc::fore::lightred << "Can't load address book" << zkr::cc::console << endl;
 		_erro(e.what());
-		//return NULL;
 	}
+
+	return addressBookPointer;
 }
 
 bool AddressBook::loadFromFile() {
@@ -59,7 +63,7 @@ bool AddressBook::add(const string & nymName, const string & nymID) {
 	_info("adding to address book: " << nymName << " (" << nymID << ")");
 	AddressBook::Entry entry(nymName);
 
-	std::pair <string, string> contact = std::make_pair(nymID, entry.toString());
+	std::pair <string, string> contact(nymID, entry.toString());
 	nOT::nUtils::cConfigManager utils;
 
 	try {
@@ -153,31 +157,28 @@ vector<string> AddressBook::getAllNames() {
 
 
 AddressBook::~AddressBook() {
-	_dbg3(ownerNymID);
+	_mark("DESTRUCTOR: " << ownerNymID);
 }
 
 AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
-	//auto nymVec = nOT::nUtils::SplitString(strEntry);
 	AddressBook::Entry entry(strEntry);
 	return entry;
 }
 map<string, shared_ptr<AddressBook>> AddressBookStorage::saved;
-//map<string, AddressBook> AddressBookStorage::saved;
 
-
-AddressBook AddressBookStorage::Get(const string & nymID) {
+shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 	try {
-		return *saved.at(nymID);
-//		return saved.at(nymID);
+		return saved.at(nymID);
 	}  catch (const std::out_of_range& e) {
 		_note("can't find in map, creating the new one for nym: " << nymID);
-		auto addressBook = std::make_shared<AddressBook>(AddressBook::Load(nymID));
-		saved.insert(std::make_pair(nymID, addressBook));
-		return *addressBook;
-//		auto addressBook = AddressBook::Load(nymID);
-//		saved.insert(std::make_pair(nymID, addressBook));
-//		return addressBook;
+		auto addressBookPointer = AddressBook::Load(nymID);
+		saved.insert(std::pair<string, shared_ptr<AddressBook>>(nymID, addressBookPointer));
+		return addressBookPointer;
 	}
+}
+
+void AddressBookStorage::ForceClear() {
+	saved.clear();
 }
 
 }

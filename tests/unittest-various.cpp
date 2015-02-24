@@ -18,6 +18,8 @@ protected:
 	string toAcc;
 	string server;
 
+	enum  color { red, blue };
+
 	virtual void SetUp() {
 		useOt = std::make_shared<nOT::nUse::cUseOT>("test-record");
 		preCmd = "ot record ";
@@ -66,25 +68,38 @@ TEST_F(cUseOtTest, AddressbookOperation) {
 
 	auto addressbook = nOT::AddressBookStorage::Get(nymID);
 
-	EXPECT_TRUE(addressbook.add(toNym, useOt->NymGetId(toNym)));
-	EXPECT_TRUE(addressbook.nymExist(useOt->NymGetId(toNym)));
-	EXPECT_FALSE(addressbook.add(toNym, useOt->NymGetId(toNym)));
-	EXPECT_FALSE(addressbook.add(nym2, nymID2));
+	EXPECT_TRUE(addressbook->add(toNym, useOt->NymGetId(toNym)));
+	EXPECT_TRUE(addressbook->nymExist(useOt->NymGetId(toNym)));
+	EXPECT_FALSE(addressbook->add(toNym, useOt->NymGetId(toNym)));
+	EXPECT_FALSE(addressbook->add(nym2, nymID2));
 
-	addressbook.display();
+	addressbook->display();
 
 	const auto removingNymID = useOt->NymGetId(toNym);
-	EXPECT_TRUE(addressbook.remove(removingNymID));
-	EXPECT_FALSE(addressbook.nymExist(removingNymID));
-	EXPECT_FALSE(addressbook.remove(removingNymID));
+	EXPECT_TRUE(addressbook->remove(removingNymID));
+	EXPECT_FALSE(addressbook->nymExist(removingNymID));
+	EXPECT_FALSE(addressbook->remove(removingNymID));
 
-	addressbook.display();
+	addressbook->display();
 }
 
 TEST_F(cUseOtTest, AddressbookDisplay) {
 	const string nym = "Alice";
 	const auto nymID = useOt->NymGetId(nym);
 	auto addressbook = nOT::AddressBookStorage::Get(nymID);
-	addressbook.display();
+	addressbook->display();
 
+}
+
+TEST_F(cUseOtTest, AddressbookClear) {
+	for(auto nym : useOt->NymGetAllNames()) {
+		EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
+	}
+
+	sleep(3);
+
+	for(auto nym : useOt->NymGetAllNames()) {
+			EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
+		}
+	nOT::AddressBookStorage::ForceClear();
 }

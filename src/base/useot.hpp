@@ -135,7 +135,7 @@ namespace nUse {
 
 		EXEC bool AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun);
 		EXEC bool AddressBookDisplay(const string & nym, bool dryrun);
-//		EXEC bool AddressBookRemove(const string & nym);
+		EXEC bool AddressBookRemove(const string & ownerNym, const ID & toRemoveNymID, bool dryrun);
 
 
 		//================= asset =================

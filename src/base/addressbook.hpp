@@ -5,10 +5,11 @@
 
 namespace nOT {
 class AddressBook {
-	AddressBook(const string & nymID);
 
 public:
-	static AddressBook Load(const string &nymID);
+	AddressBook(const string & nymID);
+
+	static shared_ptr<AddressBook> Load(const string &nymID);
 	size_t getCount() { return contacts.size(); };
 
 	bool add(const string & nymName, const string & nymID);
@@ -27,7 +28,6 @@ private:
 		Entry(const string & name) :
 				nymName(name) {
 		};
-
 		string toString() { return nymName; };
 		static Entry fromString(string strEntry);
 	};
@@ -45,9 +45,10 @@ private:
 
 class AddressBookStorage {
 public:
-	static AddressBook Get(const string & nymID);
+	static shared_ptr<AddressBook> Get(const string & nymID); ///< returns pointer to address book for specific nym
+	static void ForceClear(); ///< remove pointer to addressBook
 private:
-	static map <string, shared_ptr<AddressBook>> saved;
+	static map <string, shared_ptr<AddressBook>> saved; ///< map with pointers to address book
 };
 
 
