@@ -10,7 +10,7 @@
 
 using namespace nOT::nUtils;
 
-class cUseOtRecordTest: public testing::Test {
+class cUseOtTest: public testing::Test {
 protected:
 	std::shared_ptr<nOT::nUse::cUseOT> useOt;
 	string preCmd;
@@ -34,27 +34,14 @@ protected:
 	}
 };
 
-TEST_F(cUseOtRecordTest, ClearExpired) {
-//	EXPECT_TRUE(useOt->RecordClear(toAcc, server, false, false));
 
-//	EXPECT_FALSE(useOt->RecordClear("silver issuer", false, false));
-
-//	EXPECT_TRUE(useOt->RecordDisplay(toAcc, server, false));
-}
-
-TEST_F(cUseOtRecordTest, ClearAll) {
-//	EXPECT_TRUE(useOt->RecordClear(toAcc, server, true, false));
-//	EXPECT_FALSE(useOt->RecordClear(toAcc, server, true, false));
-
-}
-
-TEST_F(cUseOtRecordTest, NymAcc) {
+TEST_F(cUseOtTest, NymAcc) {
 	useOt->Init();
 	EXPECT_EQ(toNym, useOt->AccountGetNym(toAcc));
 
 }
 
-TEST_F(cUseOtRecordTest, Basket) {
+TEST_F(cUseOtTest, Basket) {
 	useOt->Init();
 	auto assets = useOt->AssetGetAllNames();
 	_dbg3(assets.size());
@@ -69,7 +56,7 @@ TEST_F(cUseOtRecordTest, Basket) {
 	}
 }
 
-TEST_F(cUseOtRecordTest, Addressbook) {
+TEST_F(cUseOtTest, Addressbook) {
 	useOt->Init();
 
 	const string nym = "Alice";
@@ -80,8 +67,8 @@ TEST_F(cUseOtRecordTest, Addressbook) {
 
 	auto addressbook = nOT::AddressBook::Load(nymID);
 
-	addressbook.add(toNym, useOt->NymGetId(toNym));
-	addressbook.add(nym2, nymID2);
+	EXPECT_FALSE(addressbook.add(toNym, useOt->NymGetId(toNym)));
+	EXPECT_FALSE(addressbook.add(nym2, nymID2));
 
 	addressbook.display();
 }
