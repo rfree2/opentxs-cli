@@ -34,7 +34,6 @@ protected:
 	}
 };
 
-
 TEST_F(cUseOtTest, NymAcc) {
 	useOt->Init();
 	EXPECT_EQ(toNym, useOt->AccountGetNym(toAcc));
@@ -56,7 +55,7 @@ TEST_F(cUseOtTest, Basket) {
 	}
 }
 
-TEST_F(cUseOtTest, Addressbook) {
+TEST_F(cUseOtTest, AddressbookAdd) {
 	useOt->Init();
 
 	const string nym = "Alice";
@@ -67,8 +66,22 @@ TEST_F(cUseOtTest, Addressbook) {
 
 	auto addressbook = nOT::AddressBook::Load(nymID);
 
+	EXPECT_TRUE(addressbook.add(toNym, useOt->NymGetId(toNym)));
+	EXPECT_TRUE(addressbook.nymExist(useOt->NymGetId(toNym)));
 	EXPECT_FALSE(addressbook.add(toNym, useOt->NymGetId(toNym)));
 	EXPECT_FALSE(addressbook.add(nym2, nymID2));
 
 	addressbook.display();
+}
+
+TEST_F(cUseOtTest, AddressbookRemove) {
+	const string nym = "Alice";
+	const auto nymID = useOt->NymGetId(nym);
+	auto addressbook = nOT::AddressBook::Load(nymID);
+
+	const auto removingNymID = useOt->NymGetId(toNym);
+	EXPECT_TRUE(addressbook.remove(removingNymID));
+	EXPECT_FALSE(addressbook.nymExist(removingNymID));
+	EXPECT_FALSE(addressbook.remove(removingNymID));
+
 }

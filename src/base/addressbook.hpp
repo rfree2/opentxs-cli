@@ -14,7 +14,8 @@ public:
 	size_t getCount() { return contacts.size(); };
 
 	bool add(const string & nymName, const string & nymID);
-//	void remove();
+	bool nymExist(const string & nymID) const;
+	bool remove(const string & nymID);
 
 	void display();
 	virtual ~AddressBook();
@@ -34,7 +35,9 @@ private:
 
 	void createDirectory();
 	bool loadFromFile();
-	bool checkExistance(const string & nymID);
+
+	void saveContacts();
+	void saveContacts(map<string, string> contacts);
 
 	const string ownerNymID;
 	string path;

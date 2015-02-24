@@ -619,7 +619,7 @@ void cConfigManager::Save(const string & fileName, const std::pair<eSubjectType,
 void cConfigManager::SaveStr(const string & fileName, const map<string, string> & str) {
 	_dbg1("Will save map of config");
 
-	std::ofstream outFile(fileName.c_str());
+	std::ofstream outFile(fileName.c_str(), std::ios::trunc);
 	for (auto pair : str) {
 		_dbg2("Got: "<<pair.first<<","<<pair.second);
 		outFile << pair.first << " ";

@@ -51,7 +51,7 @@ void AddressBook::createDirectory() {
 }
 
 bool AddressBook::add(const string & nymName, const string & nymID) {
-	if(checkExistance(nymID)) {
+	if(nymExist(nymID)) {
 		_warn("This nym: " << nymName << "(" << nymID << ") already exist in address book, aborting");
 		return false;
 	}
@@ -71,7 +71,7 @@ bool AddressBook::add(const string & nymName, const string & nymID) {
 	return true;
 }
 
-bool AddressBook::checkExistance(const string &nymID) {
+bool AddressBook::nymExist(const string &nymID) const {
 	auto count = contacts.count(nymID);
 	_dbg3(count);
 	if(count == 0) return false;
@@ -100,6 +100,44 @@ void AddressBook::display() {
 		++i;
 	}
 	tp.PrintFooter();
+}
+
+bool AddressBook::remove(const string & nymID) {
+	if(!nymExist(nymID)) {
+		cout << zkr::cc::fore::yellow << "This nym doesn't exist" << zkr::cc::console << endl;
+		_warn("Can't find nym: " << nymID);
+		return false;
+	}
+	auto copyOfConacts = this->contacts;
+	try {
+		contacts.erase(nymID);
+		saveContacts(contacts);
+		_info("removing nym: " << nymID << " successfull");
+	} catch(...) {
+		contacts.clear();
+		contacts = copyOfConacts;
+		saveContacts(contacts);
+		_erro("can't remove nym: " << nymID << ", aborting");
+		return false;
+	}
+
+	return true;
+}
+
+void AddressBook::saveContacts(map<string, string> contacts) {
+	if(!opentxs::OTPaths::PathExists(opentxs::String(path)))
+		createDirectory();
+
+	nOT::nUtils::cConfigManager utils;
+	try {
+		utils.SaveStr(path, contacts);
+	} catch(...) {
+		_erro("problem with saving to file");
+	}
+}
+
+void AddressBook::saveContacts() {
+	saveContacts(this->contacts);
 }
 
 AddressBook::~AddressBook() {
