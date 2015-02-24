@@ -8,7 +8,7 @@ Template for new files, replace word "template" and later delete this line here.
 
 #include "lib_common2.hpp"
 //#include "OTStorage.hpp"
-
+#include "addressbook.hpp"
 
 namespace opentxs{
 class OT_ME;
@@ -130,6 +130,13 @@ namespace nUse {
 
 		EXEC bool AccountOutCancel(const string & account, const int index, bool all, bool dryrun);
 		EXEC bool AccountOutDisplay(const string & account, bool dryrun);
+
+		//================= addressbook =================
+
+		EXEC bool AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun);
+		EXEC bool AddressBookDisplay(const string & nym, bool dryrun);
+//		EXEC bool AddressBookRemove(const string & nym);
+
 
 		//================= asset =================
 
@@ -277,7 +284,8 @@ namespace nUse {
 		//================= voucher ==============
 
 		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun);
-		EXEC bool VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun);
+		EXEC bool VoucherWithdraw(const string & fromAcc, const string &fromNym, const string &toNym, int64_t amount,
+				string memo, bool dryrun);
 
 	};
 

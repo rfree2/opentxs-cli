@@ -39,10 +39,10 @@ protected:
 };
 
 
-
 TEST_F(cUseOtChequeTest, CreateCheque) {
 	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, server, "test cheque", false);
 	EXPECT_TRUE(result);
+	useOt->Refresh(true);
 }
 
 TEST_F(cUseOtChequeTest, SendCheque) {
@@ -51,6 +51,7 @@ TEST_F(cUseOtChequeTest, SendCheque) {
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(fromAcc, true, false);
 	ASSERT_TRUE(result);
+	useOt->Refresh(true);
 }
 
 TEST_F(cUseOtChequeTest, DepositCheque) {
@@ -67,7 +68,7 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 
 	EXPECT_EQ(toNymBalance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 	EXPECT_EQ(fromNymBalance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)));
-
+	useOt->Refresh(true);
 }
 
 TEST_F(cUseOtChequeTest, CreateAndDiscard) {
@@ -86,7 +87,7 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 	useOt->NymRefresh(toNym, true, false);
 
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
-
+	useOt->Refresh(true);
 }
 /*
 TEST_F(cUseOtChequeTest, BasketNew) {

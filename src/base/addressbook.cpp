@@ -65,6 +65,7 @@ bool AddressBook::add(const string & nymName, const string & nymID) {
 	try {
 		contacts.insert(contact);
 		utils.SaveStr(path, contact);
+		_dbg3("all ok");
 	} catch(...) {
 		_erro("Problem with saving to file");
 		return false;
@@ -160,17 +161,22 @@ AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
 	AddressBook::Entry entry(strEntry);
 	return entry;
 }
-
 map<string, shared_ptr<AddressBook>> AddressBookStorage::saved;
+//map<string, AddressBook> AddressBookStorage::saved;
+
 
 AddressBook AddressBookStorage::Get(const string & nymID) {
 	try {
 		return *saved.at(nymID);
+//		return saved.at(nymID);
 	}  catch (const std::out_of_range& e) {
 		_note("can't find in map, creating the new one for nym: " << nymID);
 		auto addressBook = std::make_shared<AddressBook>(AddressBook::Load(nymID));
 		saved.insert(std::make_pair(nymID, addressBook));
 		return *addressBook;
+//		auto addressBook = AddressBook::Load(nymID);
+//		saved.insert(std::make_pair(nymID, addressBook));
+//		return addressBook;
 	}
 }
 

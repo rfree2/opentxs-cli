@@ -44,18 +44,19 @@ protected:
 };
 
 TEST_F(cUseOtVoucherTest, VoucherCreate) {
-	EXPECT_FALSE(useOt->VoucherWithdraw("bitcoins", toNym, -20, "some memo", 0));
+	const string acc = "bitcoins";
+	EXPECT_FALSE(useOt->VoucherWithdraw(acc, useOt->AccountGetNym(acc), toNym, -20, "some memo", 0));
 
 	auto fromAccID = useOt->AccountGetId(fromAcc);
 
 	EXPECT_FALSE(
-			useOt->VoucherWithdraw(fromAcc, toNym, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID) + 1, "memo",
+			useOt->VoucherWithdraw(fromAcc, useOt->AccountGetNym(fromAcc), toNym, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID) + 1, "memo",
 					false));
 
 	sleep(3);
 	const auto balance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(fromAccID);
 
-	EXPECT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount, "memo", false));
+	EXPECT_TRUE(useOt->VoucherWithdraw(fromAcc, useOt->AccountGetNym(fromAcc), toNym, amount, "memo", false));
 	EXPECT_TRUE(useOt->OutpaymentShow(fromNym, 0, false));
 
 	sleep(10);
@@ -83,7 +84,7 @@ TEST_F(cUseOtVoucherTest, Create) {
 	const auto startBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
 
 	// create
-	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, toNym, amount2, "", false));
+	ASSERT_TRUE(useOt->VoucherWithdraw(fromAcc, useOt->AccountGetNym(fromAcc), toNym, amount2, "", false));
 	sleep(15);
 	_info("after sleeping");
 	EXPECT_EQ(startBalance - amount2, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)));

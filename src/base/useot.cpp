@@ -712,6 +712,27 @@ bool cUseOT::AccountSetName(const string & accountID, const string & newAccountN
 	_info("Set account " << accountID << "name to " << newAccountName);
 	return true;
 }
+bool cUseOT::AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun) {
+	_fact("ot addressbook add " << nym << " " << newNym << " " << newNymID);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+
+	auto addressbook = AddressBookStorage::Get(NymGetId(nym));
+	auto added = addressbook.add(newNym, newNymID);
+
+	return added;
+}
+bool cUseOT::AddressBookDisplay(const string & nym, bool dryrun) {
+	_fact("ot addressbook ls " << nym);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	cout << "owner nym: " << nym << endl;
+	auto addressbook = AddressBookStorage::Get(NymGetId(nym));
+	addressbook.display();
+	return true;
+}
 
 vector<string> cUseOT::AssetGetAllNames() {
 	if(!Init())
@@ -2936,7 +2957,8 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 }
 
 
-bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_t amount, string memo, bool dryrun) {
+bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &fromNym, const string &toNym, int64_t amount,
+		string memo, bool dryrun) {
 	_fact("voucher new " << fromAcc << " " << toNym << " " << amount << " " << memo);
 	if (dryrun)
 		return true;
@@ -2948,7 +2970,7 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &toNym, int64_
 
 	const ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(fromAccID);
 	const ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(fromAccID);
-	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
+	const ID fromNymID = NymGetId(fromNym);
 
 	// comfortable lambda function, reports errors, returns false
 	auto err = [] (string var, string mess, string com)->bool {

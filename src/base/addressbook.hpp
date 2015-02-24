@@ -48,7 +48,6 @@ public:
 	static AddressBook Get(const string & nymID);
 private:
 	static map <string, shared_ptr<AddressBook>> saved;
-
 };
 
 
