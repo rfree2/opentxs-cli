@@ -6,7 +6,6 @@
 #include "../src/base/useot.hpp"
 #include <typeinfo>
 
-#include "../src/base/addressbook.hpp"
 
 using namespace nOT::nUtils;
 
@@ -57,49 +56,16 @@ TEST_F(cUseOtTest, Basket) {
 	}
 }
 
-TEST_F(cUseOtTest, AddressbookOperation) {
-	useOt->Init();
+TEST_F(cUseOtTest, AccGetNym) {
+	ASSERT_TRUE(useOt->Init());
+	auto allAccs = useOt->AccountGetAllNames();
+	ASSERT_TRUE(!allAccs.empty());
 
-	const string nym = "Alice";
-	const auto nymID = useOt->NymGetId(nym);
-
-	const string nym2 = "issuer";
-	const auto nymID2 = useOt->NymGetId(nym2);
-
-	auto addressbook = nOT::AddressBookStorage::Get(nymID);
-
-	EXPECT_TRUE(addressbook->add(toNym, useOt->NymGetId(toNym)));
-	EXPECT_TRUE(addressbook->nymExist(useOt->NymGetId(toNym)));
-	EXPECT_FALSE(addressbook->add(toNym, useOt->NymGetId(toNym)));
-	EXPECT_FALSE(addressbook->add(nym2, nymID2));
-
-	addressbook->display();
-
-	const auto removingNymID = useOt->NymGetId(toNym);
-	EXPECT_TRUE(addressbook->remove(removingNymID));
-	EXPECT_FALSE(addressbook->nymExist(removingNymID));
-	EXPECT_FALSE(addressbook->remove(removingNymID));
-
-	addressbook->display();
-}
-
-TEST_F(cUseOtTest, AddressbookDisplay) {
-	const string nym = "Alice";
-	const auto nymID = useOt->NymGetId(nym);
-	auto addressbook = nOT::AddressBookStorage::Get(nymID);
-	addressbook->display();
-
-}
-
-TEST_F(cUseOtTest, AddressbookClear) {
-	for(auto nym : useOt->NymGetAllNames()) {
-		EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
+	for(auto acc : allAccs) {
+		auto nym = useOt->AccountGetNym(acc);
+		_dbg1(nym << "\t" << acc);
+		EXPECT_EQ(useOt->NymGetId(nym), useOt->AccountGetNymID(acc));
 	}
-
-	sleep(3);
-
-	for(auto nym : useOt->NymGetAllNames()) {
-			EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
-		}
-	nOT::AddressBookStorage::ForceClear();
 }
+
+
