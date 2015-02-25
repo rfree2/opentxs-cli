@@ -92,8 +92,11 @@ bool AddressBook::nymExist(const string &nymID) const {
 
 bool AddressBook::nymNameExist(const string & nymName) const {
 	for (auto it = contacts.begin(); it != contacts.end(); ++it )
-	    if (it->second == nymName)
-	        return true;
+	    if (it->second == nymName) {
+	    	_info("nym " << nymName << " exists in addressBook");
+	    	return true;
+	    }
+	_info("nym " << nymName << " DOESN'T exist in addressBook");
 	return false;
 }
 

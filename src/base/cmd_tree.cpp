@@ -84,11 +84,10 @@ void cCmdParser::Init() {
 	cParamInfo pNymTo( "nym-to", [] () -> string { return Tr(eDictType::help, "nym-to") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Nym to validation");
-			auto nym = data.Var(curr_word_ix - 1);
-
-			bool exist = use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1))
-					|| AddressBookStorage::Get(use.NymGetId(nym))->nymExist(use.NymGetId(nym));
-			return exist;
+			auto nym = data.Var(curr_word_ix);
+			bool existInWallet = use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1));
+			bool existInAddressBook = AddressBookStorage::Get(use.NymGetId(nym))->nymNameExist(data.Var(curr_word_ix + 1));
+			return existInWallet || existInAddressBook;
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting");
