@@ -44,7 +44,12 @@ protected:
 };
 
 TEST_F(cUseOtVoucherTest, VoucherCreate) {
-	const string acc = "bitcoins";
+	ASSERT_TRUE(useOt->Init());
+	const string acc = "silver_issuer";
+
+	_info(useOt->AccountGetNym(acc));
+	ASSERT_FALSE(useOt->AccountGetNym(acc).empty());
+
 	EXPECT_FALSE(useOt->VoucherWithdraw(acc, useOt->AccountGetNym(acc), toNym, -20, "some memo", 0));
 
 	auto fromAccID = useOt->AccountGetId(fromAcc);
