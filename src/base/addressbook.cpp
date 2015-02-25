@@ -6,9 +6,9 @@ namespace nOT {
 
 INJECT_OT_COMMON_USING_NAMESPACE_COMMON_3
 
-AddressBook::AddressBook(const string & nymID) :
+AddressBook ::AddressBook(const string & nymID) :
 		ownerNymID(nymID) {
-	_mark("constructor");
+	_fact("constructor");
 	this->path = string(opentxs::OTPaths::AppDataFolder().Get()) + "client_data/" + "addressbook/" + ownerNymID;
 	_dbg2("owner: " << ownerNymID);
 	_dbg3(path);
@@ -25,7 +25,7 @@ shared_ptr<AddressBook> AddressBook::Load(const string &nymID) {
 		//AddressBook addressBook(nymID);
 
 		addressBookPointer = std::make_shared<AddressBook>(nymID);
-	} catch(std::exception &e) {
+	} catch (std::exception &e) {
 		cout << zkr::cc::fore::lightred << "Can't load address book" << zkr::cc::console << endl;
 		_erro(e.what());
 	}
@@ -40,7 +40,7 @@ bool AddressBook::loadFromFile() {
 	nOT::nUtils::cConfigManager utils;
 	utils.Load(path, contacts);
 
-	if(getCount() == 0)
+	if (getCount() == 0)
 		cout << "Empty address book";
 
 	return true;
@@ -56,21 +56,21 @@ void AddressBook::createDirectory() {
 }
 
 bool AddressBook::add(const string & nymName, const string & nymID) {
-	if(nymExist(nymID)) {
+	if (nymExist(nymID)) {
 		_warn("This nym: " << nymName << "(" << nymID << ") already exist in address book, aborting");
 		return false;
 	}
 	_info("adding to address book: " << nymName << " (" << nymID << ")");
 	AddressBook::Entry entry(nymName);
 
-	std::pair <string, string> contact(nymID, entry.toString());
+	std::pair<string, string> contact(nymID, entry.toString());
 	nOT::nUtils::cConfigManager utils;
 
 	try {
 		contacts.insert(contact);
 		utils.SaveStr(path, contact);
 		_dbg3("all ok");
-	} catch(...) {
+	} catch (...) {
 		_erro("Problem with saving to file");
 		return false;
 	}
@@ -79,17 +79,25 @@ bool AddressBook::add(const string & nymName, const string & nymID) {
 
 bool AddressBook::nymExist(const string &nymID) const {
 	auto count = contacts.count(nymID);
-	_dbg3(count);
-	if(count == 0) return false;
-	else if (count == 1) return true;
+	_dbg3("check existance nym: " << nymID << " ->" << count);
+	if (count == 0) {
+		return false;
+	} else if (count == 1)
+		return true;
 	else {
 		throw "duplicate entry in AddressBook!";
 		return false;
 	}
 }
 
+string AddressBook::nymGetName(const string & id) const {
+	auto it = contacts.find(id);
+	if(it == contacts.end()) return "";
+	return it->second;
+}
+
 void AddressBook::display() {
-	if(getCount() == 0) {
+	if (getCount() == 0) {
 		cout << "Empty address book" << endl;
 		return;
 	}
@@ -100,7 +108,7 @@ void AddressBook::display() {
 
 	tp.PrintHeader();
 
-	int i=0;
+	int i = 0;
 	for (auto pair : contacts) {
 		tp << i << pair.second << pair.first;
 		++i;
@@ -109,7 +117,7 @@ void AddressBook::display() {
 }
 
 bool AddressBook::remove(const string & nymID) {
-	if(!nymExist(nymID)) {
+	if (!nymExist(nymID)) {
 		cout << zkr::cc::fore::yellow << "This nym doesn't exist" << zkr::cc::console << endl;
 		_warn("Can't find nym: " << nymID);
 		return false;
@@ -119,7 +127,7 @@ bool AddressBook::remove(const string & nymID) {
 		contacts.erase(nymID);
 		saveContacts(contacts);
 		_info("removing nym: " << nymID << " successfull");
-	} catch(...) {
+	} catch (...) {
 		contacts.clear();
 		contacts = copyOfConacts;
 		saveContacts(contacts);
@@ -131,13 +139,13 @@ bool AddressBook::remove(const string & nymID) {
 }
 
 void AddressBook::saveContacts(map<string, string> contacts) {
-	if(!opentxs::OTPaths::PathExists(opentxs::String(path)))
+	if (!opentxs::OTPaths::PathExists(opentxs::String(path)))
 		createDirectory();
 
 	nOT::nUtils::cConfigManager utils;
 	try {
 		utils.SaveStr(path, contacts);
-	} catch(...) {
+	} catch (...) {
 		_erro("problem with saving to file");
 	}
 }
@@ -155,9 +163,8 @@ vector<string> AddressBook::getAllNames() {
 	return nyms;
 }
 
-
 AddressBook::~AddressBook() {
-	_mark("DESTRUCTOR: " << ownerNymID);
+	_fact("DESTRUCTOR: " << ownerNymID);
 }
 
 AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
@@ -169,7 +176,7 @@ map<string, shared_ptr<AddressBook>> AddressBookStorage::saved;
 shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 	try {
 		return saved.at(nymID);
-	}  catch (const std::out_of_range& e) {
+	} catch (const std::out_of_range& e) {
 		_note("can't find in map, creating the new one for nym: " << nymID);
 		auto addressBookPointer = AddressBook::Load(nymID);
 		saved.insert(std::pair<string, shared_ptr<AddressBook>>(nymID, addressBookPointer));
