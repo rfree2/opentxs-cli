@@ -100,9 +100,12 @@ TEST_F(cUseOtAddressBookTest, AddAndFind) {
 		if(shouldExist) {
 			EXPECT_FALSE(addressBook->nymGetName(toAddNymID).empty());
 			EXPECT_TRUE(addressBook->nymExist(toAddNymID));
+			EXPECT_TRUE(addressBook->nymNameExist(toAddNymName));
+
 		} else {
 			EXPECT_TRUE(addressBook->nymGetName(toAddNymID).empty());
 			EXPECT_FALSE(addressBook->nymExist(toAddNymID));
+			EXPECT_FALSE(addressBook->nymNameExist(toAddNymName));
 		}
 	};
 

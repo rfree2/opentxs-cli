@@ -90,6 +90,13 @@ bool AddressBook::nymExist(const string &nymID) const {
 	}
 }
 
+bool AddressBook::nymNameExist(const string & nymName) const {
+	for (auto it = contacts.begin(); it != contacts.end(); ++it )
+	    if (it->second == nymName)
+	        return true;
+	return false;
+}
+
 string AddressBook::nymGetName(const string & id) const {
 	auto it = contacts.find(id);
 	if(it == contacts.end()) return "";

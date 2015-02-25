@@ -14,6 +14,7 @@ public:
 
 	bool add(const string & nymName, const string & nymID);
 	bool nymExist(const string & nymID) const;
+	bool nymNameExist(const string & nymName) const;
 	string nymGetName(const string & id) const;
 
 	bool remove(const string & nymID);
