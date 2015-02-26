@@ -214,6 +214,7 @@ namespace nUse {
 		ID NymGetId(const string & nym); ///< Gets Nym ID both from name and ID with prefix
 		ID NymGetToNymId(const string & nym, const string & ownerNymID);
 		string NymGetName(const ID & nymID);
+		string NymGetRecipientName(const ID & nymID); ///< returns nym name or id (if name not found)
 		bool NymSetName(const ID & nymID, const string & newNymName);
 		//bool NymIsInWalled();
 

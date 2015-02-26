@@ -39,7 +39,7 @@ bool AddressBook::loadFromFile() {
 	utils.Load(path, contacts);
 
 	if (getCount() == 0)
-		cout << "Empty address book";
+		_warn("Empty address book");
 
 	return true;
 }

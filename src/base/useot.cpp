@@ -86,12 +86,13 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	auto ncol = zkr::cc::console;
 	auto err = zkr::cc::fore::lightred;
 
+
 	auto now = OTTimeGetCurrentTime();
 	cout << col << "              TXN: " << ncol << txn << endl;
 	cout << col << "           Server: " << ncol << ServerGetName(serverID) << col2 << " (" << serverID << ")" << endl;
 	cout << col << "   Sender account: " << ncol << AccountGetName(senderAccID) << col2 << " (" << senderAccID << ")" << endl;
 	cout << col << "       Sender nym: " << ncol << NymGetName(senderNymID) << col2 << " (" << senderNymID << ")" << endl;
-	cout << col << "    Recipient nym: " << ncol << NymGetName(recNymID) << col2 << " (" << recNymID << ")" << endl;
+	cout << col << "    Recipient nym: " << ncol << NymGetRecipientName(recNymID) << col2 << " (" << recNymID << ")" << endl;
 	cout << col << "       Asset type: " << ncol << AssetGetName(assetID) << col2 << " (" << assetID << ")" << endl;
 	cout << col << "           Amount: " << ncol << amount << endl;
 	cout << col << "             Memo: " << ncol << memo << endl;
@@ -1470,32 +1471,39 @@ vector<string> cUseOT::MsgGetAll() { ///< Get all messages from all Nyms. FIXME 
 
 bool cUseOT::MsgDisplayForNym(const string & nymName, bool dryrun) { ///< Get all messages from Nym.
 	_fact("msg ls " << nymName);
-	if (dryrun) return false;
-	if(!Init())	return false;
+	if (dryrun)
+		return false;
+	if (!Init())
+		return false;
 	string nymID = NymGetId(nymName);
 
 	bprinter::TablePrinter tpIn(&std::cout);
-  tpIn.AddColumn("ID", 4);
-  tpIn.AddColumn("From", 20);
-  tpIn.AddColumn("Content", 50);
+	tpIn.AddColumn("ID", 4);
+	tpIn.AddColumn("From", 20);
+	tpIn.AddColumn("Content", 50);
 
-  nUtils::DisplayStringEndl( cout, zkr::cc::fore::lightgreen + NymGetName(nymID) + zkr::cc::fore::console+ "(" + nymID + ")" );
-	nUtils::DisplayStringEndl( cout, "INBOX" );
+	nUtils::DisplayStringEndl(cout,
+			zkr::cc::fore::lightgreen + NymGetName(nymID) + zkr::cc::fore::console + "(" + nymID + ")");
+	nUtils::DisplayStringEndl(cout, "INBOX");
 	tpIn.PrintHeader();
-	for(int i = 0 ; i < opentxs::OTAPI_Wrap::GetNym_MailCount (nymID);i++) {
-		tpIn << i << NymGetName(opentxs::OTAPI_Wrap::GetNym_MailSenderIDByIndex(nymID, i)) << opentxs::OTAPI_Wrap::GetNym_MailContentsByIndex(nymID,i);
+
+	for (int i = 0; i < opentxs::OTAPI_Wrap::GetNym_MailCount(nymID); i++) {
+		tpIn << i << NymGetName(opentxs::OTAPI_Wrap::GetNym_MailSenderIDByIndex(nymID, i))
+				<< opentxs::OTAPI_Wrap::GetNym_MailContentsByIndex(nymID, i);
 	}
 	tpIn.PrintFooter();
 
-  bprinter::TablePrinter tpOut(&std::cout);
+	bprinter::TablePrinter tpOut(&std::cout);
 	tpOut.AddColumn("ID", 4);
 	tpOut.AddColumn("To", 20);
 	tpOut.AddColumn("Content", 50);
 
 	nUtils::DisplayStringEndl(cout, "OUTBOX");
 	tpOut.PrintHeader();
-	for(int i = 0 ; i < opentxs::OTAPI_Wrap::GetNym_OutmailCount (nymID);i++) {
-		tpOut << i << NymGetName(opentxs::OTAPI_Wrap::GetNym_OutmailRecipientIDByIndex(nymID, i)) << opentxs::OTAPI_Wrap::GetNym_OutmailContentsByIndex(nymID,i);
+
+	for (int i = 0; i < opentxs::OTAPI_Wrap::GetNym_OutmailCount(nymID); i++) {
+		tpOut << i << NymGetRecipientName(opentxs::OTAPI_Wrap::GetNym_OutmailRecipientIDByIndex(nymID, i))
+				<< opentxs::OTAPI_Wrap::GetNym_OutmailContentsByIndex(nymID, i);
 	}
 	tpOut.PrintFooter();
 	return true;
@@ -1542,7 +1550,7 @@ bool cUseOT::MsgDisplayForNymBox(eBoxType boxType, const string & nymName, int m
 			return false;
 		}
 
-		const string& data_from = NymGetName(opentxs::OTAPI_Wrap::GetNym_MailSenderIDByIndex(nymID, msg_index));
+		const string& data_from = NymGetRecipientName(opentxs::OTAPI_Wrap::GetNym_MailSenderIDByIndex(nymID, msg_index));
 		const string& data_server = ServerGetName(opentxs::OTAPI_Wrap::GetNym_MailNotaryIDByIndex(nymID, msg_index));
 
 		cout << col1 << "          To: " << col2 << nymName << endl;
@@ -1889,6 +1897,19 @@ string cUseOT::NymGetName(const ID & nymID) {
 	return opentxs::OTAPI_Wrap::GetNym_Name(nymID);
 }
 
+string cUseOT::NymGetRecipientName(const ID & nymID) {
+	// if can't get nym name, returns id
+	// comfortable to printing information about transaction, etc
+	// in case situation whet nym WAS in addressBook but it was removed (or sth like that)
+
+	auto name = NymGetName(nymID);
+	if(name.empty()) {
+		_warn("Can't find nym");
+		return nymID;
+	}
+	return name;
+}
+
 bool cUseOT::NymRefresh(const string & nymName, bool all, bool dryrun) { //TODO arguments for server, all servers
 	_fact("nym refresh " << nymName << " all?=" << all);
 	if(dryrun) return true;
@@ -2059,8 +2080,7 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 
 	for (int32_t i = 0; i<count; i++) {
 		auto instr = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
-		//auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
-		auto to = opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i);
+		auto to = NymGetRecipientName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
 		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
 		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instr));
 		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
@@ -2256,7 +2276,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 
 	string recipientNymID = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument);
 
-	_dbg1("recNym: " << NymGetName(recipientNymID));
+	_dbg1("recNym: " << NymGetRecipientName(recipientNymID));
 	/*
 	 if (!recipientNymID.empty() && !CheckIfExists(eSubjectType::User, recipientNymID)) {
 	 _erro("The instrument " + ToStr(index) + " is endorsed to a specific recipient ("
@@ -2384,7 +2404,6 @@ bool cUseOT::PaymentShow(const string & nym, const string & server, bool dryrun)
 				 return false;
 			}
 			string transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(serverID, nymID, nymID, paymentInbox, index);
-
 
 			int64_t transNumber = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(serverID, nymID, nymID, paymentInbox, index);
 
@@ -2647,7 +2666,7 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 		const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
 		const auto senderNym = NymGetName(
 				opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction));
-		const auto recipientNym = NymGetName(
+		const auto recipientNym = NymGetRecipientName(
 				opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID, transaction));
 		const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
 

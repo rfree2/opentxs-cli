@@ -586,7 +586,7 @@ void cCmdParser::Init() {
 			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 
 	AddFormat("cheque new-for", {pNymTo, pAmount}, {}, { {"--memo",pText} },
-			LAMBDA { auto &D=*d; return U.ChequeCreate( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+			LAMBDA {auto &D=*d; return U.ChequeCreate( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.o1("--memo", ""), D.has("--dryrun") );} );
 
 
 	//======== ot market ========
