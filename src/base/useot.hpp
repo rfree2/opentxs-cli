@@ -174,7 +174,7 @@ namespace nUse {
 
 		//================= cheque =================
 
-		EXEC bool ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun);
+		EXEC bool ChequeCreate(const string &fromAcc, const string & fromNym, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun);
 		EXEC bool ChequeDiscard(const string &acc, const string &nym, const int32_t & index, bool dryrun);
 
 
@@ -212,8 +212,10 @@ namespace nUse {
 		vector<string> NymGetAllIDs();
 		string NymGetDefault();
 		ID NymGetId(const string & nym); ///< Gets Nym ID both from name and ID with prefix
+		ID NymGetToNymId(const string & nym, const string & ownerNymID);
 		string NymGetName(const ID & nymID);
 		bool NymSetName(const ID & nymID, const string & newNymName);
+		//bool NymIsInWalled();
 
 		HINT vector<string> NymGetAllNames();
 

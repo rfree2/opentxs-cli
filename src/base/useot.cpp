@@ -960,7 +960,7 @@ bool cUseOT::CashExportWrap(const ID & nymSender, const ID & nymRecipient, const
 	if(!Init()) return false;
 
 	ID nymSenderID = NymGetId(nymSender);
-	ID nymRecipientID = NymGetId(nymRecipient);
+	ID nymRecipientID = NymGetToNymId(nymRecipient, nymSenderID);
 
 	string indices = "";
 	string retained_copy = "";
@@ -1161,7 +1161,7 @@ bool cUseOT::CashSend(const string & nymSender, const string & nymRecipient, con
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	ID nymSenderID = NymGetId(nymSender);
-	ID nymRecipientID = NymGetId(nymRecipient);
+	ID nymRecipientID = NymGetToNymId(nymRecipient, nymSenderID);
 
 	_info("Withdrawing cash from account: " << account << " amount: " << amount);
 	bool withdrawalSuccess = CashWithdraw(account, amount, false);
@@ -1358,15 +1358,15 @@ bool cUseOT::CashWithdraw(const string & account, int64_t amount, bool dryrun) {
 	return true;
 }
 
-bool cUseOT::ChequeCreate(const string &fromAcc, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun) {
+bool cUseOT::ChequeCreate(const string &fromAcc, const string & fromNym, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun) {
 	_fact("cheque new \"" << fromAcc << "\" \"" << toNym << "\" " << srv);
 	if (dryrun) return false;
 	if (!Init()) return false;
 
 	const ID fromAccID = AccountGetId(fromAcc);
-	const ID toNymID = NymGetId(toNym);
 
-	const ID fromNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(fromAccID);
+	const ID fromNymID = NymGetId(fromNym);
+	const ID toNymID = NymGetToNymId(toNym, fromNymID);
 	const ID srvID = ServerGetId(srv);
 
 	// TODO: Cheque is valid 6 months, time as param?
@@ -1604,7 +1604,7 @@ bool cUseOT::MsgSend(const string & nymSender, vector<string> nymRecipient, cons
 	ID senderID = NymGetId(nymSender);
 	vector<ID> recipientID;
 	for (auto varName : nymRecipient)
-		recipientID.push_back( NymGetId(varName) );
+		recipientID.push_back( NymGetToNymId(varName, senderID) );
 
 	for (auto varID : recipientID) {
 		_dbg1("Sending message from " + senderID + " to " + varID + "using server " + nUtils::SubjectType2String(nUtils::eSubjectType::Server) );
@@ -1857,6 +1857,16 @@ string cUseOT::NymGetId(const string & nymName) { // Gets nym aliases and IDs be
 	return "";
 }
 
+string cUseOT::NymGetToNymId(const string & nym, const string & ownerNymID) {
+	ID nymID = NymGetId(nym);
+
+	if(nymID.empty()) {
+		return AddressBookStorage::Get(ownerNymID)->nymGetID(nym);
+	}
+
+	return nymID;
+}
+
 bool cUseOT::NymDisplayInfo(const string & nymName, bool dryrun) {
 	_fact("nym info " << nymName);
 	if(dryrun) return true;
@@ -1869,6 +1879,13 @@ bool cUseOT::NymDisplayInfo(const string & nymName, bool dryrun) {
 string cUseOT::NymGetName(const ID & nymID) {
 	if(!Init())
 		return "";
+
+	auto vector = NymGetAllIDs();
+	if(std::find(vector.begin(), vector.end(), nymID) == vector.end()) { // nym not found, checing in address book
+		_dbg1("nym not found, checking in address book");
+		return AddressBookStorage::GetNymName(nymID, vector);
+	}
+
 	return opentxs::OTAPI_Wrap::GetNym_Name(nymID);
 }
 
@@ -2042,7 +2059,8 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 
 	for (int32_t i = 0; i<count; i++) {
 		auto instr = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID,i);
-		auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
+		//auto to = NymGetName(opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i));
+		auto to = opentxs::OTAPI_Wrap::GetNym_OutpaymentsRecipientIDByIndex(nymID,i);
 		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
 		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instr));
 		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
@@ -2501,7 +2519,7 @@ bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, 
 		return false;
 
 	const ID senderNymID = NymGetId(senderNym);
-	const ID recNymID = NymGetId(recipientNym);
+	const ID recNymID = NymGetToNymId(recipientNym, senderNymID);
 
 	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(senderNymID);
 
@@ -2883,7 +2901,7 @@ bool cUseOT::TextEncrypt(const string & recipientNymName, const string & plainTe
 		plainTextIn = plainText;
 
 	string encryptedText;
-	encryptedText = opentxs::OTAPI_Wrap::Encrypt(NymGetId(recipientNymName), plainTextIn);
+	encryptedText = opentxs::OTAPI_Wrap::Encrypt(NymGetToNymId(recipientNymName, NymGetDefault()), plainTextIn);
 	nUtils::DisplayStringEndl(cout, encryptedText);
 	return true;
 }
@@ -2962,8 +2980,9 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 
 	auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
 	cout << dep << endl;
+	auto ok = mMadeEasy->retrieve_account(srvID, nymID, accID, true);
 
-	return true;
+	return ok;
 }
 
 
@@ -2976,12 +2995,13 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &fromNym, cons
 		return false;
 
 	const ID fromAccID = AccountGetId(fromAcc);
-	const ID toNymID = NymGetId(toNym);
+	const ID fromNymID = NymGetId(fromNym);
+	const ID toNymID = NymGetToNymId(toNym, fromNymID);
 
 	const ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(fromAccID);
 	const ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(fromAccID);
-	const ID fromNymID = NymGetId(fromNym);
 
+	_mark(toNym << " id: " << toNymID );
 	// comfortable lambda function, reports errors, returns false
 	auto err = [] (string var, string mess, string com)->bool {
 		_erro( mess << " [" << var << "]");

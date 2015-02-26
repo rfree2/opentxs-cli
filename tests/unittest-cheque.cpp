@@ -40,7 +40,7 @@ protected:
 
 
 TEST_F(cUseOtChequeTest, CreateCheque) {
-	auto result = useOt->ChequeCreate(fromAcc, toNym, amount, server, "test cheque", false);
+	auto result = useOt->ChequeCreate(fromAcc, fromNym, toNym, amount, server, "test cheque", false);
 	EXPECT_TRUE(result);
 	useOt->Refresh(true);
 }
@@ -72,7 +72,7 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 }
 
 TEST_F(cUseOtChequeTest, CreateAndDiscard) {
-	auto create = useOt->ChequeCreate(fromAcc, toNym, amount, server, "to discard", false);
+	auto create = useOt->ChequeCreate(fromAcc, fromNym, toNym, amount, server, "to discard", false);
 	ASSERT_TRUE(create);
 
 	auto discard = useOt->ChequeDiscard(fromAcc, fromNym, 0, false);

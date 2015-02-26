@@ -80,21 +80,28 @@ void cCmdParser::Init() {
 		}
 	);
 
-	// IMPORTANT: to folly works before nym-to must be some nym (best nym-from)
+	// ? FIXME: nym-to must be first param or after nym or nym-from
 	cParamInfo pNymTo( "nym-to", [] () -> string { return Tr(eDictType::help, "nym-to") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Nym to validation");
-			auto nym = data.Var(curr_word_ix);
+			auto nym =  data.Var(curr_word_ix);
+
 			bool existInWallet = use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1));
 			bool existInAddressBook = AddressBookStorage::Get(use.NymGetId(nym))->nymNameExist(data.Var(curr_word_ix + 1));
 			return existInWallet || existInAddressBook;
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting");
-			auto nym = data.Var(curr_word_ix-1);
+			string nym = "";
+
+			try { nym = data.Var(curr_word_ix); }
+			catch(...) { nym = use.NymGetName(use.NymGetDefault()); }
+			_dbg2("completition for nym: " << nym);
+
 			auto walletNyms =  use.NymGetAllNames();
 			auto addressBookNyms = AddressBookStorage::Get(use.NymGetId(nym))->getAllNames();
 			vector <string> nyms;
+			// merge vectors
 			nyms.reserve(walletNyms.size() + addressBookNyms.size());
 			nyms.insert(nyms.end(), addressBookNyms.begin(), addressBookNyms.end());
 			nyms.insert(nyms.end(), walletNyms.begin(), walletNyms.end());
@@ -572,8 +579,8 @@ void cCmdParser::Init() {
 
 	//======== ot cheque ========
 
-	AddFormat("cheque new", {pAccountFrom, pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
-			LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), stoi(D.V(3)), D.v(4, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
+	AddFormat("cheque new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
+			LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.v(5, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("cheque discard", {pAccount, pNym, pOutpaymentIndex}, {}, {},
 			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
@@ -737,9 +744,9 @@ void cCmdParser::Init() {
 	//======== ot voucher ========
 
 	AddFormat("voucher new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
-		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(1), D.V(3), stoi(D.V(4)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
-	AddFormat("voucher cancel", {pAccount, pNym, pOutpaymentIndex}, {pOutpaymentIndex}, {},
+	AddFormat("voucher cancel", {pAccount, pNym}, {pOutpaymentIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();
