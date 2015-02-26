@@ -585,6 +585,10 @@ void cCmdParser::Init() {
 	AddFormat("cheque discard", {pAccount, pNym, pOutpaymentIndex}, {}, {},
 			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 
+	AddFormat("cheque new-for", {pNymTo, pAmount}, {}, { {"--memo",pText} },
+			LAMBDA { auto &D=*d; return U.ChequeCreate( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+
+
 	//======== ot market ========
 
 	AddFormat( "market ls", {}, {pServer, pNym}, NullMap,
@@ -745,6 +749,9 @@ void cCmdParser::Init() {
 
 	AddFormat("voucher new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+
+	AddFormat("voucher new-for", {pNymTo, pAmount}, {}, { {"--memo",pText} },
+		LAMBDA { auto &D=*d; return U.VoucherWithdraw( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher cancel", {pAccount, pNym}, {pOutpaymentIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
