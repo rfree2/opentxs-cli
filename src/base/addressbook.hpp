@@ -14,10 +14,12 @@ public:
 
 	bool add(const string & nymName, const string & nymID);
 	bool nymExist(const string & nymID) const;
+	string nymGetID(const string & nymName) const;
 	bool nymNameExist(const string & nymName) const;
 	string nymGetName(const string & id) const;
 
 	bool remove(const string & nymID);
+	void removeAll();
 
 	vector<string> getAllNames();
 
@@ -50,6 +52,7 @@ class AddressBookStorage {
 public:
 	static shared_ptr<AddressBook> Get(const string & nymID); ///< returns pointer to address book for specific nym
 	static void ForceClear(); ///< remove pointer to addressBook
+	static string GetNymName(const string & nymID, const vector<string> & allNymsID);
 private:
 	static map <string, shared_ptr<AddressBook>> saved; ///< map with pointers to address book
 };

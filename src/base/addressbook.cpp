@@ -22,8 +22,6 @@ shared_ptr<AddressBook> AddressBook::Load(const string &nymID) {
 	_info("loading address book for nym: " << nymID);
 	shared_ptr<AddressBook> addressBookPointer(nullptr);
 	try {
-		//AddressBook addressBook(nymID);
-
 		addressBookPointer = std::make_shared<AddressBook>(nymID);
 	} catch (std::exception &e) {
 		cout << zkr::cc::fore::lightred << "Can't load address book" << zkr::cc::console << endl;
@@ -91,18 +89,23 @@ bool AddressBook::nymExist(const string &nymID) const {
 }
 
 bool AddressBook::nymNameExist(const string & nymName) const {
-	for (auto it = contacts.begin(); it != contacts.end(); ++it )
-	    if (it->second == nymName) {
-	    	_info("nym " << nymName << " exists in addressBook");
-	    	return true;
-	    }
+	return !nymGetID(nymName).empty();
+}
+
+string AddressBook::nymGetID(const string & nymName) const {
+	for (auto it = contacts.begin(); it != contacts.end(); ++it)
+		if (it->second == nymName) {
+			_info("nym " << nymName << " exists in addressBook");
+			return it->first;
+		}
 	_info("nym " << nymName << " DOESN'T exist in addressBook");
-	return false;
+	return "";
 }
 
 string AddressBook::nymGetName(const string & id) const {
 	auto it = contacts.find(id);
-	if(it == contacts.end()) return "";
+	if (it == contacts.end())
+		return "";
 	return it->second;
 }
 
@@ -146,6 +149,12 @@ bool AddressBook::remove(const string & nymID) {
 	}
 
 	return true;
+}
+
+void AddressBook::removeAll() {
+	_warn("deleting all entires from address book");
+	for(auto nym : contacts)
+		remove(nym.first);
 }
 
 void AddressBook::saveContacts(map<string, string> contacts) {
@@ -196,6 +205,22 @@ shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 
 void AddressBookStorage::ForceClear() {
 	saved.clear();
+}
+
+string AddressBookStorage::GetNymName(const string & nymID, const vector<string> & allNymsID) {
+	string nymName = "";
+	for (auto ownerNymID : allNymsID) {
+		nymName = Get(ownerNymID)->nymGetName(nymID);
+		if (!nymName.empty()) {
+			_dbg1("ok found nym");
+			ForceClear();
+			return nymName;
+		}
+	}
+	_dbg1("Nym not found");
+	ForceClear();
+	return nymName;
+
 }
 
 }
