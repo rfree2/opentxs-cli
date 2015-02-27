@@ -80,7 +80,7 @@ void cCmdParser::Init() {
 		}
 	);
 
-	// ? FIXME: nym-to must be first param or after nym or nym-from
+	// TODO suggest not the same nym as was used already before
 	cParamInfo pNymTo( "nym-to", [] () -> string { return Tr(eDictType::help, "nym-to") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Nym to validation");
@@ -92,26 +92,11 @@ void cCmdParser::Init() {
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting");
-			string nym = "";
-
-			try { nym = data.Var(curr_word_ix); }
-			catch(...) { nym = use.NymGetName(use.NymGetDefault()); }
-			_dbg2("completition for nym: " << nym);
-
-			auto walletNyms =  use.NymGetAllNames();
-			auto addressBookNyms = AddressBookStorage::Get(use.NymGetId(nym))->getAllNames();
-			vector <string> nyms;
-			// merge vectors
-			nyms.reserve(walletNyms.size() + addressBookNyms.size());
-			nyms.insert(nyms.end(), addressBookNyms.begin(), addressBookNyms.end());
-			nyms.insert(nyms.end(), walletNyms.begin(), walletNyms.end());
-
-			return nyms;
+			using namespace nOT::nUtils::nOper;
+			return use.NymGetAllNames() + AddressBookStorage::GetAllNames(use.NymGetAllIDs());
 		}
 	);
 
-
-	//cParamInfo pNymTo = pNym << cParamInfo("nym-to",[] () -> string { return Tr(eDictType::help, "nym-to") }); // TODO suggest not the same nym as was used already before
 	cParamInfo pNymFrom = pNymMy << cParamInfo("nym-from", [] () -> string { return Tr(eDictType::help, "nym-from") });
 
 	cParamInfo pNymNewName( "nym-new-name", [] () -> string { return Tr(eDictType::help, "nym-new-name") },
