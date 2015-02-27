@@ -53,8 +53,11 @@ public:
 	static shared_ptr<AddressBook> Get(const string & nymID); ///< returns pointer to address book for specific nym
 	static void ForceClear(); ///< remove pointer to addressBook
 	static string GetNymName(const string & nymID, const vector<string> & allNymsID);
+	static vector <string> GetAllNames(const vector<string> & allNymsID);
+
 private:
 	static map <string, shared_ptr<AddressBook>> saved; ///< map with pointers to address book
+	static vector<string> names;
 };
 
 

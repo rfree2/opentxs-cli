@@ -190,7 +190,9 @@ AddressBook::Entry AddressBook::Entry::fromString(string strEntry) {
 	AddressBook::Entry entry(strEntry);
 	return entry;
 }
+
 map<string, shared_ptr<AddressBook>> AddressBookStorage::saved;
+vector <string> AddressBookStorage::names = {};
 
 shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 	try {
@@ -220,7 +222,27 @@ string AddressBookStorage::GetNymName(const string & nymID, const vector<string>
 	_dbg1("Nym not found");
 	ForceClear();
 	return nymName;
+}
 
+vector<string> AddressBookStorage::GetAllNames(const vector<string> & allNymsID) {
+	using namespace nOT::nUtils::nOper;
+	if(names.empty()) {
+		_dbg2("empty vetor, load all nyms from beginning");
+		for(auto nymID : allNymsID) {
+			names = names + Get(nymID)->getAllNames();
+		}
+		ForceClear();
+	} else {
+		_dbg2("vector has already nym names, only saved nyms can be changed");
+		for(auto pair : saved) {
+			names = names + pair.second->getAllNames();
+		}
+	}
+	// removes duplicates
+	sort( names.begin(), names.end() );
+	names.erase( unique( names.begin(), names.end() ), names.end() );
+	_dbg3("names vector: (" << names.size() << ") -> " <<  DbgVector(names));
+	return names;
 }
 
 }
