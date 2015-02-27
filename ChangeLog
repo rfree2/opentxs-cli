@@ -1,0 +1,65 @@
+2015-02-26  Avvys  <avvy@mempo.org>
+
+	Safe function for displayng nym name from address book
+
+	address book new function: getNymName(), removeAll() function 
+
+	Unit tests for address book
+
+2015-02-25  Avvys  <avvy@mempo.org>
+
+	fix validation for nyms from address book
+
+	check if nym with specific name exist in addressBook
+
+	separate tests for address book
+
+2015-02-24  Avvys  <avvy@mempo.org>
+
+	addressBookStarage class
+
+	Remove nym from address book - funtion and test
+
+	improve and	reorganize tests
+
+2015-02-23  Avvys  <avvy@mempo.org>
+
+	new AddressBook class
+
+	deposit cheque - using function from MadeEasy
+
+2015-02-20  Avvys  <avvy@mempo.org>
+
+	compfortable run script - gdb as option
+
+	Moved saving to file to utils class
+
+	better error handling
+
+	export nym to file, files validation
+
+	fix checkServer function (using ping)
+
+2015-02-19  Avvys  <avvy@mempo.org>
+
+	auto initialization git modules
+
+	simple updating script
+
+	new confortable scripts to run opentxs-cli and tests
+
+	moved old scripts to deprecated/ directory
+
+2015-02-18  Avvys  <avvy@mempo.org>
+
+	Preparing to implement baskets
+
+2015-02-17  Avvys  <avvy@mempo.org>
+
+	more sleeping in tests
+
+	rename: server -> notary
+
+	add opentxs libs
+
+	Adjust cmake to local build

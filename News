@@ -1,0 +1,31 @@
+2015-02-26  Avvys  <avvy@mempo.org>
+
+	new commands: cheque new-for and voucher new-for
+
+	command completition using address book
+
+2015-02-24  Avvys  <avvy@mempo.org>
+
+	Address book - command to add, remove and display
+
+2015-02-20  Avvys  <avvy@mempo.org>
+
+	ot server show-contract, add - comfortable handling file
+
+	exporting nym to file
+
+	AccountCreate() - server as argument
+
+	new command: server ping
+
+2015-02-19  Avvys  <avvy@mempo.org>
+
+	asset add function
+
+	simple updating script
+
+	asset show contract function
+
+	new confortable scripts to run opentxs-cli and tests
+
+
