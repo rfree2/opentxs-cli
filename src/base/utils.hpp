@@ -257,6 +257,13 @@ string SubjectType2String(const eSubjectType & type);
 eSubjectType String2SubjectType(const string & type);
 
 // ====================================================================
+// comfortable function for error reporting
+
+ bool reportError(const string & var, const string & description, const string & message);
+ bool reportError(const string & message);
+
+
+// ====================================================================
 // operation on files
 
 class cFilesystemUtils { // if we do not want to use boost in given project (or we could optionally write boost here later)

@@ -68,4 +68,23 @@ TEST_F(cUseOtTest, AccGetNym) {
 	}
 }
 
+TEST_F(cUseOtTest, Nymbox) {
+	const auto srvID = useOt->ServerGetId(server);
+	for(auto nymID : useOt->NymGetAllIDs()) {
+		auto proccessNymbox = opentxs::OTAPI_Wrap::processNymbox(srvID, nymID);
+		EXPECT_GT(proccessNymbox, -1);
+		auto nymbox = opentxs::OTAPI_Wrap::getNymbox(srvID, nymID);
+		_info(useOt->NymGetName(nymID) << ": " << nymbox << " nymbox");
 
+		auto mess = opentxs::OTAPI_Wrap::Nymbox_GetReplyNotice(srvID, nymID, proccessNymbox);
+		_info(mess);
+
+		auto txnNum = opentxs::OTAPI_Wrap::GetNym_TransactionNumCount(srvID, nymID);
+		_info(txnNum);
+/*
+		if(txnNum == 0) {
+			opentxs::OTAPI_Wrap::FlushSentMessages(false, srvID, nymID, nymboxHash);
+			_info(opentxs::OTAPI_Wrap::GetNym_TransactionNumCount(srvID, nymID));
+		}*/
+	}
+}

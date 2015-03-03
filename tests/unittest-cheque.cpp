@@ -28,33 +28,37 @@ protected:
 		fromAcc = "Bob's dollars";
 
 		server = "Transactions.com";
-		amount = 2;
+		amount = 3;
 
 		cout << "cheque test" << endl;
 	}
 
 	virtual void TearDown() {
+		sleep(180);
 		cout << "tear down" << endl;
 	}
 };
 
 
-TEST_F(cUseOtChequeTest, CreateCheque) {
-	auto result = useOt->ChequeCreate(fromAcc, fromNym, toNym, amount, server, "test cheque", false);
+TEST_F(cUseOtChequeTest, Create) {
+	auto result = useOt->ChequeCreate(fromAcc, fromNym, toNym, amount, server, "test_cheque", false);
 	EXPECT_TRUE(result);
 	useOt->Refresh(true);
 }
 
 TEST_F(cUseOtChequeTest, SendCheque) {
 	//EXPECT_FALSE(useOt->PaymentSend("Alice", toNym, 0, false));
+	sleep(5);
 	auto result = useOt->PaymentSend(fromNym, toNym, 0, false);
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(fromAcc, true, false);
 	ASSERT_TRUE(result);
 	useOt->Refresh(true);
+	sleep(10);
+
 }
 
-TEST_F(cUseOtChequeTest, DepositCheque) {
+TEST_F(cUseOtChequeTest, accept) {
 	const auto toNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc));
 	const auto fromNymBalance = opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc));
 
@@ -64,13 +68,13 @@ TEST_F(cUseOtChequeTest, DepositCheque) {
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(toAcc, true, false);
 
-	sleep(90);
+	sleep(150);
 
 	EXPECT_EQ(toNymBalance + amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(toAcc)));
 	EXPECT_EQ(fromNymBalance - amount, opentxs::OTAPI_Wrap::GetAccountWallet_Balance(useOt->AccountGetId(fromAcc)));
 	useOt->Refresh(true);
 }
-
+/*
 TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 	auto create = useOt->ChequeCreate(fromAcc, fromNym, toNym, amount, server, "to discard", false);
 	ASSERT_TRUE(create);
@@ -88,7 +92,7 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 	useOt->Refresh(true);
-}
+}*/
 /*
 TEST_F(cUseOtChequeTest, BasketNew) {
 

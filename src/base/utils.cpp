@@ -533,6 +533,21 @@ eSubjectType String2SubjectType(const string & type) {
 }
 
 // ====================================================================
+// comfortable function for error reporting
+
+bool reportError(const string & var, const string & description, const string & message) {
+	_erro(description << " [" << var << "]");
+	cout << zkr::cc::fore::lightred << message << zkr::cc::fore::console << endl;
+	return false;
+}
+
+bool reportError(const string & message) {
+	_erro(message);
+	cout << zkr::cc::fore::lightred << message << zkr::cc::fore::console << endl;
+	return false;
+}
+
+// ====================================================================
 // operation on files
 
 bool cConfigManager::Load(const string & fileName, map<eSubjectType, string> & configMap){
