@@ -1375,12 +1375,17 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string & fromNym, const s
 	const time64_t validFrom = now;
 	const time64_t validTo = now + OT_TIME_SIX_MONTHS_IN_SECONDS;
 
+
+
+	if(!mMadeEasy->retrieve_nym(srvID, fromNymID, true))
+		return nUtils::reportError("Can't retrieve nym");
+
 	if(!mMadeEasy->make_sure_enough_trans_nums(1, srvID, fromNymID)) {
-		return nUtils::reportError("", "not enough transaction number", "Not enough transaction number!");
+	//	return nUtils::reportError("", "not enough transaction number", "Not enough transaction number!");
+		auto proccessNymbox = opentxs::OTAPI_Wrap::processNymbox(srvID, fromNymID);
+		auto nymbox = opentxs::OTAPI_Wrap::LoadNymbox(srvID, fromNymID);
 
 	}
-	_info(mMadeEasy->load_or_retrieve_encrypt_key(srvID, fromNymID, toNymID));
-
 
 	const auto cheque = opentxs::OTAPI_Wrap::WriteCheque(srvID, amount, validFrom, validTo, fromAccID, fromNymID, memo,
 			toNymID);
@@ -1389,15 +1394,15 @@ bool cUseOT::ChequeCreate(const string &fromAcc, const string & fromNym, const s
 	// into the payments outbox, the same as it does when you "sendcheque" (after all, the same
 	// resolution would be expected once it is cashed.)
 
-	PrintInstrumentInfo(cheque);
 
 	const auto status = mMadeEasy->VerifyMessageSuccess(cheque);
-	if(status <= 0) {
+	if(status < 0) {
 		_erro("status: " << status << " for cheque: " << cheque);
 		return nUtils::reportError(ToStr(status), "status", "Creating cheque failed!");
 	}
 
 	auto ok = mMadeEasy->retrieve_account(srvID, fromNymID, fromAccID, true);
+	PrintInstrumentInfo(cheque);
 	return ok;
 }
 
@@ -1989,6 +1994,7 @@ bool cUseOT::NymRegister(const string & nymName, const string & serverName, bool
 		string response = mMadeEasy->register_nym(serverID, nymID);
 		nOT::nUtils::DisplayStringEndl(cout, response);
 		_info("Nym " << nymName << "(" << nymID << ")" << " was registered successfully on server");
+		cout << "Nym " << nymName << "(" << nymID << ")" << " was registered successfully on server" << endl;
 		return true;
 	}
 	_info("Nym " << nymName << "(" << nymID << ")" << " was already registered" << endl);
@@ -2058,6 +2064,11 @@ bool cUseOT::OutpaymentCheckIndex(const string & nymName, const int32_t & index)
 		return true;
 
 	return false;
+}
+
+int32_t cUseOT::OutpaymantGetCount(const string & nym) {
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(NymGetId(nym));
+	return (count <= 0) ? -1 : count;
 }
 
 bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
@@ -2219,7 +2230,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 			index = nCount - 1;
 	_info("index = " << index << "nCount = " << nCount);
 
-	ASRT(index > 0);
+	ASRT(index >= 0);
 /*
 	int32_t nIndicesCount = VerifyStringVal(strIndices) ? opentxs::OTAPI_Wrap::NumList_Count(strIndices) : 0;
 
@@ -2347,7 +2358,7 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 
 		auto refreshRecipient = mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true);
 
-		if(status <= 0)
+		if(status < 0)
 			return nUtils::reportError("Can't accept this payment!");
 		return true;
 	}
@@ -2535,8 +2546,8 @@ bool cUseOT::PurseCreate(const string & serverName, const string & asset, const 
 	return true;
 }
 
-bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
-	_fact("payment send " << senderNym << " " << recipientNym << " " << index);
+bool cUseOT::PaymentSend(const string & recipientNym, const string & senderNym, int32_t index, bool dryrun) {
+	_fact("payment send " << recipientNym << " " << senderNym << " " << index);
 	if (dryrun)
 		return true;
 	if (!Init())
@@ -2568,7 +2579,9 @@ bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, 
 	auto refreshSender = mMadeEasy->retrieve_nym(srvID, senderNymID, true);
 	auto status = mMadeEasy->VerifyMessageSuccess(send);
 
-	if(status <= 0) {
+	if(status < 0) {
+        auto harvest = opentxs::OTAPI_Wrap::Msg_HarvestTransactionNumbers(send, senderNymID, false, false, false, false, false); // XXX
+        _dbg1("harvest = " << harvest);
 		return nUtils::reportError(ToStr(status), "status", "Can't send this payment");
 	}
 
@@ -3011,7 +3024,7 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 	auto dep = mMadeEasy->deposit_cheque(srvID, nymID, accID, voucher);
 	auto status = mMadeEasy->VerifyMessageSuccess(dep);
 
-	if(status <= 0)
+	if(status < 0)
 		return nUtils::reportError(ToStr(status), "status", "Can't cancel voucher ");
 
 
@@ -3037,9 +3050,9 @@ bool cUseOT::VoucherWithdraw(const string & fromAcc, const string &fromNym, cons
 
 	_mark(toNym << " id: " << toNymID );
 
-	if(!mMadeEasy->make_sure_enough_trans_nums(1, srvID, fromNymID))
+	if(!mMadeEasy->make_sure_enough_trans_nums(1, srvID, fromNymID)) {
 		return nUtils::reportError("", "not enough transaction number", "Not enough transaction number!");
-
+	}
 	// amount validating
 	if (amount < 1)
 		return nUtils::reportError(ToStr(amount), "Amount < 1", "Amount must be greater then zero!");

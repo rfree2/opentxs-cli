@@ -156,4 +156,3 @@ TEST_F(cUseOtAddressBookTest, Completiton) {
 		EXPECT_TRUE(addressBook->remove(nym.first));
 	}
 }
-

@@ -235,6 +235,7 @@ namespace nUse {
 		//================= nym-outpayments ==========
 
 		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
+		HINT int32_t OutpaymantGetCount(const string & nym);
 
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
 		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
@@ -246,7 +247,7 @@ namespace nUse {
 		EXEC bool PaymentAccept(const string & account, int64_t index, bool dryrun); ///< accept specified payment from payment inbox
 		EXEC bool PaymentDiscard(const string & nym, const string & index, bool all, bool dryrun);
 		EXEC bool PaymentDiscardAll(bool dryrun);
-		EXEC bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun);
+		EXEC bool PaymentSend(const string & recipientNym, const string & senderNym, int32_t index, bool dryrun);
 
 		//================= purse ==================
 
@@ -283,6 +284,7 @@ namespace nUse {
 		EXEC bool TextEncrypt(const string & recipientNymName, const string & plainText, bool dryrun);
 		EXEC bool TextDecode(const string & encodedText, bool dryrun);
 		EXEC bool TextDecrypt(const string & recipientNymName, const string & encryptedText, bool dryrun);
+
 
 		//================= voucher ==============
 

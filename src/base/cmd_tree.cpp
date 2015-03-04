@@ -306,7 +306,9 @@ void cCmdParser::Init() {
 			return use.OutpaymentCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
-			return vector<string> {}; //TODO hinting function for outpayment index
+			auto count = use.OutpaymantGetCount(data.Var(curr_word_ix-1));
+			if(count == -1) return vector<string> {};
+			return vector<string> {"0", ToStr(count-1)};
 		}
 	);
 
@@ -670,7 +672,7 @@ void cCmdParser::Init() {
 	AddFormat("payment discard-all", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentDiscardAll( D.has("--dryrun") ); } );
 
-	AddFormat("payment send", {pNymFrom, pNymTo, pInboxIndex}, {}, NullMap,
+	AddFormat("payment send", {pNymTo, pNymFrom, pOutpaymentIndex}, {}, NullMap,
 			LAMBDA { auto &D=*d; return U.PaymentSend( D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 		
 	//======== ot purse ========
