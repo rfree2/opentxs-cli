@@ -257,6 +257,11 @@ vector<ID> cUseOT::AccountGetAllIds() {
 	return accountsIDs;
 }
 
+ID cUseOT::AccountGetAssetID(const string & account) {
+	auto accID = AccountGetId(account);
+	return (!accID.empty()) ? opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accID) : "";
+}
+
 int64_t cUseOT::AccountGetBalance(const string & accountName) {
 	if(!Init()) return 0; //FIXME
 
@@ -507,6 +512,16 @@ bool cUseOT::AccountTransfer(const string & accountFrom, const string & accountT
 	if(dryrun) return true;
 	if(!Init()) return false;
 
+	if( AccountGetAssetID(accountFrom) !=  AccountGetAssetID(accountTo) ) {
+		cout << zkr::cc::fore::yellow;
+		cout << "Accounts have different assets!" << zkr::cc::fore::console << endl;
+		cout << "Sender account (" << accountFrom << ") has asset: " << AssetGetName(AccountGetAssetID(accountFrom)) << endl;
+		cout << "Recipient account (" << accountTo << ") has asset: " << AssetGetName(AccountGetAssetID(accountTo)) << endl;
+		cout << "Aborting" << endl;
+		cout << endl;
+		return false;
+	}
+
 	ID accountFromID = AccountGetId(accountFrom);
 	ID accountToID = AccountGetId(accountTo);
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountFromID);
@@ -654,17 +669,25 @@ bool cUseOT::AccountOutCancel(const string & account, const int index, bool all,
 
 bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 	_fact("account-out ls " << account);
-	if(dryrun) return true;
-	if(!Init()) return false;
+	if (dryrun)
+		return true;
+	if (!Init())
+		return false;
+
+	cout << zkr::cc::fore::lightblue;
+	cout << "  account: " << account << endl;
+	cout << "    asset: " << AssetGetName(AccountGetAssetID(account)) << endl;
+	cout << zkr::cc::console << endl;
 
 	ID accountID = AccountGetId(account);
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
-	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
+	ID accountNymID = AccountGetNymID(account);
 
 	string outbox = opentxs::OTAPI_Wrap::LoadOutbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
 
 	if (outbox.empty()) {
-		_info("Unable to load outbox for account " << AccountGetName(accountID)<< "(" << accountID << "). Perhaps it doesn't exist yet?");
+		_info(
+				"Unable to load outbox for account " << AccountGetName(accountID)<< "(" << accountID << "). Perhaps it doesn't exist yet?");
 		return false;
 	}
 
@@ -677,27 +700,35 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 		tp.AddColumn("Type", 10);
 		tp.AddColumn("TxN", 8);
 		tp.AddColumn("InRef", 8);
-		tp.AddColumn("To Nym", 60);
-		tp.AddColumn("To Account", 60);
+//		tp.AddColumn("To Nym", 50); // XXX: opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID returns NULL, so printing nym is disabled.
+		 tp.AddColumn("To Account", 50);
 
 		tp.PrintHeader();
-	  for (int32_t index = 0; index < transactionCount; ++index) {
-			string transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(accountServerID, accountNymID, accountID, outbox, index);
-			int64_t transactionID = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(accountServerID, accountNymID, accountID, outbox, index);
-			int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(accountServerID, accountNymID, accountID, transaction);
-			int64_t amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(accountServerID, accountNymID, accountID, transaction);
-			string transactionType = opentxs::OTAPI_Wrap::Transaction_GetType(accountServerID, accountNymID, accountID, transaction);
-			string recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(accountServerID, accountNymID, accountID, transaction); //FIXME transaction recipientID=NULL
-			string recipientAcctID = opentxs::OTAPI_Wrap::Transaction_GetRecipientAcctID(accountServerID, accountNymID, accountID, transaction);
+		for (int32_t index = 0; index < transactionCount; ++index) {
+			const string transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(accountServerID, accountNymID,
+					accountID, outbox, index);
+			int64_t transactionID = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(accountServerID, accountNymID,
+					accountID, outbox, index);
+			int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(accountServerID, accountNymID,
+					accountID, transaction);
+			int64_t amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(accountServerID, accountNymID, accountID,
+					transaction);
+			string transactionType = opentxs::OTAPI_Wrap::Transaction_GetType(accountServerID, accountNymID, accountID,
+					transaction);
+			string recipientAcctID = opentxs::OTAPI_Wrap::Transaction_GetRecipientAcctID(accountServerID, accountNymID,
+					accountID, transaction);
 
 			//TODO Check if Transaction information needs to be verified!!!
-		 tp << ToStr(index) << ToStr(amount) << transactionType << ToStr(transactionID) << ToStr(refNum) << "BUG - working on it" << "BUG - working on it" ;
-//			  << NymGetName(recipientNymID) + "(" + recipientNymID + ")" <<  AccountGetName( recipientAcctID ) + "(" + recipientAcctID + ")";
+			tp << ToStr(index) << ToStr(amount) << transactionType << ToStr(transactionID)
+					<< ToStr(refNum)
+					// << "BUG - working on it" << "BUG - working on it" ;
+//					<< NymGetName(recipientNymID) + "(" + recipientNymID + ")";
+					<< AccountGetName(recipientAcctID) + "(" + recipientAcctID + ")";
 		}
 		tp.PrintFooter();
-	  return true;
+		return true;
 	} else {
-		_info("There is no transactions in outbox for account "  << AccountGetName(accountID)<< "(" << accountID << ")");
+		_info("There is no transactions in outbox for account " << AccountGetName(accountID)<< "(" << accountID << ")");
 		return true;
 	}
 	return false;

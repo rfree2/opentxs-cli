@@ -106,7 +106,7 @@ namespace nUse {
 		ID AccountGetId(const string & account); ///< Gets account ID both from name and ID with prefix
 		string AccountGetName(const ID & accountID);
 		bool AccountSetName(const string & accountID, const string & NewAccountName);
-
+		ID AccountGetAssetID(const string & account);
 		ID AccountGetNymID(const string & account);
 		string AccountGetNym(const string & account);
 
