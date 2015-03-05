@@ -122,3 +122,26 @@ TEST_F(cUseOtVoucherTest, OutpaymentRemove) {
 
 	useOt->OutpaymentDisplay(nym1, false);
 }
+
+TEST_F(cUseOtVoucherTest, Cleanup) {
+	const int maxTimes = 10;
+	bool display = true;
+	int32_t txnCount = -1;
+	const string server = "Transaction.com";
+	for (int i = 0; i < maxTimes; ++i) {
+		string inbox = opentxs::OTAPI_Wrap::LoadInbox(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
+				useOt->AccountGetId(fromAcc));
+		ASSERT_TRUE(!inbox.empty());
+		txnCount = opentxs::OTAPI_Wrap::Ledger_GetCount(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
+				useOt->AccountGetId(fromAcc), inbox);
+
+		_info("txn: " << txnCount);
+		if(txnCount == 0) break;
+
+		useOt->AccountInAccept(fromAcc, 0, true, false);
+		display = useOt->AccountInDisplay(fromAcc, false);
+	}
+	_dbg2("end loop");
+	EXPECT_EQ(0, txnCount);
+}
+

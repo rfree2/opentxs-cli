@@ -34,8 +34,8 @@ protected:
 	}
 
 	virtual void TearDown() {
-		sleep(180);
 		cout << "tear down" << endl;
+		sleep(10);
 	}
 };
 
@@ -121,4 +121,29 @@ TEST_F(cUseOtChequeTest, BasketDisplay) {
 	}
 	EXPECT_TRUE(ok);
 }*/
+TEST_F(cUseOtChequeTest, Cleanup) {
+	const int maxTimes = 10;
+	bool display = true;
+	int32_t txnCount = -1;
+
+	for (int i = 0; i < maxTimes; ++i) {
+		string inbox = opentxs::OTAPI_Wrap::LoadInbox(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
+				useOt->AccountGetId(fromAcc));
+
+		if(inbox.empty()) {
+			txnCount = 0;
+			break;
+		}
+		txnCount = opentxs::OTAPI_Wrap::Ledger_GetCount(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
+				useOt->AccountGetId(fromAcc), inbox);
+
+		_info("txn: " << txnCount);
+		if(txnCount == 0) break;
+
+		useOt->AccountInAccept(fromAcc, 0, true, false);
+		display = useOt->AccountInDisplay(fromAcc, false);
+	}
+	_dbg2("end loop");
+	EXPECT_EQ(0, txnCount);
+}
 
