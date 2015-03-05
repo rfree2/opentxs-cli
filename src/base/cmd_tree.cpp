@@ -663,16 +663,19 @@ void cCmdParser::Init() {
 	AddFormat("payment ls", {}, {pNymMy, pServer}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentShow( D.v(1, U.NymGetName( U.NymGetDefault())), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
 
-	AddFormat("payment accept", {pAccountMy, pPaymetInboxIndex}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.PaymentAccept( D.V(1), stoi(D.V(2)), D.has("--dryrun") ); } );
-		
+//	AddFormat("payment accept", {pAccountMy, pPaymetInboxIndex}, {}, NullMap,
+//		LAMBDA { auto &D=*d; return U.PaymentAccept( D.V(1), stoi(D.V(2)), D.has("--dryrun") ); } );
+
+	AddFormat("payment accept", {}, {pAccountMy, pInboxIndex}, { {"--all", pBool } },
+		LAMBDA { auto &D=*d; return U.PaymentAccept(D.v(1, U.AccountGetName(U.AccountGetDefault())), stoi( D.v(2, "0") ), D.has("--all"), D.has("--dryrun") ); } );
+
 	AddFormat("payment discard", {}, {pNymMy, pPaymetInboxIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentDiscard( D.v(1), D.v(2), D.has("--all"), D.has("--dryrun") ); } );
 			
 	AddFormat("payment discard-all", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentDiscardAll( D.has("--dryrun") ); } );
 
-	AddFormat("payment send", {pNymTo, pNymFrom, pOutpaymentIndex}, {}, NullMap,
+	AddFormat("payment send", {pNymFrom, pNymTo, pInt}, {}, NullMap,
 			LAMBDA { auto &D=*d; return U.PaymentSend( D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
 		
 	//======== ot purse ========

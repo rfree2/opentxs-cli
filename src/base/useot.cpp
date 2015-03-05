@@ -1871,7 +1871,7 @@ string cUseOT::NymGetId(const string & nymName) { // Gets nym aliases and IDs be
 			return key;
 		}
 	}
-//
+
 	for(int i = 0 ; i < opentxs::OTAPI_Wrap::GetNymCount ();i++) {
 		string nymID = opentxs::OTAPI_Wrap::GetNym_ID (i);
 		string nymName_ = opentxs::OTAPI_Wrap::GetNym_Name (nymID);
@@ -2175,6 +2175,33 @@ bool cUseOT::OutpaymentShow(const string & nym, int32_t index, bool dryrun) {
 	cout << zkr::cc::console << endl;
 
 	return true;
+}
+
+bool cUseOT::PaymentAccept(const string & account, int64_t index, bool all, bool dryrun) {
+	_fact("payment accept " << account << " " << index << " " << all);
+	if (dryrun) return false;
+	if (!Init()) return false;
+
+	auto accID = AccountGetId(account);
+	auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
+	auto nymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accID);
+
+	if (all) {
+		string paymentInbox = opentxs::OTAPI_Wrap::LoadPaymentInbox(srvID, nymID); // Returns NULL, or an inbox.
+		if (paymentInbox.empty())
+			return nUtils::reportError("accept_from_paymentbox: OT_API_LoadPaymentInbox Failed.");
+
+		_dbg3("Get size of inbox ledger");
+
+		int32_t nCount = opentxs::OTAPI_Wrap::Ledger_GetCount(srvID, nymID, nymID, paymentInbox);
+		bool ok = true;
+
+		for(int32_t i=nCount-1; i>=0; --i) {
+			ok = ok && PaymentAccept(account, i, false);
+		}
+		return ok;
+	} else
+		return PaymentAccept(account, index, false);
 }
 
 bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
@@ -2546,7 +2573,7 @@ bool cUseOT::PurseCreate(const string & serverName, const string & asset, const 
 	return true;
 }
 
-bool cUseOT::PaymentSend(const string & recipientNym, const string & senderNym, int32_t index, bool dryrun) {
+bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
 	_fact("payment send " << recipientNym << " " << senderNym << " " << index);
 	if (dryrun)
 		return true;

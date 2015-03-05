@@ -98,7 +98,7 @@ TEST_F(cUseOtVoucherTest, Create) {
 
 TEST_F(cUseOtVoucherTest, Send) {
 	// send
-	ASSERT_TRUE(useOt->PaymentSend(toNym, fromNym, 0, false));
+	ASSERT_TRUE(useOt->PaymentSend(fromNym, toNym, 0, false));
 
 	// refresh
 	useOt->NymRefresh(toNym, false, false);
@@ -128,10 +128,15 @@ TEST_F(cUseOtVoucherTest, Cleanup) {
 	bool display = true;
 	int32_t txnCount = -1;
 	const string server = "Transaction.com";
+
 	for (int i = 0; i < maxTimes; ++i) {
 		string inbox = opentxs::OTAPI_Wrap::LoadInbox(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
 				useOt->AccountGetId(fromAcc));
-		ASSERT_TRUE(!inbox.empty());
+
+		if(inbox.empty()) {
+			txnCount = 0;
+			break;
+		}
 		txnCount = opentxs::OTAPI_Wrap::Ledger_GetCount(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
 				useOt->AccountGetId(fromAcc), inbox);
 
