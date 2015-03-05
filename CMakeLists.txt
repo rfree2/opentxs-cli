@@ -25,6 +25,7 @@ endif()
 # Options for building
 
 option(BUILD_VERBOSE       "Verbose build output." ON)
+option(BUILD_DOCUMENTATION "Build the Doxygen documentation." ON)
 option(BUILD_TESTS         "Build the unit tests." ON)
 option(KEYRING_FLATFILE    "Build with Flatfile Keyring" OFF)
 option(RPM                 "Build a RPM" OFF)
@@ -60,7 +61,9 @@ message(STATUS "System:                   ${CMAKE_SYSTEM}")
 message(STATUS "Processor:                ${CMAKE_SYSTEM_PROCESSOR}")
 
 message(STATUS "Verbose:                  ${BUILD_VERBOSE}")
-message(STATUS "Testing:                  ${BUILD_TESTS}")
+message(STATUS "Testing:                  ${BUILD_TESTS}") 
+message(STATUS "Documentation:          ${BUILD_DOCUMENTATION}")
+
 message(STATUS "Flatfile keyring:         ${KEYRING_FLATFILE}")
 message(STATUS "Build RPM:                ${RPM}")
 message(STATUS "Build DEB:                ${DEB}")
@@ -177,19 +180,27 @@ endif (${CMAKE_EXTRA_GENERATOR} MATCHES "Eclipse CDT4")
 #-----------------------------------------------------------------------------
 # Build Documentation
 
-# if(BUILD_DOCUMENTATION)
-#    find_package(Doxygen)
-#    if (DOXYGEN_FOUND)
-#      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-#      add_custom_target(doc
-#        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-#        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#        COMMENT "Generating API documentation with Doxygen" VERBATIM)
-#      set(CPP-NETLIB_GENERATE_DOCS ON)
-#    endif(DOXYGEN_FOUND)
-# endif(BUILD_DOCUMENTATION)
+if(BUILD_DOCUMENTATION)
+  set(DOC_GRAPHS "YES" CACHE STRING "Create dependency graphs (needs graphviz)")
+  set(DOC_FULLGRAPHS "NO" CACHE STRING "Create call/callee graphs (large)")
 
+  find_program(DOT_PATH dot)
 
+  if (DOT_PATH STREQUAL "DOT_PATH-NOTFOUND")
+    message("Doxygen: graphviz not found - graphs disabled")
+    set(DOC_GRAPHS "NO")
+  endif()
+
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+    configure_file("cmake/Doxyfile.in" "Doxyfile" @ONLY)
+    configure_file("cmake/Doxygen.extra.css.in" "Doxygen.extra.css" @ONLY)
+    add_custom_target(doc
+      ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen.." VERBATIM)
+  endif()
+endif()
 
 #-----------------------------------------------------------------------------
 # Source Definitions
