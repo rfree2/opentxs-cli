@@ -212,9 +212,9 @@ namespace nUse {
 		vector<string> NymGetAllIDs();
 		string NymGetDefault();
 		ID NymGetId(const string & nym); ///< Gets Nym ID both from name and ID with prefix
-		ID NymGetToNymId(const string & nym, const string & ownerNymID);
+		ID NymGetToNymId(const string & nym, const string & ownerNymID); ///< like @see NymGetID() but allows nyms from address book, should be use to get recipient nym ID
 		string NymGetName(const ID & nymID);
-		string NymGetRecipientName(const ID & nymID); ///< returns nym name or id (if name not found)
+		string NymGetRecipientName(const ID & nymID); ///< returns nym name or ID (if name not found), should be used to displaying payments, etc. works, when recipient nym was removed from address book and for now is unknown
 		bool NymSetName(const ID & nymID, const string & newNymName);
 		//bool NymIsInWalled();
 
@@ -288,7 +288,7 @@ namespace nUse {
 
 		//================= voucher ==============
 
-		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun);
+		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun); ///< Cancels a voucher, usable only when voucher isn't sent
 		EXEC bool VoucherWithdraw(const string & fromAcc, const string &fromNym, const string &toNym, int64_t amount,
 				string memo, bool dryrun);
 

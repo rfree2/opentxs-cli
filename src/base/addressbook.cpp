@@ -27,7 +27,6 @@ shared_ptr<AddressBook> AddressBook::Load(const string &nymID) {
 		cout << zkr::cc::fore::lightred << "Can't load address book" << zkr::cc::console << endl;
 		_erro(e.what());
 	}
-
 	return addressBookPointer;
 }
 

@@ -7,21 +7,21 @@ namespace nOT {
 class AddressBook {
 
 public:
-	AddressBook(const string & nymID);
+public:
+	AddressBook(const string & nymID); ///< constructor, should be called only from Load() function @see Load()
+	static shared_ptr<AddressBook> Load(const string &nymID); ///< creates AddressBook object and returns shared pointer to it, this function should be used only from AddressBookSorade
+	size_t getCount() { return contacts.size(); }; ///< get numbers of contact
 
-	static shared_ptr<AddressBook> Load(const string &nymID);
-	size_t getCount() { return contacts.size(); };
+	bool add(const string & nymName, const string & nymID); ///< adding new nym to address book
+	bool nymExist(const string & nymID) const; ///< check nym exists (by ID)
+	string nymGetID(const string & nymName) const; ///< get nyn exist
+	bool nymNameExist(const string & nymName) const; ///< check nym exists (by name)
+	string nymGetName(const string & id) const; ///< get nym name
 
-	bool add(const string & nymName, const string & nymID);
-	bool nymExist(const string & nymID) const;
-	string nymGetID(const string & nymName) const;
-	bool nymNameExist(const string & nymName) const;
-	string nymGetName(const string & id) const;
+	bool remove(const string & nymID); ///< removes nym
+	void removeAll(); ///< removes all nyms from address book
 
-	bool remove(const string & nymID);
-	void removeAll();
-
-	vector<string> getAllNames();
+	vector<string> getAllNames(); ///< returns vector of all nyms names from address book
 
 	void display();
 	virtual ~AddressBook();
@@ -51,13 +51,13 @@ private:
 class AddressBookStorage {
 public:
 	static shared_ptr<AddressBook> Get(const string & nymID); ///< returns pointer to address book for specific nym
-	static void ForceClear(); ///< remove pointer to addressBook
-	static string GetNymName(const string & nymID, const vector<string> & allNymsID);
-	static vector <string> GetAllNames(const vector<string> & allNymsID);
+	static void ForceClear(); ///< remove pointers to addressBook
+	static string GetNymName(const string & nymID, const vector<string> & allNymsID); ///< search name in address books all given nyms
+	static vector <string> GetAllNames(const vector<string> & allNymsID); ///< all names from all address books, used to completition
 
 private:
 	static map <string, shared_ptr<AddressBook>> saved; ///< map with pointers to address book
-	static vector<string> names;
+	static vector<string> names; ///< map with all nym names
 };
 
 
