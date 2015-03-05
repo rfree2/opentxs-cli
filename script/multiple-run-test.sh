@@ -22,8 +22,8 @@ function run() {
         name="$dir/test$i.txt"
         echo "test number: $i $name"
         echo "test number: $i" >> $dir/info.txt
-        eval $test_script --gtest_output=xml:$dir/tests_$i.xml   &>  $name                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-		tail $dir/tests_$i.xml
+        eval $test_script --gtest_output=xml:$dir/test_$i.xml   &>  $name                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+		tail $name
         sleep 1
 	done 
 }

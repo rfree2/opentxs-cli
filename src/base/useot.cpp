@@ -579,9 +579,11 @@ bool cUseOT::AccountInDisplay(const string & account, bool dryrun) {
 			string recipientAcctID = opentxs::OTAPI_Wrap::Transaction_GetRecipientAcctID(accountServerID, accountNymID, accountID, transaction);
 
 			//TODO Check if Transaction information needs to be verified!!!
-
+			// XXX; test this!! Should be recipient or sender?
             tp << ToStr(index) << ToStr(amount) << transactionType << ToStr(transactionID) << ToStr(refNum)
-				 << NymGetName(senderNymID) + "(" + senderNymID + ")" <<  AccountGetName( senderAcctID ) + "(" + senderAcctID + ")";
+//				 << NymGetName(senderNymID) + "(" + senderNymID + ")" <<  AccountGetName( senderAcctID ) + "(" + senderAcctID + ")";
+				<< NymGetName(recipientNymID) + "(" + recipientNymID + ")" <<  AccountGetName( recipientAcctID ) + "(" + recipientNymID + ")";
+
 		}
 		tp.PrintFooter();
 	  return true;
