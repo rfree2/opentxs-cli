@@ -98,7 +98,7 @@ bool cUseOT::PrintInstrumentInfo(const string &instrument) {
 	cout << col << "             Memo: " << ncol << memo << endl;
 	cout << col << "             Type: " << ncol << type << endl;
 
-	if(validTo - now < 0) cout << err << "\n\nexpired" << ncol << endl;
+	if(validTo - now < 0) cout << err << "\n\nexpired " << ncol << endl;
 
 	return true;
 }
@@ -556,6 +556,11 @@ bool cUseOT::AccountInDisplay(const string & account, bool dryrun) {
 	int32_t transactionCount = opentxs::OTAPI_Wrap::Ledger_GetCount(accountServerID, accountNymID, accountID, inbox);
 
 	if (transactionCount > 0) {
+		cout << zkr::cc::fore::lightblue;
+		cout << "  account: " << account << endl;
+		cout << "    asset: " << AssetGetName(AccountGetAssetID(account)) << endl;
+		cout << zkr::cc::console << endl;
+
 		bprinter::TablePrinter tp(&std::cout);
 		tp.AddColumn("ID", 4);
 		tp.AddColumn("Amount", 10);
@@ -2605,13 +2610,32 @@ bool cUseOT::PurseCreate(const string & serverName, const string & asset, const 
 
 	return true;
 }
+bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool all, bool dryrun) {
+	_fact("payment send " << recipientNym << " " << senderNym << " " << index << " " << all);
+	if (dryrun)	return true;
+	if (!Init()) return false;
+
+	const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(NymGetId(senderNym));
+	if(count <= 0 ) {
+		cout << "Empty payment box, aborting" << endl;
+		return false;
+	}
+	bool sent = true;
+	if(all) {
+		cout << "sending all payments to " << recipientNym << endl;
+		bool sent = true;
+		for(auto i=count-1; i>= 0; --i)
+			sent = sent && PaymentSend(senderNym, recipientNym, i, false);
+		return sent;
+	} else {
+		sent = PaymentSend(senderNym, recipientNym, index, false);
+	}
+	return sent;
+}
 
 bool cUseOT::PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun) {
-	_fact("payment send " << recipientNym << " " << senderNym << " " << index);
-	if (dryrun)
-		return true;
-	if (!Init())
-		return false;
+	if (dryrun)	return true;
+	if (!Init()) return false;
 
 	const ID senderNymID = NymGetId(senderNym);
 	const ID recNymID = NymGetToNymId(recipientNym, senderNymID);

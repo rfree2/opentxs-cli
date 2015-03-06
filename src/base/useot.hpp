@@ -244,12 +244,12 @@ namespace nUse {
 		//================= payment ==================
 
 		EXEC bool PaymentShow(const string & nym, const string & server, bool dryrun); ///< show payments inbox
-		bool PaymentAccept(const string & account, int64_t index, bool dryrun); ///< accept specified payment from payment inbox
-		EXEC bool PaymentAccept(const string & account, int64_t index, bool all, bool dryrun);
+		EXEC bool PaymentAccept(const string & account, int64_t index, bool all, bool dryrun); ///< accept specified payment from payment inbox
+		bool PaymentAccept(const string & account, int64_t index, bool dryrun); ///< main accepting function
 		EXEC bool PaymentDiscard(const string & nym, const string & index, bool all, bool dryrun);
 		EXEC bool PaymentDiscardAll(bool dryrun);
-		EXEC bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool dryrun);
-
+		EXEC bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool all, bool dryrun);
+		bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index,  bool dryrun); ///< main sending function
 		//================= purse ==================
 
 		EXEC bool PurseCreate(const string & serverName, const string & asset, const string & ownerName, const string & signerName, bool dryrun);
