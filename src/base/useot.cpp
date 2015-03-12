@@ -598,7 +598,8 @@ bool cUseOT::AccountInDisplay(const string & account, bool dryrun) {
 		tp.PrintFooter();
 	  return true;
 	} else {
-		_info("There is no transactions in inbox for account "  << AccountGetName(accountID)<< "(" << accountID << ")");
+		_info("There is no transactions in inbox for account " << AccountGetName(accountID)<< "(" << accountID << ")");
+		cout << zkr::cc::fore::yellow << "no transactions in inbox for account " << account << zkr::cc::console << endl;
 		return true;
 	}
 	return false;
@@ -613,35 +614,51 @@ bool cUseOT::AccountInAccept(const string & account, const int index, bool all, 
 
 	int32_t nItemType = 0; // TODO pass it as an argument
 
+
 	if (all) {
 		int32_t transactionsAccepted = 0;
 
-		ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
-		ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
+		ID serverID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
+		ID nymID = AccountGetNymID(account);
 
-		string inbox = opentxs::OTAPI_Wrap::LoadInbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
+		mMadeEasy->retrieve_account(serverID, nymID, accountID, true);
+
+		string inbox = opentxs::OTAPI_Wrap::LoadInbox(serverID, nymID, accountID); // Returns NULL, or an inbox.
 
 		if (inbox.empty()) {
+			cout << "Unable to load inbox for " << AccountGetName(accountID) << endl;
 			_info("Unable to load inbox for account " << AccountGetName(accountID)<< "(" << accountID << "). Perhaps it doesn't exist yet?");
 			return false;
 		}
-		int32_t transactionCount = opentxs::OTAPI_Wrap::Ledger_GetCount(accountServerID, accountNymID, accountID, inbox);
+		int32_t transactionCount = opentxs::OTAPI_Wrap::Ledger_GetCount(serverID, nymID, accountID, inbox);
 		_dbg3("Transaction count in inbox: " << transactionCount);
+
 		if (transactionCount == 0){
+			cout << zkr::cc::fore::yellow << "Empty inbox ("<< account << ")" << zkr::cc::console << endl;
 			_warn("No transactions in inbox");
 			return true;
 		}
 
 		for (int32_t index = 0; index < transactionCount; ++index) { //FIXME work successfully only for first transaction
-			if ( mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(index) ) ) {
+			auto accepted =  mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(0));
+			if(!accepted) {
+				_warn("transaction " << index << " failed, trying again");
+				accepted =  mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(0));
+			}
+
+			if (accepted) {
 				_info("Successfully accepted inbox transaction number: " << index);
 				++transactionsAccepted;
 			} else
 				_erro("Failed to accept inbox transaction for number: " << index);
 		}
+
+
 		string count = ToStr(transactionsAccepted) + "/" + ToStr(transactionCount);
 		if (transactionsAccepted == transactionCount) {
 			_info("All transactions were successfully accepted " << count);
+			mMadeEasy->retrieve_account(serverID, nymID, accountID, true);
+			cout << zkr::cc::fore::lightgreen << "Payments accepted" << zkr::cc::console << endl;
 			return true;
 		} else if (transactionsAccepted == 0) {
 			_erro("Transactions cannot be accepted " << count);
@@ -650,6 +667,7 @@ bool cUseOT::AccountInAccept(const string & account, const int index, bool all, 
 			_erro("Some transactions cannot be accepted " << count);
 			return true;
 		}
+
 	}
 	else {
 		if ( mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(index) ) ) {
@@ -685,7 +703,6 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 		return true;
 	if (!Init())
 		return false;
-
 	cout << zkr::cc::fore::lightblue;
 	cout << "  account: " << account << endl;
 	cout << "    asset: " << AssetGetName(AccountGetAssetID(account)) << endl;
@@ -695,6 +712,7 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 	ID accountNymID = AccountGetNymID(account);
 
+	mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true);
 	string outbox = opentxs::OTAPI_Wrap::LoadOutbox(accountServerID, accountNymID, accountID); // Returns NULL, or an inbox.
 
 	if (outbox.empty()) {
