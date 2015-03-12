@@ -58,21 +58,23 @@ You can try or demonstrate following things:
 BUILDING
 ------------------------------------------------------------------------
 
-How to building/compile otcli from source code:
+How to building/compile opentxs-cli from source code in opentxs directory:
+```sh
+mkdir build && cd build/
+cmake .. && make
+```
+In cmake option LOCAL is enabled as default - searching for needed libraries (like opentxs) in ~/.local directory. To disable this option use: 
+```sh 
+cmake -DLOCAL=OFF ..
+```
+### Documentation 
+To build documentation: 
+```sh 
+make doc
+```
+in build/ directory.
 
-0) Fast full rebuild
-1) Build otcli - choosing compiler
-2) Build otcli - dependencies
-3) Build otcli - main
-
-_this section is being rewritten_
-
-Try:
-
-mkdir -p build ; cd build ; CMAKE_PREFIX_PATH="$HOME/.local/" CMAKE_INSTALL_PREFIX="$HOME/.local/" cmake .. && make 
-
-0) If you system was already configured then just do ./full-rebuild.sh ; Else:
-
+Build deatils
 ---------------------------------------
 1) Build othint - choosing compiler
 Project otcli does use C++11, and therefore requires clang >= 3.3, or gcc >= 4.7 , MSVC12 (2013).
