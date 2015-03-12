@@ -25,7 +25,8 @@ protected:
 };
 
 TEST_F(cUseOtAccountTest, Transfer1) {
-	useOt->AccountInAccept(acc1, 1, false, false);
+	useOt->AccountInAccept(acc1, 1, true, false);
+	useOt->AccountInAccept(acc2, 1, true, false);
 	auto fromAccBalance = useOt->AccountGetBalance(acc2);
 	auto toAccBalance = useOt->AccountGetBalance(acc1);
 	int64_t amount = 10000;
@@ -42,6 +43,7 @@ TEST_F(cUseOtAccountTest, Transfer1) {
 
 	sleep(4);
 	useOt->Refresh(false);
+	sleep(1);
 	EXPECT_EQ(toAccBalance+amount, useOt->AccountGetBalance(acc1));
 
 }
@@ -52,13 +54,13 @@ TEST_F(cUseOtAccountTest, Transfer2) {
 	int64_t amount = 10000;
 	useOt->Refresh(true);
 
-	for(int64_t i=amount/10; i<amount; i+=amount/10) {
+	for(int64_t i=amount/10; i<=amount; i+=amount/10) {
 		auto currBalance = useOt->AccountGetBalance(acc1);
-		auto trans = useOt->AccountTransfer(acc1, acc2, i, "test", false);
+		auto trans = useOt->AccountTransfer(acc1, acc2, amount/10, "test", false);
 		EXPECT_TRUE(trans);
 		useOt->Refresh(true);
 		sleep(1);
-		EXPECT_EQ(currBalance-i, useOt->AccountGetBalance(acc1));
+		EXPECT_EQ(currBalance-amount/10, useOt->AccountGetBalance(acc1));
 	}
 	EXPECT_EQ(fromAccBalance - amount, useOt->AccountGetBalance(acc1));
 
