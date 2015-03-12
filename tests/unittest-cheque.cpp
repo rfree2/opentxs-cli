@@ -49,7 +49,7 @@ TEST_F(cUseOtChequeTest, Create) {
 TEST_F(cUseOtChequeTest, SendCheque) {
 	//EXPECT_FALSE(useOt->PaymentSend("Alice", toNym, 0, false));
 	sleep(5);
-	auto result = useOt->PaymentSend(fromNym, toNym, 0, false);
+	auto result = useOt->OutpaymentSend(fromNym, toNym, 0, false);
 	useOt->NymRefresh(toNym, true, false);
 	useOt->AccountRefresh(fromAcc, true, false);
 	ASSERT_TRUE(result);

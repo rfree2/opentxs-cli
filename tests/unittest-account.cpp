@@ -11,8 +11,8 @@ using namespace std;
 class cUseOtAccountTest: public testing::Test {
 protected:
 	std::shared_ptr<nOT::nUse::cUseOT> useOt;
-	string acc1 = "Bob's silver";
-	string acc2 = "FT's silver";
+	string acc2 = "Bob's silver";
+	string acc1 = "FT's silver";
 
 	virtual void SetUp() {
 		useOt = std::make_shared<nOT::nUse::cUseOT>("test");
@@ -25,22 +25,27 @@ protected:
 };
 
 TEST_F(cUseOtAccountTest, Transfer1) {
+	useOt->AccountInAccept(acc1, 1, false, false);
 	auto fromAccBalance = useOt->AccountGetBalance(acc2);
 	auto toAccBalance = useOt->AccountGetBalance(acc1);
 	int64_t amount = 10000;
 	auto trans = useOt->AccountTransfer(acc2, acc1, amount, "test", false);
 	EXPECT_TRUE(trans);
 	useOt->Refresh(false);
+
 	EXPECT_EQ(fromAccBalance-amount, useOt->AccountGetBalance(acc2));
-	sleep(10);
-	useOt->Refresh(false);
+	sleep(3);
+
+//	useOt->Refresh(false);
 
 	EXPECT_TRUE(useOt->AccountInAccept(acc1, 0, false, false));
+
+	sleep(4);
 	useOt->Refresh(false);
 	EXPECT_EQ(toAccBalance+amount, useOt->AccountGetBalance(acc1));
 
 }
-/* FIXME:
+
 TEST_F(cUseOtAccountTest, Transfer2) {
 	auto fromAccBalance = useOt->AccountGetBalance(acc1);
 	auto toAccBalance = useOt->AccountGetBalance(acc2);
@@ -57,8 +62,10 @@ TEST_F(cUseOtAccountTest, Transfer2) {
 	}
 	EXPECT_EQ(fromAccBalance - amount, useOt->AccountGetBalance(acc1));
 
+	EXPECT_TRUE(useOt->AccountInAccept(acc1, 0, true, false));
 	EXPECT_TRUE(useOt->AccountInAccept(acc2, 0, true, false));
+
 	useOt->Refresh(true);
 	EXPECT_EQ(toAccBalance+amount, useOt->AccountGetBalance(acc2));
 }
-*/
+

@@ -572,8 +572,8 @@ void cCmdParser::Init() {
 	AddFormat("cheque new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
 			LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.v(5, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
 
-	AddFormat("cheque discard", {pAccount, pNym, pOutpaymentIndex}, {}, {},
-			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
+	AddFormat("cheque discard", {pAccount, pNym}, {pOutpaymentIndex}, {},
+			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );
 
 	AddFormat("cheque new-for", {pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
 		LAMBDA {auto &D=*d; return U.ChequeCreate( U.AccountGetName( U.AccountGetDefault() ), U.AccountGetNym( U.AccountGetName(U.AccountGetDefault()) ), D.V(1), stoi(D.V(2)), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.o1("--memo", ""), D.has("--dryrun") );} );
@@ -592,7 +592,7 @@ void cCmdParser::Init() {
 
 	AddFormat( "msg-in show", {}, {pNym, pMsgInIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.MsgDisplayForNymInbox( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
-	AddFormat("msg-out show", {}, {pNym, pMsgOutIndex}, NullMap,
+	AddFormat( "msg-out show", {}, {pNym, pMsgOutIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.MsgDisplayForNymOutbox( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
 
 	//======== ot msg ========
@@ -652,6 +652,9 @@ void cCmdParser::Init() {
 
 	//======== ot nym-outpayment ========
 
+	AddFormat("outpayment discard", { pNym}, {pOutpaymentIndex}, NullMap,
+			LAMBDA { auto &D=*d; return U.OutpaymentDiscard(D.V(1), stoi(D.v(2, "0")), D.has("--dryrun") ); } );
+
 	AddFormat("outpayment ls", {}, {pNym}, NullMap,
 			LAMBDA { auto &D=*d; return U.OutpaymentDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
@@ -659,7 +662,14 @@ void cCmdParser::Init() {
 			LAMBDA { auto &D=*d; return U.OutpaymentShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
 
 	AddFormat("outpayment rm", {pNym}, {pOutpaymentIndex}, { {"--all", pBool} },
-				LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
+			LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
+
+	AddFormat("outpayment send", {pNymFrom, pNymTo}, {pInt}, NullMap,
+			LAMBDA { auto &D=*d; return U.OutpaymentSend( D.V(1), D.V(2), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
+
+	AddFormat("outpayment send-to", {pNymTo}, {pInt}, { {"--all", pBool} },
+			LAMBDA { auto &D=*d; return U.OutpaymentSend( U.NymGetName( U.NymGetDefault()), D.V(1), stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
+
 
 	//======== ot payment ========
 
@@ -675,12 +685,7 @@ void cCmdParser::Init() {
 	AddFormat("payment discard-all", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.PaymentDiscardAll( D.has("--dryrun") ); } );
 
-	AddFormat("payment send", {pNymFrom, pNymTo}, {pInt}, NullMap,
-			LAMBDA { auto &D=*d; return U.PaymentSend( D.V(1), D.V(2), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
 
-	AddFormat("payment send-to", {pNymTo}, {pInt}, { {"--all", pBool} },
-			LAMBDA { auto &D=*d; return U.PaymentSend( U.NymGetName( U.NymGetDefault()), D.V(1), stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
-		
 	//======== ot purse ========
 
 	AddFormat("purse create", {pServer, pAsset, pNym, pNym}, {}, NullMap,
@@ -747,7 +752,7 @@ void cCmdParser::Init() {
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher cancel", {pAccount, pNym}, {pOutpaymentIndex}, NullMap,
-		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.V(3)), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();
 }

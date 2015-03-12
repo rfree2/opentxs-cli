@@ -107,6 +107,8 @@ namespace nUse {
 		string AccountGetName(const ID & accountID);
 		bool AccountSetName(const string & accountID, const string & NewAccountName);
 		ID AccountGetAssetID(const string & account);
+		string AccountGetAsset(const string & account);
+
 		ID AccountGetNymID(const string & account);
 		string AccountGetNym(const string & account);
 
@@ -232,12 +234,15 @@ namespace nUse {
 		EXEC bool NymRename(const string & oldNymName, const string & newNymName, bool dryrun);
 		EXEC bool NymSetDefault(const string & nymName, bool dryrun);
 
-		//================= nym-outpayments ==========
+		//================= outpayments ==========
 
 		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
 		HINT int32_t OutpaymantGetCount(const string & nym);
 
+		EXEC bool OutpaymentDiscard(const string & nym, const int32_t index, bool dryrun); ///< discard outgoing payment
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
+		EXEC bool OutpaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool all, bool dryrun);
+		bool OutpaymentSend(const string & senderNym, const string & recipientNym, int32_t index,  bool dryrun); ///< main sending function
 		EXEC bool OutpaymentShow(const string & nym, int32_t index, bool dryrun);
 		EXEC bool OutpaymentRemove(const string & nym, const int32_t & index, bool all, bool dryrun);
 
@@ -248,8 +253,7 @@ namespace nUse {
 		bool PaymentAccept(const string & account, int64_t index, bool dryrun); ///< main accepting function
 		EXEC bool PaymentDiscard(const string & nym, const string & index, bool all, bool dryrun);
 		EXEC bool PaymentDiscardAll(bool dryrun);
-		EXEC bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool all, bool dryrun);
-		bool PaymentSend(const string & senderNym, const string & recipientNym, int32_t index,  bool dryrun); ///< main sending function
+
 		//================= purse ==================
 
 		EXEC bool PurseCreate(const string & serverName, const string & asset, const string & ownerName, const string & signerName, bool dryrun);

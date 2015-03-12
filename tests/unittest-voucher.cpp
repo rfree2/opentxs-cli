@@ -98,7 +98,7 @@ TEST_F(cUseOtVoucherTest, Create) {
 
 TEST_F(cUseOtVoucherTest, Send) {
 	// send
-	ASSERT_TRUE(useOt->PaymentSend(fromNym, toNym, 0, false));
+	ASSERT_TRUE(useOt->OutpaymentSend(fromNym, toNym, 0, false));
 
 	// refresh
 	useOt->NymRefresh(toNym, false, false);
