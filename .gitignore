@@ -20,3 +20,4 @@ otcli-history.txt
 run.sh
 run-test.sh
 *.test
+tests_output/
