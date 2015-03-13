@@ -536,7 +536,7 @@ void cCmdParser::Init() {
 	//======== ot basket ======
 
 //	AddFormat("basket new", {pNym, pServer}, {}, { {"--assets",pAssets} },
-//			LAMBDA { auto &D=*d; return U.AssetNew(D.V(1), D.has("--dryrun") ); } );
+//		LAMBDA { auto &D=*d; return U.AssetNew(D.V(1), D.has("--dryrun") ); } );
 
 	//======== ot cash ========
 
@@ -696,8 +696,8 @@ void cCmdParser::Init() {
 
 	//======== ot recordbox ========
 
-	AddFormat("record ls", {}, {pAccount, pNym, pServer}, NullMap,
-		LAMBDA { auto &D=*d; return U.RecordDisplay( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--dryrun") ); } );
+	AddFormat("record ls", {}, {pAccount, pNym, pServer},  { {"--no-verify", pBool } },
+		LAMBDA { auto &D=*d; return U.RecordDisplay( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--no-verify"), D.has("--dryrun") ); } );
 
 	AddFormat("record clear", {}, {pAccount}, { {"--all", pBool} },
 		LAMBDA { auto &D=*d; return U.RecordClear( D.v(1, U.AccountGetName(U.AccountGetDefault())), D.has("--all"), D.has("--dryrun") ); } );

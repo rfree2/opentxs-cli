@@ -96,7 +96,7 @@ namespace nUse {
 		EXEC bool DisplayHistory(bool dryrun);
 		string SubjectGetDescr(const nUtils::eSubjectType type, const string & subject);
 		bool Refresh(bool dryrun);
-		bool PrintInstrumentInfo(const string &instrument);
+		bool PrintInstrumentInfo(const string &instrument); ///< shows details about instrument
 
 		//================= account =================
 
@@ -135,9 +135,9 @@ namespace nUse {
 
 		//================= addressbook =================
 
-		EXEC bool AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun);
-		EXEC bool AddressBookDisplay(const string & nym, bool dryrun);
-		EXEC bool AddressBookRemove(const string & ownerNym, const ID & toRemoveNymID, bool dryrun);
+		EXEC bool AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun); ///< adds new nym to adress book, TODO: some validation of new nym ID
+		EXEC bool AddressBookDisplay(const string & nym, bool dryrun); ///< displaying address book for specific nym
+		EXEC bool AddressBookRemove(const string & ownerNym, const ID & toRemoveNymID, bool dryrun); ///< removes entry from address book by nym ID
 
 
 		//================= asset =================
@@ -145,20 +145,21 @@ namespace nUse {
 		ID AssetGetId(const string & asset); ///< Gets asset ID both from name and ID with prefix
 		string AssetGetName(const ID & accountID);
 		string AssetGetContract(const string & asset);
-		string AssetGetDefault(); // Get default asset, also known as purse
+		string AssetGetDefault(); ///< Get default asset, also known as purse
 
 		HINT vector<string> AssetGetAllNames();
 
-		EXEC bool AssetAdd(const string & filename, bool dryrun);
-		EXEC bool AssetSetDefault(const std::string & asset, bool dryrun); // Set default asset, also known as purse
+		EXEC bool AssetAdd(const string & filename, bool dryrun); ///< adds asset by contract
+		EXEC bool AssetSetDefault(const std::string & asset, bool dryrun); ///< Set default asset, also known as purse
 		EXEC bool AssetDisplayAll(bool dryrun);
 		EXEC bool AssetIssue(const string & serverID, const string & nymID, bool dryrun) ;
 		EXEC bool AssetNew(const string & nym, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
-		EXEC bool AssetShowContract(const string & asset, const string & filename, bool dryrun);
+		EXEC bool AssetShowContract(const string & asset, const string & filename, bool dryrun); ///< shows asset contract or saves it to file
+
 		//================= basket =================
 
-		EXEC bool BasketDisplay();
+//TODO:	EXEC bool BasketDisplay();
 		EXEC bool BasketNew(const string & nym, const string & server, const string & assets, bool dryrun);
 
 
@@ -179,13 +180,12 @@ namespace nUse {
 		EXEC bool ChequeCreate(const string &fromAcc, const string & fromNym, const string &toNym, int64_t amount, const string &srv, const string &memo, bool dryrun);
 		EXEC bool ChequeDiscard(const string &acc, const string &nym, const int32_t & index, bool dryrun);
 
-
 		//================= ?contract =================
 
 		string ContractSign(const std::string & nymID, const std::string & contract);
 
 		//================= market =================
-		EXEC bool MarketList(const string & srvName, const string & nymName, bool dryrun);
+		EXEC bool MarketList(const string & srvName, const string & nymName, bool dryrun); ///< displaying available markets
 
 
 		//================= mint =================
@@ -218,7 +218,6 @@ namespace nUse {
 		string NymGetName(const ID & nymID);
 		string NymGetRecipientName(const ID & nymID); ///< returns nym name or ID (if name not found), should be used to displaying payments, etc. works, when recipient nym was removed from address book and for now is unknown
 		bool NymSetName(const ID & nymID, const string & newNymName);
-		//bool NymIsInWalled();
 
 		HINT vector<string> NymGetAllNames();
 
@@ -262,8 +261,8 @@ namespace nUse {
 		//================= recordbox ==================
 
 		EXEC bool RecordClear(const string &acc, bool all, bool dryrun);
-		EXEC bool RecordDisplay(const string &acc, bool dryrun);
-//		EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
+		EXEC bool RecordDisplay(const string &acc, bool noverify, bool dryrun); ///< prints list of recorded payments
+//TODO:	EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
 		EXEC bool RecordShow(const string &acc, const string & srv, int32_t index, bool dryrun);
 
 		//================= server =================
@@ -275,13 +274,13 @@ namespace nUse {
 
 		HINT vector<string> ServerGetAllNames();
 
-		EXEC bool ServerAdd(const string &filename, bool dryrun); ///< Add new server contract
+		EXEC bool ServerAdd(const string &filename, bool dryrun); ///< Add new server contract (from editor or file)
 		EXEC bool ServerCreate(const string & nymName, bool dryrun); ///< Create new server contract
 		EXEC bool ServerRemove(const string & serverName, bool dryrun);
 		EXEC bool ServerSetDefault(const string & serverName, bool dryrun);
-		EXEC bool ServerShowContract(const string & serverName, const string &filename, bool dryrun);
+		EXEC bool ServerShowContract(const string & serverName, const string &filename, bool dryrun); ///< shows server contract or saves it to file
 		EXEC bool ServerDisplayAll(bool dryrun);
-		EXEC bool ServerPing(const string & server, const string & nym, bool dryrun);
+		EXEC bool ServerPing(const string & server, const string & nym, bool dryrun); ///< checking server connection FIXME: timeout
 
 		//================= text =================
 
@@ -293,9 +292,9 @@ namespace nUse {
 
 		//================= voucher ==============
 
-		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun); ///< Cancels a voucher, usable only when voucher isn't sent
+		EXEC bool VoucherCancel(const string & acc, const string & nym, const int32_t & index, bool dryrun); ///< Cancels a voucher (from outpayments or run editor), usable only when voucher wasn't sent
 		EXEC bool VoucherWithdraw(const string & fromAcc, const string &fromNym, const string &toNym, int64_t amount,
-				string memo, bool dryrun);
+				string memo, bool dryrun); ///< creating new voucher
 
 	};
 

@@ -6,7 +6,7 @@ dir=$(date "+%d-%m-%y_%H%M%S")
 full_dir="test_output/$dir"
 
 mkdir -p "tests_output"
-mkdir -p $dir
+mkdir -p $full_dir
 
 function checkExist() { 
     if [ ! -f $1 ]; then

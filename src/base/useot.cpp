@@ -639,9 +639,9 @@ bool cUseOT::AccountInAccept(const string & account, const int index, bool all, 
 			return true;
 		}
 
-		for (int32_t index = 0; index < transactionCount; ++index) { //FIXME work successfully only for first transaction
+		for (int32_t index = 0; index < transactionCount; ++index) {
 			auto accepted =  mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(0));
-			if(!accepted) {
+			if(!accepted) { // problem with transtaction accepting, trying once again
 				_warn("transaction " << index << " failed, trying again");
 				accepted =  mMadeEasy->accept_inbox_items( accountID, nItemType, ToStr(0));
 			}
@@ -1526,6 +1526,10 @@ bool cUseOT::MintShow(const string & srvName, const string & nymName, const stri
 	if(dryrun) return true;
 	if(!Init())	return false;
 
+	cout << "    Nym: " << nymName << endl;
+	cout << "  Asset: " << assetName << endl;
+	cout << " Server: " << srvName << endl;
+
 	ID srvID = ServerGetId(srvName);
 	ID nymID = NymGetId(nymName);
 	ID assetID = AssetGetId(assetName);
@@ -1967,7 +1971,7 @@ bool cUseOT::NymDisplayInfo(const string & nymName, bool dryrun) {
 string cUseOT::NymGetName(const ID & nymID) {
 	if(!Init())
 		return "";
-
+	if(nymID.empty()) return "";
 	auto vector = NymGetAllIDs();
 	if(std::find(vector.begin(), vector.end(), nymID) == vector.end()) { // nym not found, checing in address book
 		_dbg1("nym not found, checking in address book");
@@ -2777,7 +2781,7 @@ bool cUseOT::RecordClear(const string &acc, bool all, bool dryrun) {
 	return cleared;
 }
 
-bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
+bool cUseOT::RecordDisplay(const string &acc, bool noVerify, bool dryrun) {
 	_fact("recordbox ls " << acc);
 	if (dryrun) return true;
 	if (!Init()) return false;
@@ -2788,7 +2792,10 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 	const auto srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
 	const auto srv = ServerGetName(srvID);
 
-	const auto recordBox = opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
+	const auto recordBox =
+			(noVerify) ?
+					opentxs::OTAPI_Wrap::LoadRecordBoxNoVerify(srvID, nymID, accID) :
+					opentxs::OTAPI_Wrap::LoadRecordBox(srvID, nymID, accID);
 
 	_dbg3(recordBox);
 	cout << endl;
@@ -2818,21 +2825,25 @@ bool cUseOT::RecordDisplay(const string &acc, bool dryrun) {
 	table.PrintHeader();
 
 	for (int32_t i = 0; i < count; ++i) {
+
 		const auto transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, nymID, accID, recordBox, i);
 		if (transaction == "")
 			return false;
 		const auto id = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(srvID, nymID, accID, recordBox, i);
 		const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
-		const auto senderNym = NymGetName(
-				opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction));
-		const auto recipientNym = NymGetRecipientName(
-				opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID, transaction));
+		const auto senderNymID = opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction);
+		const auto recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID, transaction);
 		const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
 
 		(opentxs::OTAPI_Wrap::Transaction_IsCanceled(srvID, nymID, accID, transaction)) ?
 				table.SetContentColor(zkr::cc::fore::yellow) : table.SetContentColor(zkr::cc::console);
 
+		// if sender or recipient nym is empty, print space
+		const auto senderNym = (senderNymID.empty())? " " : NymGetName(senderNymID);
+		const auto recipientNym = (recipientNymID.empty())? " " : NymGetRecipientName(recipientNymID);
+
 		table << id << type << senderNym << recipientNym << amount;
+
 	}
 
 	table.PrintFooter();
