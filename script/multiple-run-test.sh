@@ -18,6 +18,8 @@ function checkExist() {
 
 function run() { 
 	i="0"   
+    passed="0"
+    failed="0"
 	                                                                                                                                                                                             
 	while [ $i -lt $times ]; do                                                                                                                                                                                                                   
         i=$[$i+1]  
@@ -27,7 +29,18 @@ function run() {
         eval $test_script --gtest_output=xml:$full_dir/$i.xml   &>  $name                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 		tail $name    
         sleep 1
+        if [ -f $full_dir/$i.xml]: then 
+            echo "Test $i passed" >> $full_dir/summary.txt
+            passed=$[$passed+1] 
+        else 
+            echo "Test $i failed"
+            failed=$[$failed+1] >> $full_dir/summary.txt
+        fi
 	done 
+    echo "====================================================="  >> $full_dir/summary.txt
+    echo "passed: $passed" >> $full_dir/summary.txt
+    echo "failed: $failed" >> $full_dir/summary.txt
+    echo "all: $i"  $full_dir/summary.txt
 }
 
 checkExist 
