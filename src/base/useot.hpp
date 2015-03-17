@@ -110,7 +110,8 @@ namespace nUse {
 		string AccountGetAsset(const string & account);
 
 		ID AccountGetNymID(const string & account);
-		string AccountGetNym(const string & account);
+		HINT string AccountGetNym(const string & account);
+		VALID bool AccountIsOwnerNym(const string & account, const string & nym);
 
 		HINT vector<string> AccountGetAllNames();
 
@@ -238,7 +239,7 @@ namespace nUse {
 		VALID bool OutpaymentCheckIndex(const string & nymName, const int32_t & index);
 		HINT int32_t OutpaymantGetCount(const string & nym);
 
-		EXEC bool OutpaymentDiscard(const string & nym, const int32_t index, bool dryrun); ///< discard outgoing payment
+		EXEC bool OutpaymentDiscard(const string & acc, const string & nym, const int32_t index, bool dryrun); ///< discard outgoing payment
 		EXEC bool OutpaymentDisplay(const string & nym, bool dryrun);
 		EXEC bool OutpaymentSend(const string & senderNym, const string & recipientNym, int32_t index, bool all, bool dryrun);
 		bool OutpaymentSend(const string & senderNym, const string & recipientNym, int32_t index,  bool dryrun); ///< main sending function
@@ -261,7 +262,7 @@ namespace nUse {
 		//================= recordbox ==================
 
 		EXEC bool RecordClear(const string &acc, bool all, bool dryrun);
-		EXEC bool RecordDisplay(const string &acc, bool noverify, bool dryrun); ///< prints list of recorded payments
+		EXEC bool RecordDisplay(const string &acc, bool noVerify, bool dryrun); ///< prints list of recorded payments
 //TODO:	EXEC bool RecordRemove(const string &acc, const string & srv, int32_t index, bool dryrun);
 		EXEC bool RecordShow(const string &acc, const string & srv, int32_t index, bool dryrun);
 

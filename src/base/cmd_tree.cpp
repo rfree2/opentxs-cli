@@ -100,6 +100,24 @@ void cCmdParser::Init() {
 		}
 	);
 
+	cParamInfo pNymAcc( "nym-acc", [] () -> string { return Tr(eDictType::help, "nym-acc") },
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			_dbg3("Nym to validation " << curr_word_ix);
+			// ot command acc [nym]
+			//
+			auto acc = (curr_word_ix == 0)? use.AccountGetDefault() : data.Var(curr_word_ix);
+			auto nym = data.Var(curr_word_ix+1);
+			_dbg2("nym: " << nym << ", account: " << acc);
+			return use.AccountIsOwnerNym(acc, nym);
+
+		} ,
+		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			_dbg3("Nym hinting");
+			_dbg2(use.AccountGetNym(data.Var(curr_word_ix-1)));
+			return vector<string>{use.AccountGetNym(data.Var(curr_word_ix-1))};
+		}
+	);
+
 	cParamInfo pNymFrom = pNymMy << cParamInfo("nym-from", [] () -> string { return Tr(eDictType::help, "nym-from") });
 
 	cParamInfo pNymNewName( "nym-new-name", [] () -> string { return Tr(eDictType::help, "nym-new-name") },
@@ -652,8 +670,8 @@ void cCmdParser::Init() {
 
 	//======== ot nym-outpayment ========
 
-	AddFormat("outpayment discard", { pNym}, {pOutpaymentIndex}, NullMap,
-			LAMBDA { auto &D=*d; return U.OutpaymentDiscard(D.V(1), stoi(D.v(2, "0")), D.has("--dryrun") ); } );
+	AddFormat("outpayment discard", {pAccount}, {pNymAcc, pOutpaymentIndex}, NullMap,
+			LAMBDA { auto &D=*d; return U.OutpaymentDiscard(D.V(1), D.v(2, U.AccountGetNym(D.V(1))), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
 
 	AddFormat("outpayment ls", {}, {pNym}, NullMap,
 			LAMBDA { auto &D=*d; return U.OutpaymentDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
@@ -745,13 +763,13 @@ void cCmdParser::Init() {
 
 	//======== ot voucher ========
 
-	AddFormat("voucher new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {}, { {"--memo",pText} },
+	AddFormat("voucher new", {pAccountFrom, pNymAcc, pNymTo, pAmount}, {}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher new-for", {pNymTo, pAmount}, {}, { {"--memo",pText} },
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
-	AddFormat("voucher cancel", {pAccount, pNym}, {pOutpaymentIndex}, NullMap,
+	AddFormat("voucher cancel", {pAccount, pNymAcc}, {pOutpaymentIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );
 
 	mI->BuildCache_CmdNames();

@@ -313,22 +313,31 @@ ID cUseOT::AccountGetNymID(const string & account) {
 	return opentxs::OTAPI_Wrap::GetAccountWallet_NymID(AccountGetId(account));
 }
 
+bool cUseOT::AccountIsOwnerNym(const string & account, const string & nym) {
+	if(!Init())
+		return false;
+	const ID rightNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(AccountGetId(account));
+	if(nym.empty() || rightNymID.empty()) return false;
+	return rightNymID == NymGetId(nym);
+}
+
 
 bool cUseOT::AccountRemove(const string & account, bool dryrun) { ///<
 	_fact("account rm " << account);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	if(opentxs::OTAPI_Wrap::Wallet_CanRemoveAccount (AccountGetId(account))) {
-		_erro("Account cannot be deleted: doesn't have a zero balance?/outstanding receipts?");
-		return false;
+	if (opentxs::OTAPI_Wrap::Wallet_CanRemoveAccount(AccountGetId(account))) {
+		return nUtils::reportError("Account cannot be deleted: doesn't have a zero balance?/outstanding receipts?");
 	}
 
-	if( opentxs::OTAPI_Wrap::deleteAssetAccount( mDefaultIDs.at(nUtils::eSubjectType::Server), mDefaultIDs.at(nUtils::eSubjectType::User), AccountGetId(account) ) ) { //FIXME should be
-		_erro("Failure deleting account: " + account);
-		return false;
+	if (opentxs::OTAPI_Wrap::deleteAssetAccount(mDefaultIDs.at(nUtils::eSubjectType::Server),
+			mDefaultIDs.at(nUtils::eSubjectType::User), AccountGetId(account))) { //FIXME should be
+		return nUtils::reportError("Failure deleting account: " + account);
 	}
 	_info("Account: " + account + " was successfully removed");
+	cout << zkr::cc::fore::lightgreen << "Account: " << account << " was successfully removed" << zkr::cc::console
+			<< endl;
 	return true;
 }
 
@@ -337,7 +346,7 @@ bool cUseOT::AccountRefresh(const string & accountName, bool all, bool dryrun) {
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	int32_t serverCount = opentxs::OTAPI_Wrap::GetServerCount();
+	// int32_t serverCount = opentxs::OTAPI_Wrap::GetServerCount(); // unused
 
 	if (all) {
 		int32_t accountsRetrieved = 0;
@@ -687,7 +696,7 @@ bool cUseOT::AccountOutCancel(const string & account, const int index, bool all,
 
 	ID accountID = AccountGetId(account);
 	ID accountNymID = opentxs::OTAPI_Wrap::GetAccountWallet_NymID(accountID);
-	int32_t nItemType = 0; // TODO pass it as an argument
+	// int32_t nItemType = 0; // TODO pass it as an argument
 
 	if ( mMadeEasy->cancel_outgoing_payments( accountNymID, accountID, ToStr(index) ) ) { //TODO cancel_outgoing_payments is not for account outbox
 		_info("Successfully cancelled outbox transaction: " << index);
@@ -1486,11 +1495,17 @@ bool cUseOT::ChequeDiscard(const string & acc, const string & nym, const int32_t
 	}
 	const auto srvID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(cheque);
 
-	auto discard = opentxs::OTAPI_Wrap::DiscardCheque(srvID, nymID, accID, cheque);
+	bool discard = opentxs::OTAPI_Wrap::DiscardCheque(srvID, nymID, accID, cheque);
 	_info(discard);
+	if(!discard) return nUtils::reportError("Error while discarding cheque");
 
-	auto ok = mMadeEasy->retrieve_account(srvID, nymID, accID, true);
-	return ok && discard;
+	auto retrive = mMadeEasy->retrieve_account(srvID, nymID, accID, true);
+	if(!retrive)
+		cout << "Can't refresh account!" << endl;
+
+	cout << zkr::cc::fore::lightgreen << "cheque discarded" << zkr::cc::console << endl;
+
+	return true;
 }
 
 string cUseOT::ContractSign(const std::string & nymID, const std::string & contract){ // FIXME can't sign contract with this (assetNew() functionality)
@@ -1613,7 +1628,6 @@ bool cUseOT::MsgDisplayForNymBox(eBoxType boxType, const string & nymName, int m
 	auto &col1 = cc::fore::lightblue;
 	auto &col2 = cc::fore::lightyellow;
 	auto &nocol = cc::fore::console;
-	auto &col3 = cc::fore::lightred;
 	auto &col4 = cc::fore::lightgreen;
 
 	auto errMessage = [](int index, string type)->void {
@@ -1875,7 +1889,10 @@ void cUseOT::NymGetAll(bool force) {
 	if(!Init())
 		return;
 
-	if (force || mCache.mNyms.size() != opentxs::OTAPI_Wrap::GetNymCount()) { //TODO optimize?
+	int32_t cacheSize = mCache.mNyms.size();
+	auto nymCount = opentxs::OTAPI_Wrap::GetNymCount();
+
+	if (force || cacheSize != nymCount) { //TODO optimize?
 		mCache.mNyms.clear();
 		_dbg3("Reloading nyms cache");
 		for(int i = 0 ; i < opentxs::OTAPI_Wrap::GetNymCount();i++) {
@@ -2123,7 +2140,7 @@ bool cUseOT::NymSetDefault(const string & nymName, bool dryrun) {
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
 }
-bool cUseOT::OutpaymentDiscard(const string & nym, const int32_t index, bool dryrun) {
+bool cUseOT::OutpaymentDiscard(const string & acc, const string & nym, const int32_t index, bool dryrun) {
 	if(!Init())	return false;
 	if(dryrun) return true;
 
@@ -2131,15 +2148,18 @@ bool cUseOT::OutpaymentDiscard(const string & nym, const int32_t index, bool dry
 	const auto outpayment = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
 
 	auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(outpayment);
-	auto account = AccountGetName(opentxs::OTAPI_Wrap::Instrmnt_GetSenderAcctID(outpayment));
 	_dbg2(type);
 
+	cout << zkr::cc::fore::cyan << "Discarding " << type << " for nym: " << nym << zkr::cc::console << " (" << nymID
+			<< ")" << endl;
+	cout << zkr::cc::fore::cyan << "Account: " << acc <<  zkr::cc::console << " (" << AccountGetId(acc)	<< ")" << endl;
+
 	if(type == "CHEQUE") {
-		return ChequeDiscard(account, nym, index, false);
+		return ChequeDiscard(acc, nym, index, false);
 	}
 
 	if(type == "VOUCHER") {
-		return VoucherCancel(account, nym, index, false);
+		return VoucherCancel(acc, nym, index, false);
 	}
 
 	if( type == "INVOICE" || type == "PURSE") {
@@ -2180,6 +2200,7 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 	cout << "Printing outpayments for nym: " << zkr::cc::fore::lightblue << nym << zkr::cc::console << " (" << count << ")" << endl;
 	auto color = zkr::cc::fore::lightyellow;
 	auto nocolor = zkr::cc::console;
+	auto err = zkr::cc::fore::lightred;
 
 	bprinter::TablePrinter table(&std::cout);
 	table.SetContentColor(nocolor);
@@ -2197,9 +2218,13 @@ bool cUseOT::OutpaymentDisplay(const string & nym, bool dryrun) {
 		auto type = opentxs::OTAPI_Wrap::Instrmnt_GetType(instr);
 		auto asset = AssetGetName(opentxs::OTAPI_Wrap::Instrmnt_GetInstrumentDefinitionID(instr));
 		auto amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instr);
+		auto srvID = opentxs::OTAPI_Wrap::Instrmnt_GetNotaryID(instr);
 
 		if(to == nym) table.SetContentColor(color);
 		else table.SetContentColor(nocolor);
+		if(!opentxs::OTAPI_Wrap::Nym_VerifyOutpaymentsByIndex(nymID, i))
+			table.SetContentColor(err);
+
 
 		table << i << to << type << asset << amount;
 	}
@@ -2537,6 +2562,8 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 		_dbg3(deposit);
 
 		auto refreshRecipient = mMadeEasy->retrieve_account(accountServerID, accountNymID, accountID, true);
+		if (!refreshRecipient)
+			_warn("Can't refresh recipient account: " << AccountGetName(accountID) << ", owner nym: " << NymGetName(accountNymID));
 
 		if(status < 0)
 			return nUtils::reportError("Can't accept this payment!");
@@ -2555,8 +2582,10 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 		// remove it from payments inbox and move it to the recordbox.
 		//
 		if ((index != -1) && (1 == nDepositPurse)) {
-			int32_t nRecorded = opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, //bIsInbox=true
+			auto recorded = opentxs::OTAPI_Wrap::RecordPayment(accountServerID, accountNymID, true, //bIsInbox=true
 					index, true); // bSaveCopy=true.
+			_dbg3("recorded: " << recorded);
+			if(!recorded) _warn("can't record this payment!");
 		}
 		return true;
 	}
@@ -2605,7 +2634,7 @@ bool cUseOT::PaymentShow(const string & nym, const string & server, bool dryrun)
 
 			string transactionNumber = ToStr(transNumber);
 
-			int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(serverID, nymID, nymID, transaction); // FIXME why we need this?
+			// int64_t refNum = opentxs::OTAPI_Wrap::Transaction_GetDisplayReferenceToNum(serverID, nymID, nymID, transaction); // FIXME why we need this?
 
 			int64_t amount = opentxs::OTAPI_Wrap::Instrmnt_GetAmount(instrument);
 			string instrumentType = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
@@ -2824,30 +2853,34 @@ bool cUseOT::RecordDisplay(const string &acc, bool noVerify, bool dryrun) {
 	table.AddColumn("Amount", 10);
 	table.PrintHeader();
 
+	bool ok = true;
+
 	for (int32_t i = 0; i < count; ++i) {
-
 		const auto transaction = opentxs::OTAPI_Wrap::Ledger_GetTransactionByIndex(srvID, nymID, accID, recordBox, i);
-		if (transaction == "")
-			return false;
-		const auto id = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(srvID, nymID, accID, recordBox, i);
-		const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
-		const auto senderNymID = opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction);
-		const auto recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID, transaction);
-		const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
+		if (transaction.empty()) { // handle error
+			ok = false;
+			table.SetContentColor(zkr::cc::fore::lightred);
+			table << "ERROR" << "ERROR" << "ERROR" << "ERROR" << "ERROR";
+		} else {
+			const auto id = opentxs::OTAPI_Wrap::Ledger_GetTransactionIDByIndex(srvID, nymID, accID, recordBox, i);
+			const auto type = opentxs::OTAPI_Wrap::Transaction_GetType(srvID, nymID, accID, transaction);
+			const auto senderNymID = opentxs::OTAPI_Wrap::Transaction_GetSenderNymID(srvID, nymID, accID, transaction);
+			const auto recipientNymID = opentxs::OTAPI_Wrap::Transaction_GetRecipientNymID(srvID, nymID, accID,
+					transaction);
+			const auto amount = opentxs::OTAPI_Wrap::Transaction_GetAmount(srvID, nymID, accID, transaction);
 
-		(opentxs::OTAPI_Wrap::Transaction_IsCanceled(srvID, nymID, accID, transaction)) ?
-				table.SetContentColor(zkr::cc::fore::yellow) : table.SetContentColor(zkr::cc::console);
+			(opentxs::OTAPI_Wrap::Transaction_IsCanceled(srvID, nymID, accID, transaction)) ?
+					table.SetContentColor(zkr::cc::fore::yellow) : table.SetContentColor(zkr::cc::console);
 
-		// if sender or recipient nym is empty, print space
-		const auto senderNym = (senderNymID.empty())? " " : NymGetName(senderNymID);
-		const auto recipientNym = (recipientNymID.empty())? " " : NymGetRecipientName(recipientNymID);
+			// if sender or recipient nym is empty, print space
+			const auto senderNym = (senderNymID.empty()) ? "???" : NymGetName(senderNymID);
+			const auto recipientNym = (recipientNymID.empty()) ? "???" : NymGetRecipientName(recipientNymID);
 
-		table << id << type << senderNym << recipientNym << amount;
-
+			table << id << type << senderNym << recipientNym << amount;
+		}
 	}
-
 	table.PrintFooter();
-	return true;
+	return ok;
 }
 
 bool cUseOT::ServerAdd(const string &filename, bool dryrun) {
@@ -3137,29 +3170,31 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	ID accID = AccountGetId(acc);
-	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
 	ID nymID = NymGetId(nym);
-	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accID);
-
 	string voucher = "" ;
 
-
-	if(index == -1) { // gets voucher from editor
+	if(index == -1) {
+		_dbg2("getting voucher from editor");
 		nUtils::cEnvUtils envUtils;
 		voucher = envUtils.Compose();
 		if(voucher.empty()) {
 			cout << "Empty voucher, aborting" << endl;
 			return false;
 		}
-	} else { // gets voucher from outpayments
+	} else {
+		_dbg2("getting voucher from outpayments");
 		auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
+		_dbg3("outpayment count: " << count);
 		if(count == 0) {
 			cout << zkr::cc::fore::lightred << "Empty outpayments for nym: " << NymGetName(nymID) << zkr::cc::console << endl;
 			return false;
 		}
 		voucher = opentxs::OTAPI_Wrap::GetNym_OutpaymentsContentsByIndex(nymID, index);
+		if(voucher.empty()) return nUtils::reportError("Empty voucher!");
 	}
+	ID accID = AccountGetId(acc);
+	ID srvID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accID);
+	ID assetID = opentxs::OTAPI_Wrap::GetAccountWallet_InstrumentDefinitionID(accID);
 
 	if(opentxs::OTAPI_Wrap::Instrmnt_GetType(voucher) != "VOUCHER") {
 		cout << zkr::cc::fore::lightred << "Not a voucher!" << zkr::cc::console << endl;
@@ -3170,16 +3205,17 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 
 	auto valid = opentxs::OTAPI_Wrap::Instrmnt_GetValidTo(voucher);
 	_mark(valid);
-	if(assetID != vAssetID)
+	if(assetID != vAssetID) {
 		cout << zkr::cc::fore::yellow << "Assets are different" << zkr::cc::console << endl;
+		return false;
+	}
 
-	// auto dep = opentxs::OTAPI_Wrap::depositCheque(srvID, nymID, accID, voucher);
 	auto dep = mMadeEasy->deposit_cheque(srvID, nymID, accID, voucher);
 	auto status = mMadeEasy->VerifyMessageSuccess(dep);
 
 	if(status < 0)
 		return nUtils::reportError(ToStr(status), "status", "Can't cancel voucher ");
-
+	OutpaymentRemove(nym, index, false, false);
 
 	auto ok = mMadeEasy->retrieve_account(srvID, nymID, accID, true);
 	return ok;
