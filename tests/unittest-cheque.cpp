@@ -93,57 +93,8 @@ TEST_F(cUseOtChequeTest, CreateAndDiscard) {
 	ASSERT_TRUE(useOt->PaymentAccept(toAcc, -1, false));
 	useOt->Refresh(true);
 }*/
-/*
-TEST_F(cUseOtChequeTest, BasketNew) {
 
-	useOt->BasketNew();
-}
-
-TEST_F(cUseOtChequeTest, BasketDisplay) {
-	using namespace opentxs;
-	auto tmp = useOt->Init();
-
-	auto assetCount = OTAPI_Wrap::GetAssetTypeCount();
-	_dbg2("asset count: " << assetCount);
-
-	int32_t index = 0;
-	bool ok = false;
-
-	for (int i = 0; i < assetCount; ++i) {
-		const auto assetID = OTAPI_Wrap::GetAssetType_ID(i);
-		const auto asset = useOt->AssetGetName(assetID);
-
-		_dbg2("asset: " << asset);
-
-		auto isb = OTAPI_Wrap::IsBasketCurrency(assetID);
-		_dbg2(isb);
-		ok = ok || isb;
-	}
-	EXPECT_TRUE(ok);
-}*/
 TEST_F(cUseOtChequeTest, Cleanup) {
-	const int maxTimes = 10;
-	bool display = true;
-	int32_t txnCount = -1;
-
-	for (int i = 0; i < maxTimes; ++i) {
-		string inbox = opentxs::OTAPI_Wrap::LoadInbox(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
-				useOt->AccountGetId(fromAcc));
-
-		if(inbox.empty()) {
-			txnCount = 0;
-			break;
-		}
-		txnCount = opentxs::OTAPI_Wrap::Ledger_GetCount(useOt->ServerGetId(server), useOt->NymGetId(fromNym),
-				useOt->AccountGetId(fromAcc), inbox);
-
-		_info("txn: " << txnCount);
-		if(txnCount == 0) break;
-
-		useOt->AccountInAccept(fromAcc, 0, true, false);
-		display = useOt->AccountInDisplay(fromAcc, false);
-	}
-	_dbg2("end loop");
-	EXPECT_EQ(0, txnCount);
+	ASSERT_TRUE(useOt->AccountInAccept(fromAcc, 0, true, false));
 }
 

@@ -82,8 +82,28 @@ TEST_F(cUseOtTest, Nymbox) {
 
 		auto txnNum = opentxs::OTAPI_Wrap::GetNym_TransactionNumCount(srvID, nymID);
 		_info(txnNum);
-
-
 	}
 }
 
+TEST_F(cUseOtTest, BasketDisplay) {
+	using namespace opentxs;
+	auto tmp = useOt->Init();
+
+	auto assetCount = OTAPI_Wrap::GetAssetTypeCount();
+	_dbg2("asset count: " << assetCount);
+
+	int32_t index = 0;
+	bool ok = false;
+
+	for (int i = 0; i < assetCount; ++i) {
+		const auto assetID = OTAPI_Wrap::GetAssetType_ID(i);
+		const auto asset = useOt->AssetGetName(assetID);
+
+		_dbg2("asset: " << asset);
+
+		auto isb = OTAPI_Wrap::IsBasketCurrency(assetID);
+		_dbg2(isb);
+		ok = ok || isb;
+	}
+	EXPECT_TRUE(ok);
+}
