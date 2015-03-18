@@ -3,7 +3,7 @@
 times=$1 
 test_script="printf '_' | script/run-test.sh"
 dir=$(date "+%d-%m-%y_%H%M%S")
-full_dir="test_output/$dir"
+full_dir="tests_output/$dir"
 
 mkdir -p "tests_output"
 mkdir -p $full_dir
@@ -29,7 +29,7 @@ function run() {
         eval $test_script --gtest_output=xml:$full_dir/$i.xml   &>  $name                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 		tail $name    
         sleep 1
-        if [ -f $full_dir/$i.xml]: then 
+        if [ -f $full_dir/$i.xml ]; then 
             echo "Test $i passed" >> $full_dir/summary.txt
             passed=$[$passed+1] 
         else 
