@@ -110,7 +110,7 @@ namespace nUse {
 		string AccountGetAsset(const string & account);
 
 		ID AccountGetNymID(const string & account);
-		HINT string AccountGetNym(const string & account);
+		HINT string AccountGetNym(const string & account); ///< get name of owner nym
 		VALID bool AccountIsOwnerNym(const string & account, const string & nym);
 
 		HINT vector<string> AccountGetAllNames();
@@ -164,7 +164,7 @@ namespace nUse {
 		EXEC bool BasketNew(const string & nym, const string & server, const string & assets, bool dryrun);
 
 
-		//================= cash =================
+		//================= cash =================	// FIXME: segfault!
 
 		string CashExport(const string & nymSender, const string & nymRecipient, const string & account, const string & indices, const bool passwordProtected, string & retained_copy);  ///< Used by CashSend and CashExportWrap to export cash purse
 		bool CashDeposit(const string & account, const string & strFromNymID, const string & strServerID,  const string & strInstrument); ///< Used by CashDepositWrap and PaymentAccept to deposit cash purse on account
@@ -275,8 +275,8 @@ namespace nUse {
 
 		HINT vector<string> ServerGetAllNames();
 
-		EXEC bool ServerAdd(const string &filename, bool dryrun); ///< Add new server contract (from editor or file)
-		EXEC bool ServerCreate(const string & nymName, bool dryrun); ///< Create new server contract
+		EXEC bool ServerAdd(const string &filename, bool dryrun); ///< Adds new server contract (from editor or file)
+		EXEC bool ServerCreate(const string & nymName, const string & filename, bool dryrun); ///< Creates new server contract
 		EXEC bool ServerRemove(const string & serverName, bool dryrun);
 		EXEC bool ServerSetDefault(const string & serverName, bool dryrun);
 		EXEC bool ServerShowContract(const string & serverName, const string &filename, bool dryrun); ///< shows server contract or saves it to file
@@ -285,9 +285,9 @@ namespace nUse {
 
 		//================= text =================
 
-		EXEC bool TextEncode(const string & plainText, bool dryrun);
+		EXEC bool TextEncode(const string & plainText, const string & fromFile, const string & toFile, bool dryrun);
 		EXEC bool TextEncrypt(const string & recipientNymName, const string & plainText, bool dryrun);
-		EXEC bool TextDecode(const string & encodedText, bool dryrun);
+		EXEC bool TextDecode(const string & encodedText, const string & fromFile, const string & toFile, bool dryrun);
 		EXEC bool TextDecrypt(const string & recipientNymName, const string & encryptedText, bool dryrun);
 
 

@@ -903,6 +903,8 @@ void cCmdProcessing::UseExecute() { // TODO write as a template for all the 3 wr
 	try {
 		_UseExecute();
 		mStateExecute = tState::succeeded;
+	} catch (const string & message) {
+		_erro("Exception:" << message);
 	} catch (const myexception &e) {
 		e.Report();
 		throw;

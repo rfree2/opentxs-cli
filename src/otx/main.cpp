@@ -47,6 +47,10 @@ int main(int argc, const char **argv) {
 	catch (const std::exception &e) {
 		_erro("\n*** Captured exception:" << e.what());
 	}
+
+	catch (const string & message) {
+		_erro("\n*** Captured exception:" << message);
+	}
 	catch (...) {
 		_erro("\n*** Captured UNKNOWN exception:");
 	}

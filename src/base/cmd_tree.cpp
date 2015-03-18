@@ -732,8 +732,8 @@ void cCmdParser::Init() {
 	AddFormat("server add", {}, {pReadFile}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerAdd( D.v(1, ""), D.has("--dryrun") ); } );
 
-	AddFormat("server new", {}, {pNymMy}, NullMap,
-		LAMBDA { auto &D=*d; return U.ServerCreate(D.v(1, U.NymGetName( U.NymGetDefault())), D.has("--dryrun") ); } );
+	AddFormat("server new", {}, {pNymMy, pReadFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerCreate(D.v(1, U.NymGetName( U.NymGetDefault())), D.v(2, ""), D.has("--dryrun") ); } );
 
 	AddFormat("server ping", {}, {pServer, pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerPing(D.v(1, U.ServerGetName( U.ServerGetDefault())), D.v(2, U.NymGetName( U.NymGetDefault())), D.has("--dryrun") ); } );
@@ -750,10 +750,17 @@ void cCmdParser::Init() {
 	//======== ot text ========
 
 	AddFormat("text encode", {}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextEncode(D.v(1, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextEncode(D.v(1, ""), "", "", D.has("--dryrun") ); } );
 
 	AddFormat("text decode", {}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextDecode(D.v(1, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextDecode(D.v(1, ""), "", "", D.has("--dryrun") ); } );
+
+	// TODO: move this to "file" section
+	AddFormat("file encode", {}, {pReadFile, pWriteFile}, NullMap,
+			LAMBDA { auto &D=*d; return U.TextEncode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
+
+	AddFormat("file decode", {}, {pReadFile, pWriteFile}, NullMap,
+			LAMBDA { auto &D=*d; return U.TextDecode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
 
 	AddFormat("text encrypt", {pNymTo}, {pText}, NullMap,
 		LAMBDA { auto &D=*d; return U.TextEncrypt(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );

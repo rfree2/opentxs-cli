@@ -197,7 +197,7 @@ shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 	try {
 		return saved.at(nymID);
 	} catch (const std::out_of_range& e) {
-		_note("can't find in map, creating the new one for nym: " << nymID);
+		_note("can't find in map, creating new addressbook for nym: " << nymID);
 		auto addressBookPointer = AddressBook::Load(nymID);
 		saved.insert(std::pair<string, shared_ptr<AddressBook>>(nymID, addressBookPointer));
 		return addressBookPointer;

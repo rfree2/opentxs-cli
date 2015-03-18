@@ -123,8 +123,9 @@ void cUseOT::LoadDefaults() {
 		if ( NymID.empty() )
 			_warn("There is no nyms in the wallet, can't set default nym");
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, NymID));
-		if ( serverID.empty() )
-			_warn("There is no servers in the wallet, can't set default server");
+		if ( serverID.empty() ) {
+			_erro("There is no servers in the wallet, can't set default server");
+		}
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Server, serverID));
 	}
 }
@@ -176,21 +177,25 @@ bool cUseOT::Refresh(bool dryrun) {
 		return true;
 	if (!Init())
 		return false;
-	bool StatusAccountRefresh = AccountRefresh(AccountGetName(AccountGetDefault()), true, false);
-	bool StatusNymRefresh = NymRefresh("^" + NymGetDefault(), true, false);
-	if (StatusAccountRefresh == true && StatusNymRefresh == true) {
-		_info("Succesfull refresh");
-		return true;
-	} else if (StatusAccountRefresh == true && StatusNymRefresh == false) {
-		_dbg1("Can not refresh Nym");
+	try {
+		bool StatusAccountRefresh = AccountRefresh(AccountGetName(AccountGetDefault()), true, false);
+		bool StatusNymRefresh = NymRefresh("^" + NymGetDefault(), true, false);
+		if (StatusAccountRefresh == true && StatusNymRefresh == true) {
+			_info("Succesfull refresh");
+			return true;
+		} else if (StatusAccountRefresh == true && StatusNymRefresh == false) {
+			_dbg1("Can not refresh Nym");
+			return false;
+		} else if (StatusAccountRefresh == false && StatusNymRefresh == true) {
+			_dbg1("Can not refresh Account");
+			return false;
+		}
+		_dbg1("Can not refresh ");
 		return false;
-	} else if (StatusAccountRefresh == false && StatusNymRefresh == true) {
-		_dbg1("Can not refresh Account");
+	} catch (std::exception& e) { // FIXME: map::at exception
+		_erro(e.what());
 		return false;
 	}
-	_dbg1("Can not refresh ");
-	return false;
-
 }
 
 bool cUseOT::Init() { // TODO init on the beginning of application execution
@@ -276,7 +281,9 @@ int64_t cUseOT::AccountGetBalance(const string & accountName) {
 string cUseOT::AccountGetDefault() {
 	if(!Init())
 		return "";
-	return mDefaultIDs.at(nUtils::eSubjectType::Account);
+	auto defaultAcc = mDefaultIDs.at(nUtils::eSubjectType::Account);
+	if(defaultAcc.empty()) throw "No default account!";
+	return defaultAcc;
 }
 
 ID cUseOT::AccountGetId(const string & accountName) {
@@ -296,7 +303,10 @@ ID cUseOT::AccountGetId(const string & accountName) {
 string cUseOT::AccountGetName(const ID & accountID) {
 	if(!Init())
 		return "";
-	return opentxs::OTAPI_Wrap::GetAccountWallet_Name(accountID);
+	if(accountID.empty())
+		return "";
+	auto account = opentxs::OTAPI_Wrap::GetAccountWallet_Name(accountID);
+	return (account.empty())? "" : account;
 }
 
 string cUseOT::AccountGetNym(const string & account) {
@@ -829,7 +839,11 @@ vector<string> cUseOT::AssetGetAllNames() {
 string cUseOT::AssetGetName(const ID & assetID) {
 	if(!Init())
 		return "";
-	return opentxs::OTAPI_Wrap::GetAssetType_Name(assetID);
+	if(assetID.empty())
+		return "";
+
+	auto asset = opentxs::OTAPI_Wrap::GetAssetType_Name(assetID);
+	return (asset.empty())? "" : asset;
 }
 
 bool cUseOT::AssetAdd(const string & filename, bool dryrun) {
@@ -1874,13 +1888,12 @@ bool cUseOT::NymImport(const string & filename, bool dryrun) {
 		_warn("Can't import, empty input");
 		return false;
 	}
+	cout << zkr::cc::fore::lightred << "Error in opentxs library, can't import nym nym!" << zkr::cc::console << endl;
+	return false; // XXX
+
 	// FIXME: segfault!
 	auto nym = opentxs::OTAPI_Wrap::Wallet_ImportNym(toImport);
-
-
-
 	//cout << nym << endl;
-
 
 	return true;
 }
@@ -1940,12 +1953,15 @@ bool cUseOT::NymDisplayAll(bool dryrun) {
 string cUseOT::NymGetDefault() {
 	if(!Init())
 		return "";
-	return mDefaultIDs.at(nUtils::eSubjectType::User);
+	auto defaultNym = mDefaultIDs.at(nUtils::eSubjectType::User);
+	if(defaultNym.empty()) throw string("No default nym!");
+	return defaultNym;
 }
 
 string cUseOT::NymGetId(const string & nymName) { // Gets nym aliases and IDs begins with '^'
 	if(!Init())
 		return "";
+	if(nymName.empty()) return "";
 
 	if ( nUtils::checkPrefix(nymName) ) // nym ID
 		return nymName.substr(1);
@@ -2912,14 +2928,19 @@ bool cUseOT::ServerAdd(const string &filename, bool dryrun) {
 	return false;
 }
 
-bool cUseOT::ServerCreate(const string & nym, bool dryrun) {
+bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryrun) {
 	_fact("server new for nym=" << nym);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	string xmlContents;
 	nUtils::cEnvUtils envUtils;
-	xmlContents = envUtils.Compose();
+
+	if(!filename.empty()) {
+		xmlContents = envUtils.ReadFromFile(filename);
+	}
+
+	if(xmlContents.empty()) xmlContents = envUtils.Compose();
 
 	if (xmlContents.empty()) {
 		_erro("Contract file is empty - aborting");
@@ -2951,7 +2972,9 @@ void cUseOT::ServerCheck() {
 string cUseOT::ServerGetDefault() {
 	if(!Init())
 		return "";
-	return mDefaultIDs.at(nUtils::eSubjectType::Server);
+	auto defaultServer = mDefaultIDs.at(nUtils::eSubjectType::Server);
+	if(defaultServer.empty()) throw "No default server!";
+	return defaultServer;
 }
 
 string cUseOT::ServerGetId(const string & serverName) { ///< Gets nym aliases and IDs begins with '%'
@@ -2974,7 +2997,11 @@ string cUseOT::ServerGetId(const string & serverName) { ///< Gets nym aliases an
 string cUseOT::ServerGetName(const string & serverID){
 	if(!Init())
 		return "";
-	return opentxs::OTAPI_Wrap::GetServer_Name(serverID);
+	if(serverID.empty())
+		return "";
+
+	auto srvName = opentxs::OTAPI_Wrap::GetServer_Name(serverID);
+	return (srvName.empty())? "" : srvName;
 }
 
 bool cUseOT::ServerRemove(const string & serverName, bool dryrun) {
@@ -3028,7 +3055,6 @@ bool cUseOT::ServerPing(const string & server, const string & nym, bool dryrun) 
 
 	else {
 		_note("ping= " << ping << " OK");
-		cout << zkr::cc::fore::lightgreen << "Connection succesfull" << zkr::cc::console << endl;
 		return true;
 	}
 
@@ -3087,23 +3113,43 @@ bool cUseOT::ServerDisplayAll(bool dryrun) {
 	return true;
 }
 
-bool cUseOT::TextEncode(const string & plainText, bool dryrun) {
+bool cUseOT::TextEncode(const string & plainText, const string & fromFile, const string & toFile, bool dryrun) {
 	_fact("text encode");
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	string plainTextIn;
-	if ( plainText.empty() ) {
-		nUtils::cEnvUtils envUtils;
-		plainTextIn = envUtils.Compose();
+	nUtils::cEnvUtils envUtils;
+
+	if (!fromFile.empty()) {
+		plainTextIn = envUtils.ReadFromFile(fromFile);
 	}
-	else
+
+	if (plainText.empty() && plainTextIn.empty()) {
+		_dbg1("can't get content from: " << fromFile);
+		plainTextIn = envUtils.Compose();
+	} else if( !plainText.empty() && plainTextIn.empty() ) {
 		plainTextIn = plainText;
+	}
 
 	bool bLineBreaks = true; // FIXME? opentxs::OTAPI_Wrap - bLineBreaks should usually be set to true
 	string encodedText;
-	encodedText = opentxs::OTAPI_Wrap::Encode (plainTextIn, bLineBreaks);
+	encodedText = opentxs::OTAPI_Wrap::Encode(plainTextIn, bLineBreaks);
+
+	if(encodedText.empty()) return nUtils::reportError("empty encoded text");
+	if (!toFile.empty()) {
+		try {
+			nUtils::DisplayStringEndl(cout, encodedText);
+			envUtils.WriteToFile(toFile, encodedText);
+			cout << "saved" << endl;
+			return true;
+		} catch (...) {
+			return false;
+		}
+	}
+
 	nUtils::DisplayStringEndl(cout, encodedText);
+
 	return true;
 }
 
@@ -3126,22 +3172,42 @@ bool cUseOT::TextEncrypt(const string & recipientNymName, const string & plainTe
 	return true;
 }
 
-bool cUseOT::TextDecode(const string & encodedText, bool dryrun) {
+bool cUseOT::TextDecode(const string & encodedText, const string & fromFile, const string & toFile, bool dryrun) {
 	_fact("text decode");
 	if(dryrun) return true;
 	if(!Init()) return false;
 
+	nUtils::cEnvUtils envUtils;
 	string encodedTextIn;
-	if ( encodedText.empty() ) {
-		nUtils::cEnvUtils envUtils;
+
+	if (!fromFile.empty()) {
+		encodedTextIn = envUtils.ReadFromFile(fromFile);
+	}
+
+	if ( encodedText.empty() && encodedTextIn.empty() ) {
+		_dbg1("can't get content from: " << fromFile);
 		encodedTextIn = envUtils.Compose();
 	}
-	else
+	else if(!encodedText.empty() && encodedTextIn.empty())
 		encodedTextIn = encodedText;
 
 	bool bLineBreaks = true; // FIXME? opentxs::OTAPI_Wrap - bLineBreaks should usually be set to true
 	string plainText;
-	plainText = opentxs::OTAPI_Wrap::Decode (encodedTextIn, bLineBreaks);
+	plainText = opentxs::OTAPI_Wrap::Decode(encodedTextIn, bLineBreaks);
+
+	if(plainText.empty()) return nUtils::reportError("empty decoded text");
+
+	if (!toFile.empty()) {
+		try {
+			envUtils.WriteToFile(toFile, plainText);
+			nUtils::DisplayStringEndl(cout, plainText);
+			cout << "saved" << endl;
+			return true;
+		} catch (...) {
+			return false;
+		}
+	}
+
 	nUtils::DisplayStringEndl(cout, plainText);
 	return true;
 }
@@ -3152,12 +3218,12 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	if(!Init()) return false;
 
 	string encryptedTextIn;
-		if ( encryptedText.empty() ) {
-			nUtils::cEnvUtils envUtils;
-			encryptedTextIn = envUtils.Compose();
-		}
-		else
-			encryptedTextIn = encryptedText;
+	if ( encryptedText.empty() ) {
+		nUtils::cEnvUtils envUtils;
+		encryptedTextIn = envUtils.Compose();
+	}
+	else
+		encryptedTextIn = encryptedText;
 
 	string plainText;
 	plainText = opentxs::OTAPI_Wrap::Decrypt(NymGetId(recipientNymName), encryptedTextIn);
