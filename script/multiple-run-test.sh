@@ -2,6 +2,7 @@
 
 times=$1 
 args=$#
+info="Estimated time per test (> 460000ms) ~ 10 minutes => 6 tests/h"
 
 test_script="printf '_' | script/run-test.sh"
 dir=$(date "+%d-%m-%y_%H%M%S")
@@ -23,19 +24,63 @@ function checkSrv() {
     fi
 }
 
+function printHelp() { 
+    echo -en "\e[39m" 
+    echo "usage examples:" 
+    echo "script/multiple-run-test.sh \"2015-03-16 14:00:00\" - runns tests until given date" 
+    echo "script/multiple-run-test.sh 4h - 4h of tests" 
+    echo "script/multiple-run-test.sh 3 - runs 4 sets of tests"
+    exit 2
+}
+
 function check() { 
     echo -en "\e[91m" 
     if ! [[ $args == 1 ]]; then 
-        echo "usage: script/multiple-run-test.sh <number of tests>"
-        exit 1
+        echo "wrong numbers of param"
+        printHelp
     fi    
 
     re='^[0-9]+$'
-    if ! [[ $times =~ $re ]] ; then
-        echo "[$times] isn't a number!"
-        exit 1
+    re_hour='^[0-9]\h+$'
+
+    if [[ $times == "--help" ]] ; then 
+        printHelp
     fi 
-    
+
+    if ! [[ $times =~ $re ]] ; then
+        last=${times: -1}
+        length=$[${#times}-1]
+        pre=${times:0:$length}
+
+        is_valid_date=`date -ud "$times" +'%s' > /dev/null 2>&1 ; echo $?` 
+        
+        if [[ $pre =~ $re ]] && [[ $last == "h" ]] ; then
+            echo -en "\e[39m" 
+            echo $info
+            
+            times=$(( $pre*6 ))
+            echo "Calculated $times tests" 
+
+        elif [[ $is_valid_date == 0 ]]; then
+            echo -en "\e[39m" 
+            echo $info
+            seconds=$(( ( $(date -d "$times" +'%s') - $(date -d now +'%s') ) ))
+            minutes=$(( $seconds/60 )) 
+
+            if [ $seconds -le "0" ] || [ $minutes -le "9" ]; then
+                echo "invalid date"
+                exit 1
+            fi
+            echo "$minutes minutes"
+            times=$(( $minutes/10 ))
+            echo "Calculated $times tests" 
+        else
+            echo "[$times] isn't a number or hours!"
+            printHelp
+            exit 1
+        fi
+    fi 
+    echo -en "\e[91m"
     checkExist "script/run-test.sh"
     checkExist "./build/tests/unittests-opentxs-cli"
     checkSrv
@@ -78,7 +123,7 @@ function run() {
             echo -e " ... \e[91mfailed \e[39m"
             echo "Test $i failed" >> $full_dir/summary.txt
             failed=$[$failed+1] 
-            echo "$i -- $full_dir/$i.xml $name" >> $full_dir/failed.txt
+            echo "$i -- $name" >> $full_dir/failed.txt
         fi
 	done 
     passed_percent="`percent $i $passed`"
@@ -99,4 +144,4 @@ function run() {
 }
 
 check
-run
+#run
