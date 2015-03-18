@@ -344,9 +344,9 @@ void cCmdParser::Init() {
 	);
 
 	cParamInfo pReadFile( "from-file", [] () -> string { return Tr(eDictType::help, "from-file") },
-		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+		[&] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			auto filename = data.Var(nr);
+			auto filename = nUtils::cFilesystemUtils::TildeToHome(data.Var(nr));
 			auto exist = opentxs::OTPaths::PathExists(filename);
 			_dbg2("file: " << filename << " exist: " << exist);
 			return exist;

@@ -2,7 +2,10 @@
 
 times=$1 
 args=$#
-info="Estimated time per test (> 460000ms) ~ 10 minutes => 6 tests/h"
+estimated_test_time="8"
+tests_per_hour="$(( 60/$estimated_test_time ))"
+info="Estimated time per test (> 460000ms) ~ $estimated_test_time minutes => $tests_per_hour tests/h"
+
 
 test_script="printf '_' | script/run-test.sh"
 dir=$(date "+%d-%m-%y_%H%M%S")
@@ -58,7 +61,7 @@ function check() {
             echo -en "\e[39m" 
             echo $info
             
-            times=$(( $pre*6 ))
+            times=$(( $pre*$tests_per_hour ))
             echo "Calculated $times tests" 
 
         elif [[ $is_valid_date == 0 ]]; then
@@ -72,7 +75,7 @@ function check() {
                 exit 1
             fi
             echo "$minutes minutes"
-            times=$(( $minutes/10 ))
+            times=$(( $minutes/$estimated_test_time ))
             echo "Calculated $times tests" 
         else
             echo "[$times] isn't a number or hours!"
@@ -144,4 +147,6 @@ function run() {
 }
 
 check
-#run
+echo "Press [enter] to run tests"
+read _
+run

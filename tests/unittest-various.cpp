@@ -145,3 +145,11 @@ TEST_F(cUseOtTest, BasketDisplay) {
 	// EXPECT_TRUE(ok);
 }
 
+TEST_F(cUseOtTest, Home) {
+	auto home = cFilesystemUtils::GetHomeDir();
+	_note(home);
+	string withTilde = "~/test";
+	string withoutTilde = home + "/test";
+
+	EXPECT_EQ(withoutTilde, cFilesystemUtils::TildeToHome(withTilde));
+}

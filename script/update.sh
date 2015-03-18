@@ -8,5 +8,5 @@ sleep 3
 #read _ 
 cd build/
 
-make && cd .. &&  ./run.sh
+make && cd .. #&&  ./run.sh
 

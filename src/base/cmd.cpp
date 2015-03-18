@@ -4,9 +4,10 @@
 #include "cmd.hpp"
 #include "cmd_detail.hpp"
 
-#include "lib_common2.hpp"
+#include "lib_common3.hpp"
 #include "ccolor.hpp"
 #include <iomanip>
+
 
 namespace nOT {
 namespace nNewcli {
@@ -904,7 +905,7 @@ void cCmdProcessing::UseExecute() { // TODO write as a template for all the 3 wr
 		_UseExecute();
 		mStateExecute = tState::succeeded;
 	} catch (const string & message) {
-		_erro("Exception:" << message);
+		_erro("Exception: " << message);
 	} catch (const myexception &e) {
 		e.Report();
 		throw;

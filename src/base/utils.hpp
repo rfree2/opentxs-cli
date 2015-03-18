@@ -270,6 +270,8 @@ class cFilesystemUtils { // if we do not want to use boost in given project (or 
 	public:
 		static bool CreateDirTree(const std::string & dir, bool only_below=false);
 		static char GetDirSeparator(); // eg '/' or '\'
+		static string GetHomeDir();
+		static string TildeToHome(const string &path);
 };
 
 // ====================================================================

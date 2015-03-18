@@ -159,6 +159,24 @@ bool cFilesystemUtils::CreateDirTree(const std::string & dir, bool only_below) {
     return true;
 }
 
+string cFilesystemUtils::GetHomeDir() {
+#ifdef __unix__
+	return string(getenv("HOME"));
+#else
+	return ""; // TODO
+#endif
+
+}
+
+string cFilesystemUtils::TildeToHome(const string &path) {
+	auto home = GetHomeDir();
+	if(home.empty()) return path;
+	auto pos = path.find("~/");
+	if(pos==string::npos) return path;
+
+	return home + path.substr(1);
+}
+
 // ====================================================================
 
 cLogger::cLogger() : mStream(NULL), mLevel(20) { mStream = & std::cout; }
@@ -501,8 +519,6 @@ string SubjectType2String(const eSubjectType & type) {
 	switch (type) {
 	case subject::Account:
 		return "Account";
-	case subject::AddressBook:
-			return "AddressBook";
 	case subject::Asset:
 			return "Asset";
 	case subject::User:
@@ -520,14 +536,12 @@ eSubjectType String2SubjectType(const string & type) {
 
 	if (type == "Account")
 		return subject::Account;
-	if (type == "AddressBook")
-			return subject::AddressBook;
 	if (type == "Asset")
-			return subject::Asset;
+		return subject::Asset;
 	if (type == "User")
-			return subject::User;
+		return subject::User;
 	if (type == "Server")
-			return subject::Server;
+		return subject::Server;
 
 	return subject::Unknown;
 }
@@ -553,7 +567,7 @@ bool reportError(const string & message) {
 bool cConfigManager::Load(const string & fileName, map<eSubjectType, string> & configMap){
 	_dbg1("Loading defaults.");
 
-	std::ifstream inFile(fileName.c_str());
+	std::ifstream inFile(cFilesystemUtils::TildeToHome(fileName.c_str()));
 	if( inFile.good() && !(inFile.peek() == std::ifstream::traits_type::eof()) ) {
 		string line;
 		while( std::getline (inFile, line) ) {
@@ -578,7 +592,7 @@ bool cConfigManager::Load(const string & fileName, map<eSubjectType, string> & c
 bool cConfigManager::Load(const string & fileName, map<string, string> & str){
 	_dbg1("Loading from file " << fileName);
 
-	std::ifstream inFile(fileName.c_str());
+	std::ifstream inFile(cFilesystemUtils::TildeToHome(fileName).c_str());
 	if( inFile.good() && !(inFile.peek() == std::ifstream::traits_type::eof()) ) {
 		string line;
 		while( std::getline (inFile, line) ) {
@@ -607,7 +621,7 @@ bool cConfigManager::Load(const string & fileName, map<string, string> & str){
 void cConfigManager::Save(const string & fileName, const map<eSubjectType, string> & configMap) {
 	_dbg1("Will save map of config");
 
-	std::ofstream outFile(fileName.c_str());
+	std::ofstream outFile(cFilesystemUtils::TildeToHome(fileName.c_str()));
 	for (auto pair : configMap) {
 		_dbg2("Got: "<<SubjectType2String(pair.first)<<","<<pair.second);
 		outFile << SubjectType2String(pair.first) << " ";
@@ -621,7 +635,7 @@ void cConfigManager::Save(const string & fileName, const map<eSubjectType, strin
 void cConfigManager::Save(const string & fileName, const std::pair<eSubjectType, string> & config) {
 	_dbg1("Will save config");
 
-	std::ofstream outFile(fileName.c_str(), std::ios::app);
+	std::ofstream outFile(cFilesystemUtils::TildeToHome(fileName.c_str()), std::ios::app);
 
 	_dbg2("Got: "<<SubjectType2String(config.first)<<","<<config.second);
 	outFile << SubjectType2String(config.first) << " ";
@@ -634,7 +648,7 @@ void cConfigManager::Save(const string & fileName, const std::pair<eSubjectType,
 void cConfigManager::SaveStr(const string & fileName, const map<string, string> & str) {
 	_dbg1("Will save map of config");
 
-	std::ofstream outFile(fileName.c_str(), std::ios::trunc);
+	std::ofstream outFile(cFilesystemUtils::TildeToHome(fileName.c_str()), std::ios::trunc);
 	for (auto pair : str) {
 		_dbg2("Got: "<<pair.first<<","<<pair.second);
 		outFile << pair.first << " ";
@@ -648,7 +662,7 @@ void cConfigManager::SaveStr(const string & fileName, const map<string, string> 
 void cConfigManager::SaveStr(const string & fileName, const std::pair<string, string> & str) {
 	_dbg1("Will save config");
 
-	std::ofstream outFile(fileName.c_str(), std::ios::app);
+	std::ofstream outFile(cFilesystemUtils::TildeToHome(fileName.c_str()), std::ios::app);
 
 	_dbg2("Got: "<<str.first<<","<<str.second);
 	outFile << str.first << " ";
@@ -717,8 +731,10 @@ const string cEnvUtils::Compose() {
 
 
 const string cEnvUtils::ReadFromFile(const string path) {
-	std::ifstream ifs(path);
+	std::ifstream ifs(cFilesystemUtils::TildeToHome(path).c_str());
+	_dbg3(cFilesystemUtils::TildeToHome(path));
 	string msg((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+	_dbg3(msg);
 	return msg;
 }
 
