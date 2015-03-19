@@ -854,19 +854,11 @@ bool cUseOT::AssetAdd(const string & filename, bool dryrun) {
 	string contract = "";
 	nUtils::cEnvUtils envUtils;
 
-	if(!filename.empty()) {
-		contract = envUtils.ReadFromFile(filename);
+	try {
+		contract = nUse::GetInput(filename);
+	} catch (const string & message) {
+		return nUtils::reportError("", message, "Provided contract was empty");
 	}
-
-	if(contract.empty())
-		contract = envUtils.Compose();
-
-	if (contract.empty()) {
-		cout << "Aborted" << endl;
-		_warn("empty contract, aborting");
-		return false;
-	}
-
 	auto result = opentxs::OTAPI_Wrap::AddAssetContract(contract);
 
 	if (result != 1) {
@@ -2907,25 +2899,20 @@ bool cUseOT::ServerAdd(const string &filename, bool dryrun) {
 	string contract = "";
 	nUtils::cEnvUtils envUtils;
 
-	if(!filename.empty()) {
-		contract = envUtils.ReadFromFile(filename);
+	try {
+		contract = nUse::GetInput(filename);
+	} catch (const string & message) {
+		return nUtils::reportError("", message,
+				"Provided contract was empty");
 	}
 
-	if(contract.empty())
-		contract = envUtils.Compose();
+	if( opentxs::OTAPI_Wrap::AddServerContract(contract) ) {
+		_info("Server added");
+		cout << "Server added" << endl;
+		return true;
+	}
 
-	if (!contract.empty()) {
-		if( opentxs::OTAPI_Wrap::AddServerContract(contract) ) {
-			_info("Server added");
-			return true;
-		}
-	}
-	else {
-		nUtils::DisplayStringEndl(cout, "Provided contract was empty");
-		_erro("Provided contract was empty");
-	}
-	_erro("Failure to add server");
-	return false;
+	return nUtils::reportError("Failure to add server");
 }
 
 bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryrun) {
@@ -2936,16 +2923,10 @@ bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryr
 	string xmlContents;
 	nUtils::cEnvUtils envUtils;
 
-	if(!filename.empty()) {
-		xmlContents = envUtils.ReadFromFile(filename);
-	}
-
-	if(xmlContents.empty()) xmlContents = envUtils.Compose();
-
-	if (xmlContents.empty()) {
-		_erro("Contract file is empty - aborting");
-		DisplayStringEndl(cout, "Contract file is empty - aborting");
-		return false;
+	try {
+		xmlContents = nUse::GetInput(filename);
+	} catch (const string & message) {
+		return nUtils::reportError("Contract file is empty - aborting");
 	}
 
 	ID nymID = NymGetId(nym);
@@ -2955,8 +2936,7 @@ bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryr
 		nUtils::DisplayStringEndl( cout, opentxs::OTAPI_Wrap::GetServer_Contract(serverID) );
 		return true;
 	}
-	_erro( "Failure to create contract for nym: " << NymGetName(nymID) << "(" << nymID << ")" );
-	return false;
+	return reportError( "Failure to create contract for nym: " + NymGetName(nymID) + "(" + nymID + ")" );
 }
 
 void cUseOT::ServerCheck() {
@@ -3121,16 +3101,13 @@ bool cUseOT::TextEncode(const string & plainText, const string & fromFile, const
 	string plainTextIn;
 	nUtils::cEnvUtils envUtils;
 
-	if (!fromFile.empty()) {
-		plainTextIn = envUtils.ReadFromFile(fromFile);
+	try {
+		plainTextIn = nUse::GetInput(fromFile, plainText);
+	} catch (const string & message) {
+		return nUtils::reportError("", message, "Aborting");
 	}
 
-	if (plainText.empty() && plainTextIn.empty()) {
-		_dbg1("can't get content from: " << fromFile);
-		plainTextIn = envUtils.Compose();
-	} else if( !plainText.empty() && plainTextIn.empty() ) {
-		plainTextIn = plainText;
-	}
+	ASRT(!plainTextIn.empty());
 
 	bool bLineBreaks = true; // FIXME? opentxs::OTAPI_Wrap - bLineBreaks should usually be set to true
 	string encodedText;
@@ -3180,16 +3157,13 @@ bool cUseOT::TextDecode(const string & encodedText, const string & fromFile, con
 	nUtils::cEnvUtils envUtils;
 	string encodedTextIn;
 
-	if (!fromFile.empty()) {
-		encodedTextIn = envUtils.ReadFromFile(fromFile);
+	try {
+		encodedTextIn = nUse::GetInput(fromFile, encodedText);
+	} catch (const string & message) {
+		return nUtils::reportError("", message, "Aborting");
 	}
 
-	if ( encodedText.empty() && encodedTextIn.empty() ) {
-		_dbg1("can't get content from: " << fromFile);
-		encodedTextIn = envUtils.Compose();
-	}
-	else if(!encodedText.empty() && encodedTextIn.empty())
-		encodedTextIn = encodedText;
+	ASRT(!encodedTextIn.empty());
 
 	bool bLineBreaks = true; // FIXME? opentxs::OTAPI_Wrap - bLineBreaks should usually be set to true
 	string plainText;

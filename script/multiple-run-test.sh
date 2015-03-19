@@ -124,7 +124,7 @@ function run() {
             passed=$[$passed+1] 
         else 
             echo -e " ... \e[91mfailed \e[39m"
-            echo "Test $i failed" >> $full_dir/summary.txt
+            echo "Test $i failed <-------------------" >> $full_dir/summary.txt
             failed=$[$failed+1] 
             echo "$i -- $name" >> $full_dir/failed.txt
         fi

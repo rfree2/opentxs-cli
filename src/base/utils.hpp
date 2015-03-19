@@ -262,7 +262,10 @@ eSubjectType String2SubjectType(const string & type);
  bool reportError(const string & var, const string & description, const string & message);
  bool reportError(const string & message);
 
+ // ====================================================================
 
+ string GetInput(const string &filename); ///< gets input from file, if empty - from text editor.
+ string GetInput(const string &filename, const string current);
 // ====================================================================
 // operation on files
 

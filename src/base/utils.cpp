@@ -560,6 +560,25 @@ bool reportError(const string & message) {
 	cout << zkr::cc::fore::lightred << message << zkr::cc::fore::console << endl;
 	return false;
 }
+// ====================================================================
+string GetInput(const string &filename) {
+	cEnvUtils envUtils;
+	string input = "";
+	if(!filename.empty()) {
+		_dbg3("Trying get input from file [" << filename << "]");
+		input = envUtils.ReadFromFile(filename);
+		if(!input.empty()) return input;
+		_warn("can't get content from file: " << filename);
+	}
+
+	input = envUtils.Compose();
+	if(input.empty()) throw string("Can't get input");
+	return input;
+}
+
+string GetInput(const string &filename, const string current) {
+	return (current.empty())? GetInput(filename) : current;
+}
 
 // ====================================================================
 // operation on files
