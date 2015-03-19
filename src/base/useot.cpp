@@ -258,6 +258,10 @@ bool cUseOT::CheckIfExists(const nUtils::eSubjectType type, const string & subje
 	return false;
 }
 
+bool cUseOT::CheckIfExists(const nUtils::eSubjectType type, const string & subject, const string & without) {
+	return (subject == without)? false : CheckIfExists(type, subject);
+}
+
 vector<ID> cUseOT::AccountGetAllIds() {
 	if(!Init())
 	return vector<string> {};

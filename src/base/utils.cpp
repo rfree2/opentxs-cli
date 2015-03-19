@@ -426,8 +426,7 @@ bool CheckIfBegins(const std::string & beggining, const std::string & all) {
 bool CheckIfEnds (std::string const & ending, std::string const & all){
 	if (all.length() >= ending.length()) {
 		return (0 == all.compare (all.length() - ending.length(), ending.length(), ending));
-	}
-	else {
+	} else {
 		return false;
 	}
 }
@@ -525,13 +524,13 @@ string SubjectType2String(const eSubjectType & type) {
 	case subject::Account:
 		return "Account";
 	case subject::Asset:
-			return "Asset";
+		return "Asset";
 	case subject::User:
-			return "User";
+		return "User";
 	case subject::Server:
-			return "Server";
+		return "Server";
 	case subject::Unknown:
-				return "Unknown";
+		return "Unknown";
 	}
 	return "";
 }

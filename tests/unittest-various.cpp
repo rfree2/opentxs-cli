@@ -153,3 +153,14 @@ TEST_F(cUseOtTest, Home) {
 
 	EXPECT_EQ(withoutTilde, cFilesystemUtils::TildeToHome(withTilde));
 }
+
+TEST_F(cUseOtTest, vector) {
+	using namespace nOper;
+	vector<string> testNyms { "Betty", "Ted", "Wilma", "Fred" };
+	vector<string> testNyms_copy(testNyms);
+
+	testNyms = testNyms - testNyms_copy.at(2);
+	EXPECT_EQ(testNyms_copy.size()-1, testNyms.size());
+	EXPECT_EQ(testNyms.at(2), testNyms_copy.at(3));
+
+}

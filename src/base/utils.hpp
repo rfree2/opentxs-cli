@@ -356,6 +356,13 @@ vector<T>& operator+=(vector<T> &a, const vector<T> &b) {
 	return a;
 }
 
+template <class T>
+vector<T> operator-(const vector<T> &a, const T &b) {
+	vector<T> result_vector(a);
+	result_vector.erase(std::remove(result_vector.begin(), result_vector.end(), b), result_vector.end());
+	return result_vector;
+}
+
 // map
 template <class TK,class TV>
 map<TK,TV> operator+(const map<TK,TV> &a, const map<TK,TV> &b) {

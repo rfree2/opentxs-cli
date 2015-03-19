@@ -91,6 +91,7 @@ namespace nUse {
 		void CloseApi();
 
 		VALID bool CheckIfExists(const nUtils::eSubjectType type, const string & subject);
+		VALID bool CheckIfExists(const nUtils::eSubjectType type, const string & subject, const string & without);
 		EXEC bool DisplayDefaultSubject(const nUtils::eSubjectType type, bool dryrun);
 		bool DisplayAllDefaults(bool dryrun);
 		EXEC bool DisplayHistory(bool dryrun);
