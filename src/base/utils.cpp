@@ -111,7 +111,7 @@ char cFilesystemUtils::GetDirSeparator() {
 }
 
 bool cFilesystemUtils::CreateDirTree(const std::string & dir, bool only_below) {
-    const bool dbg = true;
+    const bool dbg = false; // XXX
     //struct stat st;
     const char dirch = cFilesystemUtils::GetDirSeparator();
     std::istringstream iss(dir);
@@ -306,6 +306,11 @@ void DisplayStringEndl(std::ostream & out, const std::string text) {
 	out << std::endl;
 }
 
+void DisplayStringEndl(const std::string text) {
+	cout << text;
+	cout << zkr::cc::console;
+	cout << std::endl;
+}
 
 // class cTextUtils
 //static const char cTextUtils::s_char_space=' '; // the space character
@@ -761,12 +766,12 @@ void cEnvUtils::WriteToFile(const string path, const string content) {
 	std::fstream file;
 	file.exceptions(std::fstream::failbit | std::fstream::badbit);
 	try {
-		file.open(path.c_str(), std::ios::out | std::ios::trunc);
+		file.open(cFilesystemUtils::TildeToHome(path).c_str(), std::ios::out | std::ios::trunc);
 		file << content;
 		file.close();
 		_info("saving to file: " << path << " ok");
 
-	} catch (std::fstream::failure e) {
+	} catch (std::fstream::failure &e) {
 		_erro("Exception opening/reading/closing file: " << e.what());
 		cout << "Error writing to file: " << path << endl;
 		throw e;
@@ -825,23 +830,25 @@ void generateAnswers (std::fstream & file, string command, vector<string> &compl
 	}
 
 string stringToColor(const string &hash) {
-  // Generete vector with all possible light colors
-  vector <string> lightColors;
-  using namespace zkr;
-  lightColors.push_back(cc::fore::lightblue);
-  lightColors.push_back(cc::fore::lightred);
-  lightColors.push_back(cc::fore::lightmagenta);
-  lightColors.push_back(cc::fore::lightgreen);
-  lightColors.push_back(cc::fore::lightcyan);
-  lightColors.push_back(cc::fore::lightyellow);
-  lightColors.push_back(cc::fore::lightwhite);
+	if(hash == "-") return zkr::cc::fore::red;
+	vector<string> lightColors;
+	using namespace zkr;
+//	Generates vector with all possible light colors
+	lightColors.push_back(cc::fore::lightblue);
+	lightColors.push_back(cc::fore::lightred);
+	lightColors.push_back(cc::fore::lightmagenta);
+	lightColors.push_back(cc::fore::lightgreen);
+	lightColors.push_back(cc::fore::lightcyan);
+	lightColors.push_back(cc::fore::lightyellow);
+	lightColors.push_back(cc::fore::lightwhite);
 
-  int sum=0;
+	int sum = 0;
 
-  for (auto ch : hash) sum+=ch;
-  auto color = sum%(lightColors.size()-1);
+	for (auto ch : hash)
+		sum += ch;
+	auto color = sum % (lightColors.size() - 1);
 
-  return lightColors.at( color );
+	return lightColors.at(color);
 }
 
 string FindMapValue(const map<string, string> & map, const string value) {

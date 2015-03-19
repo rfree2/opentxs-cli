@@ -28,23 +28,24 @@ ostream& operator<<(ostream &stream, const cParseEntity & obj) {
 
 void cCmdParser_pimpl::BuildCache_CmdNames() {
 	_dbg1("Caching CmdNames");
+	const string logname = "cmd_names_cache";
 	mCache_CmdNames.clear();
 
 	for (const auto &elem : mTree) {
 		const string & cmdName = elem.first;
 		auto space_pos = cmdName.find(' ');
 
-		_dbg2("Caching cmdName="<<cmdName<<" space at: " << (long long int)space_pos);
+		_dbg2_c(logname, "Caching cmdName="<<cmdName<<" space at: " << (long long int)space_pos);
 
 		const string word1 = cmdName.substr(0, space_pos);
-		_dbg3("word1="<<word1);
+		_dbg3_c(logname, "word1="<<word1);
 		ASRT(word1.length());
 
 		if (space_pos == string::npos) { // 1word command
 			mCache_CmdNames[word1].insert(""); // add
 		} else { // 2word command
 			const string word2 = cmdName.substr(space_pos + 1);
-			_dbg3("word2="<<word2);
+			_dbg3_c(logname, "word2="<<word2);
 			mCache_CmdNames[word1].insert(word2);
 		}
 	}
@@ -52,10 +53,10 @@ void cCmdParser_pimpl::BuildCache_CmdNames() {
 	for (const auto & elem : mCache_CmdNames) {
 		const string & word1 = elem.first; // "msg"
 		mCache_CmdNamesVect1.push_back(word1); // write down possible word1
-		_dbg2("word1: " << word1);
+		_dbg2_c(logname, "word1: " << word1);
 		for (const auto & elem2 : elem.second) {
 			const string & word2 = elem2; // "msg send"
-			_dbg3("word2 in " <<word1<< " is: " << word2);
+			_dbg3_c(logname, "word2 in " <<word1<< " is: " << word2);
 			mCache_CmdNamesVect2[word1].push_back(word2);
 		}
 	}
@@ -238,18 +239,19 @@ void cCmdProcessing::_Validate() {
 }
 
 void cCmdProcessing::Parse(bool allowBadCmdname) {
+	const string logname = "parser";
 	if (mStateParse != tState::never) {
-		_dbg1("Already parsed");
+		_dbg1_c(logname, "Already parsed");
 		return;
 	}
 	mStateParse = tState::failed; // assumed untill succeed below
 	try {
 		_Parse(allowBadCmdname);
 		if (mFailedAfterBadCmdname) {
-			_info("Parsed partially");
+			_info_c(logname, "Parsed partially");
 			mStateParse = tState::succeeded_partial;
 		} else {
-			_info("Parsed ok (fully ok)");
+			_info_c(logname, "Parsed ok (fully ok)");
 			mStateParse = tState::succeeded;
 		}
 	} catch (const myexception &e) {
@@ -263,6 +265,7 @@ void cCmdProcessing::Parse(bool allowBadCmdname) {
 
 void cCmdProcessing::_Parse(bool allowBadCmdname) {
 	// int _dbg_ignore=50;
+	const string logname = "parser";
 	bool dbg = 1;
 	bool test_char2word = false; // run a detailed test on char to word conversion
 
@@ -275,7 +278,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 
 	if (mCommandLineString.empty()) {
 		const string s = "Command for processing was empty (string)";
-		_warn(s);
+		_warn_c(logname, s);
 		throw cErrParseSyntax(s);
 	} // <--- THROW
 
@@ -321,21 +324,21 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 			mCommandLine.push_back(curr_word);
 			mData->mWordIx2Entity.push_back(cParseEntity(cParseEntity::tKind::unknown, curr_word_pos));
 		}
-		_dbg1("Vector of words: " << DbgVector(mCommandLine));
+		_dbg1_c(logname, "Vector of words: " << DbgVector(mCommandLine));
 		if (dbg)
-			_dbg2("Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
+			_dbg2_c(logname, "Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
 	}
 
 	if (test_char2word) {
 		for (size_t i = 0; i < mCommandLineString.size(); ++i) {
 			const char c = mCommandLineString.at(i);
-			_dbg3("char '" << c << "' on position " << i << " is inside word: " << mData->CharIx2WordIx(i));
+			_dbg3_c(logname, "char '" << c << "' on position " << i << " is inside word: " << mData->CharIx2WordIx(i));
 		}
 	}
 
 	if (mCommandLine.empty()) {
 		const string s = "Command for processing was empty (had no words)";
-		_info(s);
+		_info_c(logname, s);
 		throw cErrParseSyntax(s);
 	} // <--- THROW
 
@@ -349,19 +352,19 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 	// ^--- namepart_words-- because we here inject the word "ot" and it will make word-position calculation off by one
 
 	if (mCommandLine.at(0) != "ot") {
-		_info("Command for processing is mallformed");
+		_info_c(logname, "Command for processing is mallformed");
 		const string s = "Missing pre word: ot";
-		_info(s);
+		_info_c(logname, s);
 		throw cErrParseSyntax(s);
 	}
 	mCommandLine.erase(mCommandLine.begin()); // delete the first "ot" ***
 	mData->mIsPreErased = true;
 	// mCommandLine = msg, send-from, alice, bob, hello
-	_dbg1("Parsing (after erasing ot) : " << DbgVector(mCommandLine));
+	_dbg1_c(logname, "Parsing (after erasing ot) : " << DbgVector(mCommandLine));
 
 	if (mCommandLineString.empty()) {
 		const string s = "Command for processing was empty (besides prefix)";
-		_info(s);
+		_info_c(logname, s);
 		throw cErrParseSyntax(s);
 	} // <--- THROW
 
@@ -369,13 +372,13 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 	mData->mFirstWord = prepart_words; // usually 1, meaning that there is 1 word between actuall entities, e.g. when we remove the "ot" pre
 
 	if (dbg)
-		_dbg3("Shift: mCharShift=" << mData->mCharShift << " mFirstWord="<<mData->mFirstWord);
+		_dbg3_c(logname, "Shift: mCharShift=" << mData->mCharShift << " mFirstWord="<<mData->mFirstWord);
 
 	int phase = 0; // 0: cmd name  1:var, 2:varExt  3:opt   9:end
 	try {
 		if (mCommandLine.size() == 0) {
 			const string s = "No words (besides pre ot)";
-			_info(s);
+			_info_c(logname, s);
 			throw cErrParseSyntax(s);
 		}
 
@@ -405,7 +408,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		namepart_words++;
 
 		// "msg send" or "help"
-		_dbg1("Name of command is: " << name << " namepart_words="<<namepart_words);
+		_dbg1_c(logname, "Name of command is: " << name << " namepart_words="<<namepart_words);
 		mData->mFirstArgAfterWord = namepart_words;
 
 		mData->mWordIx2Entity.at(0).SetKind(cParseEntity::tKind::pre); // "ot" token
@@ -413,7 +416,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		for (size_t i = 1; (xsize_t) i <= namepart_words; ++i)
 			mData->mWordIx2Entity.at(i).SetKind(cParseEntity::tKind::cmdname, i); // mark this words as part of cmdname
 		if (dbg)
-			_dbg2("Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
+			_dbg2_c(logname, "Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
 
 		try {
 			mFormat = mParser->FindFormat(name); // <---
@@ -425,7 +428,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				throw;
 			} // else just panic - throw // <======
 		}
-		_info("Got format for name="<<name);
+		_info_c(logname, "Got format for name="<<name);
 
 		// msg send
 		// msg ls
@@ -434,7 +437,7 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		const cCmdFormat & format = *mFormat; // const to be sure to just read from it (we are friends of this class)
 		const size_t var_size_normal = format.mVar.size(); // number of the normal (mandatory) part of variables
 		const size_t var_size_all = format.mVar.size() + format.mVarExt.size(); // number of the size of all variables (normal + extra)
-		_dbg2("Format: size of vars: " << var_size_normal << " normal, and all is: " << var_size_all);
+		_dbg2_c(logname, "Format: size of vars: " << var_size_normal << " normal, and all is: " << var_size_all);
 
 		size_t pos = 2; // number of currently parsed word "msg send"
 		if (name.find(" ") == string::npos)
@@ -446,25 +449,25 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 		if (phase == 1) { // phase: parse variable
 			while (true) { // parse var normal
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
-				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
+				_dbg2_c(logname, "phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) {
-					_dbg1("reached END, pos="<<pos);
+					_dbg1_c(logname, "reached END, pos="<<pos);
 					phase = 9;
 					break;
 				}
 				if ( var_nr >= (xsize_t)var_size_normal) {
-					_dbg1("reached end of var normal, var_nr="<<var_nr);
+					_dbg1_c(logname, "reached end of var normal, var_nr="<<var_nr);
 					phase = 2;
 					break;
 				}
 
 				string word = mCommandLine.at(pos);
-				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
+				_dbg1_c(logname, "phase="<<phase<<" pos="<<pos<<" word="<<word);
 				++pos;
 				mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::variable, var_nr);
 
 				if (nUtils::CheckIfBegins("\"", word)) { // TODO review memory access
-					_dbg1("Quotes detected in: " + word);
+					_dbg1_c(logname, "Quotes detected in: " + word);
 					word.erase(0, 1);
 					while (!nUtils::CheckIfEnds("\"", word)) {
 						word += " " + mCommandLine.at(pos);
@@ -472,44 +475,44 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 						++quotes_offset_to_var;
 					}
 					word.erase(word.end() - 1, word.end()); // ease the closing " of last mCommandLine[..] that is not at end of word
-					_dbg1("Quoted word is:"<<word);
+					_dbg1_c(logname, "Quoted word is:"<<word);
 				}
 				if (nUtils::CheckIfBegins("--", word)) { // --bcc foo
 					phase = 3;
 					--pos; // this should be re-prased in proper phase
-					_dbg1("Got an --option, so jumping to phase="<<phase);
+					_dbg1_c(logname, "Got an --option, so jumping to phase="<<phase);
 					break; // continue to phase 3 - the options
 				}
 
-				_dbg1("adding var "<<word);
+				_dbg1_c(logname, "adding var "<<word);
 				mData->mVar.push_back(word);
 			}
 		} // parse var phase 1
 
-		_mark("Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
+		_mark_c(logname, "Words position mWordIx2Entity=" << DbgVector(mData->mWordIx2Entity));
 
 		if (phase == 2) {
 			while (true) { // parse var extra
 				const int var_nr = pos - offset_to_var - quotes_offset_to_var;
-				_dbg2("phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
+				_dbg2_c(logname, "phase="<<phase<<" pos="<<pos<<" var_nr="<<var_nr);
 				if (pos >= words_count) {
-					_dbg1("reached END, pos="<<pos);
+					_dbg1_c(logname, "reached END, pos="<<pos);
 					phase = 9;
 					break;
 				}
 				if (var_nr >= xsize_t(var_size_all)) {
-					_dbg1("reached end of var ALL, var_nr="<<var_nr);
+					_dbg1_c(logname, "reached end of var ALL, var_nr="<<var_nr);
 					phase = 3;
 					break;
 				}
 
 				string word = mCommandLine.at(pos);
-				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word);
+				_dbg1_c(logname, "phase="<<phase<<" pos="<<pos<<" word="<<word);
 				++pos;
 				mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::variable_ext, var_nr);
 
 				if (nUtils::CheckIfBegins("\"", word)) { // TODO review memory access
-					_dbg1("Quotes detected in: " + word);
+					_dbg1_c(logname, "Quotes detected in: " + word);
 					word.erase(0, 1);
 					while (!nUtils::CheckIfEnds("\"", word)) {
 						word += " " + mCommandLine.at(pos);
@@ -517,16 +520,16 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 						++quotes_offset_to_var;
 					}
 					word.erase(word.end() - 1, word.end()); // ease the closing " of last mCommandLine[..] that is not at end of word
-					_dbg1("Quoted word is:"<<word);
+					_dbg1_c(logname, "Quoted word is:"<<word);
 				}
 				if (nUtils::CheckIfBegins("--", word)) { // --bcc foo
 					phase = 3;
 					--pos; // this should be re-prased in proper phase
-					_dbg1("Got an --option, so jumping to phase="<<phase);
+					_dbg1_c(logname, "Got an --option, so jumping to phase="<<phase);
 					break; // continue to phase 3 - the options
 				}
 
-				_dbg1("adding var ext "<<word);
+				_dbg1_c(logname, "adding var ext "<<word);
 				mData->mVarExt.push_back(word);
 			}
 		} // phase 2
@@ -538,13 +541,13 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 			while (true) { // parse options
 				++token_nr;
 				if (pos >= words_count) {
-					_dbg1("reached END, pos="<<pos);
+					_dbg1_c(logname, "reached END, pos="<<pos);
 					phase = 9;
 					break;
 				}
 
 				string word = mCommandLine.at(pos);
-				_dbg1("phase="<<phase<<" pos="<<pos<<" word="<<word<<" (token_nr="<<token_nr<<")");
+				_dbg1_c(logname, "phase="<<phase<<" pos="<<pos<<" word="<<word<<" (token_nr="<<token_nr<<")");
 				++pos;
 
 				bool is_newopt = nUtils::CheckIfBegins("--", word); // word is opt name like "--cc"
@@ -554,11 +557,11 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 						inside_opt = false;
 						mData->AddOpt(prev_name, ""); // ***
 						mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::option_name); // TODO sub number!
-						_dbg1("got option "<<prev_name<<" (empty)");
+						_dbg1_c(logname, "got option "<<prev_name<<" (empty)");
 					}
 					inside_opt = true;
 					prev_name = word; // we now started the new option (and next iteration will finish it)
-					_dbg3("started new option: prev_name="<<prev_name);
+					_dbg3_c(logname, "started new option: prev_name="<<prev_name);
 				} else { // not an --option, so should be a value to finish previous one
 					if (inside_opt) { // we are in middle of option, now we have the argment that ends it: --cc [alice]
 						string value = word; // like "alice"
@@ -566,12 +569,12 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 						mData->AddOpt(prev_name, value);
 						mData->mWordIx2Entity.at(pos - 1).SetKind(cParseEntity::tKind::option_name); // e.g. "--cc" // TODO sub number!
 						mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::option_value); // e.g. "alice" // TODO sub number!
-						_dbg1("got option "<<prev_name<<" with value="<<value);
+						_dbg1_c(logname, "got option "<<prev_name<<" with value="<<value);
 					} else { // we have a word like "bob", but we are not in middle of an option - syntax error
 							 // this is the special case of "ot nym inf" the word "inf" might be not a wrong use of --option, but 2nd word of command name being entered
-						_dbg3("TOLERATE? token_nr"<<token_nr<<" namepart_words="<<namepart_words<<" allowBadCmdname="<<allowBadCmdname);
+						_dbg3_c(logname, "TOLERATE? token_nr"<<token_nr<<" namepart_words="<<namepart_words<<" allowBadCmdname="<<allowBadCmdname);
 						if ((token_nr == 1) && (namepart_words == 1) && (allowBadCmdname)) {
-							_dbg2("Tollerating this option-or-nameword2 here at pos="<<pos);
+							_dbg2_c(logname, "Tollerating this option-or-nameword2 here at pos="<<pos);
 							mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::cmdname, 2); // assume this is 2nd word of command
 						} else {
 							throw cErrParseSyntax("Expected an --option here, but got a word=" + ToStr(word) + " at pos=" + ToStr(pos));
@@ -583,22 +586,22 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 				inside_opt = false;
 				mData->AddOpt(prev_name, "");
 				mData->mWordIx2Entity.at(pos).SetKind(cParseEntity::tKind::option_name); // TODO sub number!
-				_dbg1("got option "<<prev_name<<" (empty) - on end");
+				_dbg1_c(logname, "got option "<<prev_name<<" (empty) - on end");
 			}
 		} // phase 3
 
-		_note("Entities:" << DbgVector(mData->mWordIx2Entity));
-		_note("mVar parsed:    " + DbgVector(mData->mVar));
-		_note("mVarExt parsed: " + DbgVector(mData->mVarExt));
-		_note("mOption parsed  " + DbgMap(mData->mOption));
+		_note_c(logname, "Entities:" << DbgVector(mData->mWordIx2Entity));
+		_note_c(logname, "mVar parsed:    " + DbgVector(mData->mVar));
+		_note_c(logname, "mVarExt parsed: " + DbgVector(mData->mVarExt));
+		_note_c(logname, "mOption parsed  " + DbgMap(mData->mOption));
 	} catch (cErrParse &e) {
-		_info("Command can not be parsed " << e.what());
+		_info_c(logname, "Command can not be parsed " << e.what());
 		throw;
 	} catch (std::exception &e) {
-		_erro("Internal error in parser code " << e.what() << " while parsing:" << DbgVector( mCommandLine ));
+		_erro_c(logname, "Internal error in parser code " << e.what() << " while parsing:" << DbgVector( mCommandLine ));
 		throw;
 	} catch (myexception &e) {
-		_erro("Internal error in parser code " << e.what() << " while parsing:" << DbgVector( mCommandLine ));
+		_erro_c(logname, "Internal error in parser code " << e.what() << " while parsing:" << DbgVector( mCommandLine ));
 		throw;
 	}
 }
@@ -906,6 +909,7 @@ void cCmdProcessing::UseExecute() { // TODO write as a template for all the 3 wr
 		mStateExecute = tState::succeeded;
 	} catch (const string & message) {
 		_erro("Exception: " << message);
+		cout << zkr::cc::fore::red << "Can't execute command" << zkr::cc::console << endl;
 	} catch (const myexception &e) {
 		e.Report();
 		throw;
@@ -965,7 +969,7 @@ bool cParamInfo::IsValid() const {
 // cCmdFormat::cCmdFormat(cCmdExecutable exec, tVar var, tVar varExt, tOption opt)
 cCmdFormat::cCmdFormat(const cCmdExecutable &exec, const tVar &var, const tVar &varExt, const tOption &opt) :
 		mExec(exec), mVar(var), mVarExt(varExt), mOption(opt) {
-	_dbg1("Created new format");
+	_dbg1_c("parser_formats", "Created new format");
 }
 
 bool cCmdFormat::IsValid() const {

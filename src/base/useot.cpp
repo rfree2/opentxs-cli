@@ -149,9 +149,13 @@ bool cUseOT::DisplayAllDefaults(bool dryrun) {
 	_fact("display all defaults" );
 	if(dryrun) return true;
 	if(!Init()) return false;
+	auto nocol = zkr::cc::console;
 	for (auto var : mDefaultIDs) {
 		string defaultName = (this->*cUseOT::subjectGetNameFunc.at(var.first))(var.second);
-		nUtils::DisplayStringEndl( cout, SubjectType2String(var.first) + "\t" + var.second + " " + defaultName );
+
+		nUtils::DisplayStringEndl(cout,
+				nUtils::SubjectType2String(var.first) + "\t" + nUtils::stringToColor(var.second) + var.second + " "
+						+ defaultName + nocol);
 	}
 	return true;
 }
@@ -286,7 +290,7 @@ string cUseOT::AccountGetDefault() {
 	if(!Init())
 		return "";
 	auto defaultAcc = mDefaultIDs.at(nUtils::eSubjectType::Account);
-	if(defaultAcc.empty()) throw "No default account!";
+	if(defaultAcc.empty()) throw string("No default account!");
 	return defaultAcc;
 }
 
@@ -884,7 +888,7 @@ bool cUseOT::AssetDisplayAll(bool dryrun) {
 	_dbg3("Retrieving all asset names");
 	for(std::int32_t i = 0 ; i < opentxs::OTAPI_Wrap::GetAssetTypeCount();i++) {
 		ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(i);
-		nUtils::DisplayStringEndl(cout, assetID + " - " + AssetGetName( assetID ) );
+		nUtils::DisplayStringEndl(nUtils::stringToColor(assetID) + assetID + " " + AssetGetName( assetID ) );
 	}
 	return true;
 }
@@ -1806,7 +1810,7 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 	}
 
 	int32_t nKeybits = 1024;
-	string NYM_ID_SOURCE = ""; //TODO: check
+	string NYM_ID_SOURCE = ""; // TODO: check
 	string ALT_LOCATION = "";
 	string nymID = mMadeEasy->create_nym(nKeybits, NYM_ID_SOURCE, ALT_LOCATION);
 
@@ -1815,24 +1819,34 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 		return false;
 	}
 	// Set the Name of the new Nym.
+	// Signer Nym? When testing, there is only one nym, so you just pass it twice.
+	// But in real production, a user will have a default signing nym, the same way that he might have a default signing key in PGP,
+	// and that must be passed in whenever he changes the name on any of the other nyms in his wallet.
+	// (In order to properly sign and save the change.)
 
-	if ( !opentxs::OTAPI_Wrap::SetNym_Name(nymID, nymID, nymName) ) { //Signer Nym? When testing, there is only one nym, so you just pass it twice. But in real production, a user will have a default signing nym, the same way that he might have a default signing key in PGP, and that must be passed in whenever he changes the name on any of the other nyms in his wallet. (In order to properly sign and save the change.)
+	if ( !opentxs::OTAPI_Wrap::SetNym_Name(nymID, nymID, nymName) ) {
 		_erro("Failed trying to name new Nym: " << nymID);
 		return false;
 	}
 	_info("Nym " << nymName << "(" << nymID << ")" << " created successfully.");
-	//	TODO add nym to the cache
+	cout << zkr::cc::fore::lightgreen << "Nym " << nymName << "(" << nymID << ")" << " created successfully."
+			<< zkr::cc::console << endl;
 
 	mCache.mNyms.insert( std::make_pair(nymID, nymName) ); // insert nym to nyms cache
 
-	if ( registerOnServer )
-		NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
+	if ( registerOnServer ) {
+		try {
+			NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
+		} catch(...) {
+			nUtils::reportError("No default server, can't register nym");
+		}
+	}
 
 	try {
 		auto defaultNym = NymGetDefault();
 	} catch (...) {
-		_info("No default nym, sets " << nymName << " as default");
-		cout << "Setting " << nymName << " as default" << endl;
+		_info("No default nym, sets " << zkr::cc::bold << nymName << zkr::cc::console << " as default");
+		cout << "Setting " << nymName << " as default nym." << endl;
 		return NymSetDefault(nymName, false);
 	}
 
@@ -1854,14 +1868,10 @@ bool cUseOT::NymExport(const string & nymName, const string & filename, bool dry
 		return false;
 	}
 
-	auto print = [&, exported] ()->bool {
-		// TODO: handling errors??
+	if(filename.empty())  {
 		std::cout << zkr::cc::fore::lightblue << exported << zkr::cc::console << endl;
 		return true;
-	};
-
-	if(filename.empty()) return print();
-
+	}
 	nUtils::cEnvUtils envUtils;
 
 	try {
@@ -1871,7 +1881,6 @@ bool cUseOT::NymExport(const string & nymName, const string & filename, bool dry
 	}
 
 	cout << "Saved" << endl;
-
 	return true;
 }
 
@@ -1882,18 +1891,13 @@ bool cUseOT::NymImport(const string & filename, bool dryrun) {
 	std::string toImport;
 	nUtils::cEnvUtils envUtils;
 
-	if(!filename.empty()) {
-		_dbg3("Loading from file: " << filename);
-		toImport = envUtils.ReadFromFile(filename);
-		_dbg3("Loaded: " << toImport);
+	try {
+		toImport = nUtils::GetInput(filename);
+	} catch(...) {
+		return nUtils::reportError("Can't import, empty input");
 	}
 
-	if ( toImport.empty()) toImport = envUtils.Compose();
-	if( toImport.empty() ) {
-		_warn("Can't import, empty input");
-		return false;
-	}
-	cout << zkr::cc::fore::lightred << "Error in opentxs library, can't import nym nym!" << zkr::cc::console << endl;
+	cout << zkr::cc::fore::lightred << "Error in opentxs library, can't import nym!" << zkr::cc::console << endl;
 	return false; // XXX
 
 	// FIXME: segfault!
@@ -1989,12 +1993,7 @@ string cUseOT::NymGetId(const string & nymName) { // Gets nym aliases and IDs be
 
 string cUseOT::NymGetToNymId(const string & nym, const string & ownerNymID) {
 	ID nymID = NymGetId(nym);
-
-	if(nymID.empty()) {
-		return AddressBookStorage::Get(ownerNymID)->nymGetID(nym);
-	}
-
-	return nymID;
+	return (nymID.empty())? AddressBookStorage::Get(ownerNymID)->nymGetID(nym) : nymID;
 }
 
 bool cUseOT::NymDisplayInfo(const string & nymName, bool dryrun) {
@@ -2944,12 +2943,19 @@ bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryr
 
 	ID nymID = NymGetId(nym);
 	ID serverID = opentxs::OTAPI_Wrap::CreateServerContract(nymID, xmlContents);
-	if( !serverID.empty() ) {
-		_info( "Contract created for Nym: " << NymGetName(nymID) << "(" << nymID << ")" );
-		nUtils::DisplayStringEndl( cout, opentxs::OTAPI_Wrap::GetServer_Contract(serverID) );
-		return true;
-	}
-	return reportError( "Failure to create contract for nym: " + NymGetName(nymID) + "(" + nymID + ")" );
+	string server = ServerGetName(serverID);
+	if(serverID.empty())
+		return reportError( "Failure to create contract for nym: " + NymGetName(nymID) + "(" + nymID + ")" );
+
+
+	_info( "Contract created for Nym: " << NymGetName(nymID) << "(" << nymID << ")" );
+	cout << zkr::cc::fore::lightgreen << "Contract created" << zkr::cc::console << endl << endl ;
+	cout << server << " " << nUtils::stringToColor(serverID) << serverID << zkr::cc::console << endl << endl;
+	cout << "To show contract use command: \"" << zkr::cc::bold << "server show-contract " << server << zkr::cc::console
+			<< "\"" << endl;
+
+	return true;
+
 }
 
 void cUseOT::ServerCheck() {
@@ -3101,7 +3107,7 @@ bool cUseOT::ServerDisplayAll(bool dryrun) {
 	for(std::int32_t i = 0 ; i < opentxs::OTAPI_Wrap::GetServerCount();i++) {
 		ID serverID = opentxs::OTAPI_Wrap::GetServer_ID(i);
 
-		nUtils::DisplayStringEndl(cout, ServerGetName( serverID ) + " - " + serverID);
+		nUtils::DisplayStringEndl(nUtils::stringToColor(serverID) + ServerGetName(serverID) + "\t" + serverID);
 	}
 	return true;
 }

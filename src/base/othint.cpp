@@ -629,7 +629,7 @@ static char* CompletionReadlineWrapper(const char *sofar , int number) {
 	// rl_end - position to which rl_line_buffer should be read
 	// rl_point - current CURSOR position
 	// http://www.delorie.com/gnu/docs/readline/rlman_28.html
-
+	const string logname = "completition";
 	bool dbg = my_rl_wrapper_debug;
 	dbg=false || 1; // XXX
 	ASRT( !(gReadlineHandleParser == nullptr) ); // must be set before calling this function
@@ -640,30 +640,30 @@ static char* CompletionReadlineWrapper(const char *sofar , int number) {
 	string line_all;
 	if (rl_line_buffer) line_all = string(rl_line_buffer).substr(0,rl_end); // <<<
 	string line = line_all.substr(0, rl_point); // Complete from cursor position
-	if (dbg) _dbg2("sofar="<<sofar<<" number="<<number<<" rl_line_buffer="<<rl_line_buffer<<" and line="<<line<<endl);
+	if (dbg) _dbg2_c(logname, "sofar="<<sofar<<" number="<<number<<" rl_line_buffer="<<rl_line_buffer<<" and line="<<line<<endl);
 
 
 	static vector <string> completions;
 	if (number == 0) {
-		if (dbg) _dbg3("Start autocomplete (during first callback, number="<<number<<") of line="<<line);
+		if (dbg) _dbg3_c(logname, "Start autocomplete (during first callback, number="<<number<<") of line="<<line);
 		auto processing = gReadlineHandleParser->StartProcessing(line_all, gReadlineHandlerUseOT);
 		completions = processing.UseComplete( rl_point );
-		_note( "TAB-Completion: " << DbgVector(completions) );
-		if (dbg) _dbg3("Done autocomplete (during first callback, number="<<number<<"); completions="<<DbgVector(completions));
+		_note_c(logname,  "TAB-Completion: " << DbgVector(completions) );
+		if (dbg) _dbg3_c(logname, "Done autocomplete (during first callback, number="<<number<<"); completions="<<DbgVector(completions));
 	}
 
 	auto completions_size = completions.size();
 	if (!completions_size) {
-		if (dbg) _dbg3("Stop autocomplete: no matching words found because completions_size="<<completions_size);
+		if (dbg) _dbg3_c(logname, "Stop autocomplete: no matching words found because completions_size="<<completions_size);
 		return NULL; // <--- RET
 	}
-	if (dbg) _dbg3( "completions_size=" << completions_size << endl);
+	if (dbg) _dbg3_c(logname,  "completions_size=" << completions_size << endl);
 	if (number==completions_size) { // stop
-		if (dbg) _dbg3("Stop autocomplete because we are at last callback number="<<number<<" completions_size="<<completions_size);
+		if (dbg) _dbg3_c(logname, "Stop autocomplete because we are at last callback number="<<number<<" completions_size="<<completions_size);
 		return NULL;
 	}
 	FixSpecial(completions.at(number));
-	if (dbg) _dbg3("Current completion number="<<number<<" is: [" + completions.at(number) + "]");
+	if (dbg) _dbg3_c(logname, "Current completion number="<<number<<" is: [" + completions.at(number) + "]");
 	return strdup( completions.at(number).c_str() ); // caller must free() this memory
 }
 

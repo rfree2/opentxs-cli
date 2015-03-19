@@ -189,6 +189,7 @@ void DbgDisplayVectorEndl(const std::vector<T> &v, const std::string &delim=" ")
 }
 
 void DisplayStringEndl(std::ostream & out, const std::string text);
+void DisplayStringEndl(const std::string text);
 
 bool CheckIfBegins(const std::string & beggining, const std::string & all);
 bool CheckIfEnds (std::string const & ending, std::string const & all);

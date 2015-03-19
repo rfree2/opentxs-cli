@@ -26,7 +26,7 @@ void cCmdParser::_AddFormat( const cCmdName &name, shared_ptr<cCmdFormat> format
 	if (!format->IsValid()) { _erro("Can not add invalid format, named " << (string)(name) ) ; return ; } // <--- RET
 
 	mI->mTree.insert( cCmdParser_pimpl::tTreePair ( name , format ) );
-	_info("Add format for command name (" << (string)name << "), now size=" << mI->mTree.size() << " new format is: ");
+	_info_c("parser_formats", "Add format for command name (" << (string)name << "), now size=" << mI->mTree.size() << " new format is: ");
 	// format->Debug();
 }
 
@@ -86,12 +86,10 @@ void cCmdParser::Init() {
 			_dbg3("Nym to validation " << curr_word_ix);
 
 			// if curr_word_ix is 0 then this is the first param, so we will validate using default nym
-
 			auto nym = (curr_word_ix == 0)? use.NymGetDefault() : data.Var(curr_word_ix);
 
-			bool existInWallet = use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1));
-			bool existInAddressBook = AddressBookStorage::Get(use.NymGetId(nym))->nymNameExist(data.Var(curr_word_ix + 1));
-			return existInWallet || existInAddressBook;
+			if(use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1))) return true;
+			return AddressBookStorage::Get(use.NymGetId(nym))->nymNameExist(data.Var(curr_word_ix + 1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting");
@@ -360,7 +358,7 @@ void cCmdParser::Init() {
 	cParamInfo pWriteFile( "to-file", [] () -> string { return Tr(eDictType::help, "to-file") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			auto filename = data.Var(nr);
+			auto filename =  nUtils::cFilesystemUtils::TildeToHome(data.Var(nr));
 			auto fileExist = opentxs::OTPaths::PathExists(filename);
 			_dbg2("file: " << filename << " exist: " << fileExist);
 			return !fileExist; // if this file exist, return false
@@ -757,10 +755,10 @@ void cCmdParser::Init() {
 
 	// TODO: move this to "file" section
 	AddFormat("file encode", {}, {pReadFile, pWriteFile}, NullMap,
-			LAMBDA { auto &D=*d; return U.TextEncode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextEncode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
 
 	AddFormat("file decode", {}, {pReadFile, pWriteFile}, NullMap,
-			LAMBDA { auto &D=*d; return U.TextDecode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextDecode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
 
 	AddFormat("text encrypt", {pNymTo}, {pText}, NullMap,
 		LAMBDA { auto &D=*d; return U.TextEncrypt(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
