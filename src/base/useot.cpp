@@ -108,7 +108,7 @@ void cUseOT::LoadDefaults() {
 	// TODO What if there is, for example no accounts?
 	// TODO Check if defaults are correct.
 	if ( !configManager.Load(mDefaultIDsFile, mDefaultIDs) ) {
-		_dbg1("Cannot open" + mDefaultIDsFile + " file, setting IDs with ID 0 as default"); //TODO check if there is any nym in wallet
+		_dbg1("Cannot open " + mDefaultIDsFile + " file, setting IDs with ID 0 as default"); //TODO check if there is any nym in wallet
 		ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(0);
         ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(0);
         ID NymID = opentxs::OTAPI_Wrap::GetNym_ID(0);
@@ -116,16 +116,20 @@ void cUseOT::LoadDefaults() {
 
 		if ( accountID.empty() )
 			_warn("There is no accounts in the wallet, can't set default account");
+
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Account, accountID));
 		if ( assetID.empty() )
 			_warn("There is no assets in the wallet, can't set default asset");
+
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Asset, assetID));
 		if ( NymID.empty() )
 			_warn("There is no nyms in the wallet, can't set default nym");
+
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, NymID));
 		if ( serverID.empty() ) {
 			_erro("There is no servers in the wallet, can't set default server");
 		}
+
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Server, serverID));
 	}
 }
@@ -243,10 +247,10 @@ bool cUseOT::CheckIfExists(const nUtils::eSubjectType type, const string & subje
 	ID subjectID = (this->*cUseOT::subjectGetIDFunc.at(type))(subject);
 
 	if (!subjectID.empty()) {
-		_dbg3("Account " + subject + " exists");
+		_dbg3(SubjectType2String(type) + " " + subject + " exists");
 		return true;
 	}
-	_warn("Can't find this Account: " + subject);
+	_warn("Can't find this " + SubjectType2String(type) + " " + subject);
 	return false;
 }
 
@@ -1823,6 +1827,15 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 
 	if ( registerOnServer )
 		NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
+
+	try {
+		auto defaultNym = NymGetDefault();
+	} catch (...) {
+		_info("No default nym, sets " << nymName << " as default");
+		cout << "Setting " << nymName << " as default" << endl;
+		return NymSetDefault(nymName, false);
+	}
+
 	return true;
 }
 
