@@ -85,17 +85,17 @@ void cCmdParser::Init() {
 			_dbg3("Nym to validation " << curr_word_ix);
 
 			// if curr_word_ix is 0 then this is the first param, so we will validate using default nym
-			auto nymFrom = (curr_word_ix == 0)? use.NymGetDefault() : data.Var(curr_word_ix);
+			auto nymFrom = (curr_word_ix == 0)? use.NymGetName(use.NymGetDefault()) : data.Var(curr_word_ix);
 
 			if(use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1))) return true;
 			return AddressBookStorage::Get(use.NymGetId(nymFrom))->nymNameExist(data.Var(curr_word_ix + 1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym hinting " << curr_word_ix);
-			auto nymFrom = (curr_word_ix == 1)? use.NymGetDefault() : data.Var(curr_word_ix-1);
+			auto nymFrom = (curr_word_ix == 1)? use.NymGetName(use.NymGetDefault()) : data.Var(curr_word_ix-1);
 			_dbg3("Nym from: " << nymFrom);
 			using namespace nOT::nUtils::nOper;
-			auto nyms = use.NymGetAllNames() + AddressBookStorage::GetAllNames(use.NymGetAllIDs()) - use.NymGetName(nymFrom);
+			auto nyms = use.NymGetAllNames() + AddressBookStorage::GetAllNames(use.NymGetAllIDs()) - nymFrom;
 			return nyms;
 		}
 	);
@@ -103,7 +103,7 @@ void cCmdParser::Init() {
 	cParamInfo pNymId( "nym-id", [] () -> string { return Tr(eDictType::help, "nym-id") },
 			[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 				_dbg3("Nym validation");
-				return data.Var(curr_word_ix + 1).size() == 37; // 37 is nym id length
+				return true;
 			} ,
 			[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 				_dbg3("Nym hinting");

@@ -156,3 +156,9 @@ TEST_F(cUseOtAddressBookTest, Completiton) {
 		EXPECT_TRUE(addressBook->remove(nym.first));
 	}
 }
+
+TEST_F(cUseOtAddressBookTest, Cache) {
+	using namespace nOT;
+	auto names = AddressBookStorage::GetAllNames(useOt->NymGetAllIDs());
+	auto names2 = AddressBookStorage::GetAllNames(useOt->NymGetAllIDs());
+}
