@@ -260,11 +260,9 @@ void cCmdParser::Init() {
 
 	cParamInfo pText( "text", [] () -> string { return Tr(eDictType::help, "text") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-			_mark("pText ok");
 			return true;
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
-			_mark("pText no hinting");
 			return vector<string> {}; // this should be empty option, let's continue
 		}
 	);
@@ -757,8 +755,8 @@ void cCmdParser::Init() {
 	AddFormat("server set-default", {pServer}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerSetDefault( D.V(1), D.has("--dryrun") ); } );
 
-	AddFormat("server show-contract", {pServer}, {pWriteFile}, NullMap,
-		LAMBDA { auto &D=*d; return U.ServerShowContract(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
+	AddFormat("server show-contract", {}, {pServer, pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerShowContract(D.v(1, U.ServerGetDefault()), D.v(2, ""), D.has("--dryrun") ); } );
 
 	//======== ot text ========
 

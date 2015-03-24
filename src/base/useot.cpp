@@ -2955,6 +2955,12 @@ bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryr
 	cout << "To show contract use command: \"" << zkr::cc::bold << "server show-contract " << server << zkr::cc::console
 			<< "\"" << endl;
 
+	try {
+		auto defaultSrv = ServerGetDefault();
+	} catch(...) {
+		return ServerSetDefault(server, false);
+	}
+
 	return true;
 
 }
@@ -2970,8 +2976,10 @@ void cUseOT::ServerCheck() {
 }
 
 string cUseOT::ServerGetDefault() {
-	if(!Init())
+	if(!Init()) {
+		throw string("unknown error");
 		return "";
+	}
 	auto defaultServer = mDefaultIDs.at(nUtils::eSubjectType::Server);
 	if(defaultServer.empty()) throw "No default server!";
 	return defaultServer;
