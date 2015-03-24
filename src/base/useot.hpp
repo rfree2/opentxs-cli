@@ -220,6 +220,7 @@ namespace nUse {
 		string NymGetName(const ID & nymID);
 		string NymGetRecipientName(const ID & nymID); ///< returns nym name or ID (if name not found), should be used to displaying payments, etc. works, when recipient nym was removed from address book and for now is unknown
 		bool NymSetName(const ID & nymID, const string & newNymName);
+		VALID bool NymNameExist(const string & nymName);
 
 		HINT vector<string> NymGetAllNames();
 

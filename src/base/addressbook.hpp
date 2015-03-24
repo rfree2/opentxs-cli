@@ -55,7 +55,9 @@ public:
 	static string GetNymName(const string & nymID, const vector<string> & allNymsID); ///< search name in address books all given nyms
 	static vector <string> GetAllNames(const vector<string> & allNymsID); ///< all names from all address books, used to completition
 	static void Reload();
+	static bool NymNameExist(const string & nymName, const vector<string> & allNymsID);
 private:
+	static void Load(const vector<string> & allNymsID);
 	static map <string, shared_ptr<AddressBook>> saved; ///< map with <id nyms, pointers to address book>
 	static vector<string> names; ///< map with all nym names
 	static bool init;

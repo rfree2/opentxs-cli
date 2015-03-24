@@ -28,10 +28,27 @@ function printHelp() {
 	echo "--gtest_filter=cUseOtChequeTest.* "
 	echo ""
 }
+
+function parseArgs() { 
+    param="--gtest_filter=$1.$2"
+    echo $param 
+    sleep 1
+    eval "./build/tests/unittests-opentxs-cli $param" 
+    exit 
+}
+
 checkExist
-checkSrv
 removePid 
-printHelp
+
+if [[ $# == 3 ]] && [[ $1 == "parse" ]]; then
+    parseArgs $2 $3 
+ elif [[ $# == 2 ]] && [[ $1 == "parse" ]]; then
+    parseArgs $2 "*"
+fi
+
+checkSrv
+printHelp 
+
 cmd="$executable --gtest_break_on_failure $@"
 echo $cmd 
 
@@ -39,3 +56,5 @@ echo $cmd
  read _ 
 
 eval $cmd
+
+removePid 

@@ -134,7 +134,7 @@ void cCmdParser::Init() {
 	cParamInfo pNymNewName( "nym-new-name", [] () -> string { return Tr(eDictType::help, "nym-new-name") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Nym name validation");
-				return true; // Takes all input TODO check if Nym with tis name exists
+			return !use.NymNameExist(data.Var(curr_word_ix+1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Nym name hinting");
@@ -260,9 +260,11 @@ void cCmdParser::Init() {
 
 	cParamInfo pText( "text", [] () -> string { return Tr(eDictType::help, "text") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			_mark("pText ok");
 			return true;
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			_mark("pText no hinting");
 			return vector<string> {}; // this should be empty option, let's continue
 		}
 	);
@@ -528,7 +530,7 @@ void cCmdParser::Init() {
 	AddFormat("addressbook ls", {}, {pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookDisplay(D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
-	AddFormat("addressbook add", {pNym, pNymNewName, pNymId}, {}, NullMap,
+	AddFormat("addressbook add", {pNym, pText, pNymId}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookAdd(D.V(1), D.V(2), D.V(3), D.has("--dryrun") ); } );
 
 	AddFormat("addressbook rm", {pNym, pNymId}, {}, NullMap,
@@ -785,7 +787,7 @@ void cCmdParser::Init() {
 		LAMBDA { auto &D=*d; return U.VoucherWithdraw(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("voucher new-for", {pNymTo, pAmount}, {}, { {"--memo",pText} },
-		LAMBDA { auto &D=*d; return U.VoucherWithdraw( U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") ); } );
+		LAMBDA {auto &D=*d; return U.VoucherWithdraw(U.AccountGetName(U.AccountGetDefault()), U.NymGetName(U.NymGetDefault()), D.V(1), stoi(D.V(2)), D.o1("--memo", ""), D.has("--dryrun") );});
 
 	AddFormat("voucher cancel", {pAccount, pNymAcc}, {pOutpaymentIndex}, NullMap,
 		LAMBDA { auto &D=*d; return U.VoucherCancel(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );

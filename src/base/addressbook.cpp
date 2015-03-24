@@ -206,6 +206,7 @@ shared_ptr<AddressBook> AddressBookStorage::Get(const string & nymID) {
 }
 
 void AddressBookStorage::ForceClear() {
+	_info("clear saved nyms");
 	saved.clear();
 }
 
@@ -225,8 +226,13 @@ string AddressBookStorage::GetNymName(const string & nymID, const vector<string>
 }
 
 vector<string> AddressBookStorage::GetAllNames(const vector<string> & allNymsID) {
+	Load(allNymsID);
+	return names;
+}
+
+void AddressBookStorage::Load(const vector<string> & allNymsID) {
 	using namespace nOT::nUtils::nOper;
-	if(names.empty() && !init) {
+	if(names.empty() && (!init || saved.empty())) {
 		_dbg2("empty vector, load all nyms from beginning");
 		for(auto nymID : allNymsID) {
 			names = names + Get(nymID)->getAllNames();
@@ -243,13 +249,24 @@ vector<string> AddressBookStorage::GetAllNames(const vector<string> & allNymsID)
 	sort( names.begin(), names.end() );
 	names.erase( unique( names.begin(), names.end() ), names.end() );
 	_dbg3("names vector: (" << names.size() << ") -> " <<  DbgVector(names));
-	return names;
 }
+
 void AddressBookStorage::Reload() {
 	init = false;
 	names.clear();
 }
 
+bool AddressBookStorage::NymNameExist(const string & nymName, const vector<string> & allNymsID) {
+	Load(allNymsID);
+
+	auto exist = std::find(names.begin(), names.end(), nymName)!=names.end();
+	_mark("nym " << nymName << " existance=" << nymName);
+	using namespace nOT::nUtils::nOper;
+	if(!exist)  _dbg1("names: " << DbgVector(names));
+
+
+	return exist;
+}
 
 }
 // nOT

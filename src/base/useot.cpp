@@ -810,7 +810,10 @@ bool cUseOT::AddressBookAdd(const string & nym, const string & newNym, const ID 
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-
+	if(CheckIfExists(nUtils::eSubjectType::User, newNym)) {
+		cout << "This nym (" << newNym << ") is in wallet, aborting" << endl;
+		return false;
+	}
 	auto addressbook = AddressBookStorage::Get(NymGetId(nym));
 	auto added = addressbook->add(newNym, newNymID);
 
@@ -929,8 +932,9 @@ bool cUseOT::AssetIssue(const string & serverID, const string & nymID, bool dryr
 
 	string signedContract;
 	_dbg3("Message is empty, starting text editor");
-	nUtils::cEnvUtils envUtils;
-	signedContract = envUtils.Compose();
+
+	signedContract = GetText();
+
 
 	string strResponse = mMadeEasy->issue_asset_type(serverID, nymID, signedContract);
 
@@ -948,8 +952,8 @@ bool cUseOT::AssetNew(const string & nym, bool dryrun) {
 	if(dryrun) return true;
 	if(!Init()) return false;
 	string xmlContents;
-	nUtils::cEnvUtils envUtils;
-	xmlContents = envUtils.Compose();
+
+	xmlContents = GetText();
 
 	nUtils::DisplayStringEndl(cout, opentxs::OTAPI_Wrap::CreateAssetContract(NymGetId(nym), xmlContents) ); //TODO save contract to file
 	return true;
@@ -1089,12 +1093,7 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 	ID nymID = NymGetId(nym);
 
 	_dbg3("Open text editor for user to paste payment instrument");
-	nUtils::cEnvUtils envUtils;
-	string instrument = envUtils.Compose();
-
-	if (instrument.empty()) {
-		return false;
-	}
+	string instrument = GetText();
 
 	string instrumentType = opentxs::OTAPI_Wrap::Instrmnt_GetType(instrument);
 
@@ -1233,8 +1232,7 @@ bool cUseOT::CashDepositWrap(const string & account, bool dryrun) {
 	ID accountServerID = opentxs::OTAPI_Wrap::GetAccountWallet_NotaryID(accountID);
 
 	_dbg3("Open text editor for user to paste payment instrument");
-	nUtils::cEnvUtils envUtils;
-	string instrument = envUtils.Compose();
+	string instrument = GetText();
 
 	return CashDeposit(accountID, accountNymID, accountServerID, instrument);
 }
@@ -1498,13 +1496,8 @@ bool cUseOT::ChequeDiscard(const string & acc, const string & nym, const int32_t
 	string cheque = "";
 	if (index == -1) { // gets cheque from editor
 		_dbg2("getting cheque from editor");
-		nUtils::cEnvUtils envUtils;
-		cheque = envUtils.Compose();
-		if(cheque.empty()) {
-			cout << "Empty cheque, abortring!" << endl;
-			_warn("empty cheque, aborting");
-			return false;
-		}
+		cheque = GetText();
+
 	} else { // gets cheque from outpayments
 		const auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);
 		if (count == 0)
@@ -1784,6 +1777,10 @@ bool cUseOT::MsgOutRemoveByIndex(const string & nymName, const int32_t & index, 
 		return true;
 	}
 	return false;
+}
+bool cUseOT::NymNameExist(const string & nymName) {
+	if(CheckIfExists(nUtils::eSubjectType::User, nymName)) return true;
+	return AddressBookStorage::NymNameExist(nymName, NymGetAllIDs());
 }
 
 bool cUseOT::NymCheck(const string & nymName, bool dryrun) { // wip
@@ -2187,7 +2184,7 @@ bool cUseOT::OutpaymentDiscard(const string & acc, const string & nym, const int
 	}
 
 	if( type == "INVOICE" || type == "PURSE") {
-		return reportError("Sorry, discarding" + type + "is not implemented yet.");
+		return reportError("Sorry, discarding " + type + " is not implemented yet.");
 	}
 
 	return reportError("Unknown type (" + type + ")");
@@ -3222,12 +3219,8 @@ bool cUseOT::VoucherCancel(const string & acc, const string & nym, const int32_t
 
 	if(index == -1) {
 		_dbg2("getting voucher from editor");
-		nUtils::cEnvUtils envUtils;
-		voucher = envUtils.Compose();
-		if(voucher.empty()) {
-			cout << "Empty voucher, aborting" << endl;
-			return false;
-		}
+
+		voucher = GetText();
 	} else {
 		_dbg2("getting voucher from outpayments");
 		auto count = opentxs::OTAPI_Wrap::GetNym_OutpaymentsCount(nymID);

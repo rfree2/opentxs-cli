@@ -9,6 +9,7 @@
 #include "../src/base/addressbook.hpp"
 
 using namespace nOT::nUtils;
+using namespace nOT;
 
 class cUseOtAddressBookTest: public testing::Test {
 protected:
@@ -64,6 +65,8 @@ TEST_F(cUseOtAddressBookTest, Operation) {
 	EXPECT_FALSE(addressbook->remove(useOt->NymGetId(toNym)));
 
 	addressbook->display();
+
+	EXPECT_FALSE(useOt->AddressBookAdd(toNym, nym, useOt->NymGetName(nym), false));
 }
 
 TEST_F(cUseOtAddressBookTest, Display) {
@@ -77,7 +80,7 @@ TEST_F(cUseOtAddressBookTest, ClearObject) {
 		EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
 	}
 
-	sleep(3);
+	sleep(1);
 
 	for (auto nym : useOt->NymGetAllNames()) {
 		EXPECT_TRUE(useOt->AddressBookDisplay(nym, false));
@@ -152,13 +155,31 @@ TEST_F(cUseOtAddressBookTest, Completiton) {
 	}
 
 	_mark("removing nyms from address book");
-	for(auto nym :testNyms) {
+	for(auto nym : testNyms) {
 		EXPECT_TRUE(addressBook->remove(nym.first));
 	}
 }
 
 TEST_F(cUseOtAddressBookTest, Cache) {
-	using namespace nOT;
+
 	auto names = AddressBookStorage::GetAllNames(useOt->NymGetAllIDs());
 	auto names2 = AddressBookStorage::GetAllNames(useOt->NymGetAllIDs());
+}
+
+TEST_F(cUseOtAddressBookTest, NymNameExist) {
+	auto addressBook = AddressBookStorage::Get(useOt->NymGetId(toNym));
+	auto toAdd = std::make_pair("otxMDWoLhgB6QQJbX57hRc5LYTfLjB6xqjdV", "Betty");
+	addressBook->add(toAdd.second, toAdd.first);
+	addressBook->display();
+	EXPECT_FALSE(useOt->CheckIfExists(nUtils::eSubjectType::User, toAdd.second));
+	EXPECT_TRUE(AddressBookStorage::NymNameExist(toAdd.second, useOt->NymGetAllIDs()));
+
+	AddressBookStorage::ForceClear();
+
+	EXPECT_TRUE(useOt->NymNameExist(toAdd.second));
+
+	EXPECT_TRUE(addressBook->remove(toAdd.first));
+
+	EXPECT_FALSE(useOt->NymNameExist(toAdd.second));
+
 }
