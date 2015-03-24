@@ -265,6 +265,7 @@ eSubjectType String2SubjectType(const string & type);
 
  // ====================================================================
 
+ string GetText();
  string GetInput(const string &filename); ///< gets input from file, if empty - from text editor.
  string GetInput(const string &filename, const string current);
 // ====================================================================

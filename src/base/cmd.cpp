@@ -909,7 +909,7 @@ void cCmdProcessing::UseExecute() { // TODO write as a template for all the 3 wr
 		mStateExecute = tState::succeeded;
 	} catch (const string & message) {
 		_erro("Exception: " << message);
-		cout << zkr::cc::fore::red << "Can't execute command" << zkr::cc::console << endl;
+		cout << zkr::cc::fore::red << "Can't execute command (" << message << ")" << zkr::cc::console << endl;
 	} catch (const myexception &e) {
 		e.Report();
 		throw;

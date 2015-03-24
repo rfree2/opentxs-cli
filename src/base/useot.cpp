@@ -3158,16 +3158,8 @@ bool cUseOT::TextEncrypt(const string & recipientNymName, const string & plainTe
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	string plainTextIn;
-	if ( plainText.empty() ) {
-		nUtils::cEnvUtils envUtils;
-		plainTextIn = envUtils.Compose();
-	}
-	else
-		plainTextIn = plainText;
-
 	string encryptedText;
-	encryptedText = opentxs::OTAPI_Wrap::Encrypt(NymGetToNymId(recipientNymName, NymGetDefault()), plainTextIn);
+	encryptedText = opentxs::OTAPI_Wrap::Encrypt(NymGetToNymId(recipientNymName, NymGetDefault()), plainText);
 	nUtils::DisplayStringEndl(cout, encryptedText);
 	return true;
 }
@@ -3214,16 +3206,8 @@ bool cUseOT::TextDecrypt(const string & recipientNymName, const string & encrypt
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	string encryptedTextIn;
-	if ( encryptedText.empty() ) {
-		nUtils::cEnvUtils envUtils;
-		encryptedTextIn = envUtils.Compose();
-	}
-	else
-		encryptedTextIn = encryptedText;
-
 	string plainText;
-	plainText = opentxs::OTAPI_Wrap::Decrypt(NymGetId(recipientNymName), encryptedTextIn);
+	plainText = opentxs::OTAPI_Wrap::Decrypt(NymGetId(recipientNymName), encryptedText);
 	nUtils::DisplayStringEndl(cout, plainText);
 	return true;
 }

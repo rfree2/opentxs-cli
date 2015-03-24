@@ -565,19 +565,23 @@ bool reportError(const string & message) {
 	return false;
 }
 // ====================================================================
-string GetInput(const string &filename) {
+string GetText() {
 	cEnvUtils envUtils;
+	auto text = envUtils.Compose();
+	if(text.empty()) throw string("No text");
+	return text;
+}
+
+string GetInput(const string &filename) {
 	string input = "";
+	cEnvUtils envUtils;
 	if(!filename.empty()) {
 		_dbg3("Trying get input from file [" << filename << "]");
 		input = envUtils.ReadFromFile(filename);
 		if(!input.empty()) return input;
 		_warn("can't get content from file: " << filename);
 	}
-
-	input = envUtils.Compose();
-	if(input.empty()) throw string("Can't get input");
-	return input;
+	return GetText();
 }
 
 string GetInput(const string &filename, const string current) {

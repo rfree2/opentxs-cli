@@ -80,22 +80,35 @@ void cCmdParser::Init() {
 		}
 	);
 
-	// TODO suggest not the same nym as was used already before
 	cParamInfo pNymTo( "nym-to", [] () -> string { return Tr(eDictType::help, "nym-to") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Nym to validation " << curr_word_ix);
 
 			// if curr_word_ix is 0 then this is the first param, so we will validate using default nym
-			auto nym = (curr_word_ix == 0)? use.NymGetDefault() : data.Var(curr_word_ix);
+			auto nymFrom = (curr_word_ix == 0)? use.NymGetDefault() : data.Var(curr_word_ix);
 
 			if(use.CheckIfExists(nUtils::eSubjectType::User, data.Var(curr_word_ix + 1))) return true;
-			return AddressBookStorage::Get(use.NymGetId(nym))->nymNameExist(data.Var(curr_word_ix + 1));
+			return AddressBookStorage::Get(use.NymGetId(nymFrom))->nymNameExist(data.Var(curr_word_ix + 1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
-			_dbg3("Nym hinting");
+			_dbg3("Nym hinting " << curr_word_ix);
+			auto nymFrom = (curr_word_ix == 1)? use.NymGetDefault() : data.Var(curr_word_ix-1);
+			_dbg3("Nym from: " << nymFrom);
 			using namespace nOT::nUtils::nOper;
-			return use.NymGetAllNames() + AddressBookStorage::GetAllNames(use.NymGetAllIDs());
+			auto nyms = use.NymGetAllNames() + AddressBookStorage::GetAllNames(use.NymGetAllIDs()) - use.NymGetName(nymFrom);
+			return nyms;
 		}
+	);
+
+	cParamInfo pNymId( "nym-id", [] () -> string { return Tr(eDictType::help, "nym-id") },
+			[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+				_dbg3("Nym validation");
+				return data.Var(curr_word_ix + 1).size() == 37; // 37 is nym id length
+			} ,
+			[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+				_dbg3("Nym hinting");
+				return vector<string> {"otx"};
+			}
 	);
 
 	cParamInfo pNymAcc( "nym-acc", [] () -> string { return Tr(eDictType::help, "nym-acc") },
@@ -515,10 +528,10 @@ void cCmdParser::Init() {
 	AddFormat("addressbook ls", {}, {pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookDisplay(D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
-	AddFormat("addressbook add", {pNym, pText, pText}, {}, NullMap,
+	AddFormat("addressbook add", {pNym, pNymNewName, pNymId}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookAdd(D.V(1), D.V(2), D.V(3), D.has("--dryrun") ); } );
 
-	AddFormat("addressbook rm", {pNym, pText}, {}, NullMap,
+	AddFormat("addressbook rm", {pNym, pNymId}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookRemove(D.V(1), D.V(2), D.has("--dryrun") ); } );
 
 	//======== ot asset ========
@@ -748,10 +761,10 @@ void cCmdParser::Init() {
 	//======== ot text ========
 
 	AddFormat("text encode", {}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextEncode(D.v(1, ""), "", "", D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextEncode(D.v(1, nUtils::GetText()), "", "", D.has("--dryrun") ); } );
 
 	AddFormat("text decode", {}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextDecode(D.v(1, ""), "", "", D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextDecode(D.v(1, nUtils::GetText()), "", "", D.has("--dryrun") ); } );
 
 	// TODO: move this to "file" section
 	AddFormat("file encode", {}, {pReadFile, pWriteFile}, NullMap,
@@ -761,10 +774,10 @@ void cCmdParser::Init() {
 		LAMBDA { auto &D=*d; return U.TextDecode("", D.v(1, ""), D.v(2, ""), D.has("--dryrun") ); } );
 
 	AddFormat("text encrypt", {pNymTo}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextEncrypt(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextEncrypt(D.V(1), D.v(2, nUtils::GetText()), D.has("--dryrun") ); } );
 
 	AddFormat("text decrypt", {pNymMy}, {pText}, NullMap,
-		LAMBDA { auto &D=*d; return U.TextDecrypt(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.TextDecrypt(D.V(1), D.v(2, nUtils::GetText()), D.has("--dryrun") ); } );
 
 	//======== ot voucher ========
 
