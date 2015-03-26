@@ -6,8 +6,6 @@
 #include "../src/base/useot.hpp"
 #include <typeinfo>
 
-
-
 //#include <condition_variable>
 //#include <atomic>
 //#include <chrono>
@@ -163,7 +161,13 @@ TEST_F(cUseOtTest, vector) {
 	EXPECT_EQ(testNyms_copy.size()-1, testNyms.size());
 	EXPECT_EQ(testNyms.at(2), testNyms_copy.at(3));
 
-//	vector<string> one { "test" };
-//	one = one - "test";
-//	EXPECT_TRUE(one.empty());
+	vector<string> one { "test" };
+	one = one - string("test");
+	EXPECT_TRUE(one.empty());
 }
+
+
+
+
+
+

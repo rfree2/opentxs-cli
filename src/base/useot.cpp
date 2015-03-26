@@ -118,9 +118,10 @@ void cUseOT::LoadDefaults() {
 			_warn("There is no accounts in the wallet, can't set default account");
 
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Account, accountID));
-		if ( assetID.empty() )
+		if ( assetID.empty() ) {
 			_warn("There is no assets in the wallet, can't set default asset");
-
+			AssetSetDefault();
+		}
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Asset, assetID));
 		if ( NymID.empty() )
 			_warn("There is no nyms in the wallet, can't set default nym");
@@ -128,6 +129,7 @@ void cUseOT::LoadDefaults() {
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, NymID));
 		if ( serverID.empty() ) {
 			_erro("There is no servers in the wallet, can't set default server");
+			ServerSetDefault();
 		}
 
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Server, serverID));
@@ -884,6 +886,13 @@ bool cUseOT::AssetAdd(const string & filename, bool dryrun) {
 	}
 
 	cout << zkr::cc::fore::lightgreen << "Success adding asset contract to your wallet" << zkr::cc::console << endl;
+
+	try {
+		auto defaultAsset = AssetGetDefault();
+	} catch(...) {
+		return AssetSetDefault();
+	}
+
 	return true;
 }
 
@@ -922,10 +931,12 @@ string cUseOT::AssetGetContract(const string & asset){
 }
 
 string cUseOT::AssetGetDefault(){
-	return mDefaultIDs.at(nUtils::eSubjectType::Asset);
+	auto defaultAsset = mDefaultIDs.at(nUtils::eSubjectType::Asset);
+	if(defaultAsset.empty() || defaultAsset == "-") throw string("No default asset!");
+	return defaultAsset;
 }
 
-bool cUseOT::AssetIssue(const string & serverID, const string & nymID, bool dryrun) { // Issue new asset type
+bool cUseOT::AssetIssue(const string & serverID, const string & nymID, const string & filename, bool dryrun) { // Issue new asset type
 	_fact("asset ls");
 	if(dryrun) return true;
 	if(!Init()) return false;
@@ -933,8 +944,11 @@ bool cUseOT::AssetIssue(const string & serverID, const string & nymID, bool dryr
 	string signedContract;
 	_dbg3("Message is empty, starting text editor");
 
-	signedContract = GetText();
-
+	try {
+		signedContract = GetInput(filename);
+	} catch (...) {
+		return false;
+	}
 
 	string strResponse = mMadeEasy->issue_asset_type(serverID, nymID, signedContract);
 
@@ -947,15 +961,26 @@ bool cUseOT::AssetIssue(const string & serverID, const string & nymID, bool dryr
 	return true;
 }
 
-bool cUseOT::AssetNew(const string & nym, bool dryrun) {
+bool cUseOT::AssetNew(const string & nym, const string & filename, bool dryrun) {
 	_fact("asset new for nym=" << nym);
 	if(dryrun) return true;
 	if(!Init()) return false;
 	string xmlContents;
 
-	xmlContents = GetText();
+	try {
+		xmlContents = nUse::GetInput(filename);
+	} catch (const string & message) {
+		return nUtils::reportError("", message, "Provided contract was empty");
+	}
 
 	nUtils::DisplayStringEndl(cout, opentxs::OTAPI_Wrap::CreateAssetContract(NymGetId(nym), xmlContents) ); //TODO save contract to file
+
+	try {
+		auto defaultAsset = AssetGetDefault();
+	} catch(...) {
+		return AssetSetDefault();
+	}
+
 	return true;
 }
 
@@ -973,6 +998,12 @@ bool cUseOT::AssetRemove(const string & asset, bool dryrun) {
 	}
 	_warn("Asset cannot be removed");
 	return false;
+}
+bool cUseOT::AssetSetDefault() {
+	ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(0);
+	if(assetID.empty()) return false;
+	cout << "Setting asset" << AssetGetName(assetID) << " as default" << endl;
+	return AssetSetDefault(AssetGetName(assetID), false);
 }
 
 bool cUseOT::AssetSetDefault(const std::string & asset, bool dryrun){
@@ -2919,13 +2950,20 @@ bool cUseOT::ServerAdd(const string &filename, bool dryrun) {
 				"Provided contract was empty");
 	}
 
-	if( opentxs::OTAPI_Wrap::AddServerContract(contract) ) {
-		_info("Server added");
-		cout << "Server added" << endl;
-		return true;
+	if( !opentxs::OTAPI_Wrap::AddServerContract(contract) ) {
+		return nUtils::reportError("Failure to add server");
 	}
 
-	return nUtils::reportError("Failure to add server");
+	_info("Server added");
+	cout << "Server added" << endl;
+
+	try {
+		auto defaultSrv = ServerGetDefault();
+		_dbg3(defaultSrv);
+	} catch (...) {
+		return ServerSetDefault();
+	}
+	return true;
 }
 
 bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryrun) {
@@ -2957,7 +2995,9 @@ bool cUseOT::ServerCreate(const string & nym, const string & filename, bool dryr
 
 	try {
 		auto defaultSrv = ServerGetDefault();
+		_dbg3(defaultSrv);
 	} catch(...) {
+		_note("Setting " << server << " as default server");
 		return ServerSetDefault(server, false);
 	}
 
@@ -2981,7 +3021,8 @@ string cUseOT::ServerGetDefault() {
 		return "";
 	}
 	auto defaultServer = mDefaultIDs.at(nUtils::eSubjectType::Server);
-	if(defaultServer.empty()) throw "No default server!";
+	if(defaultServer.empty() || defaultServer == "-") throw string("No default server!");
+	_dbg1("default server: " << defaultServer);
 	return defaultServer;
 }
 
@@ -3027,6 +3068,13 @@ bool cUseOT::ServerRemove(const string & serverName, bool dryrun) {
 	}
 	_warn("Server " << serverName << " cannot be removed");
 	return false;
+}
+
+bool cUseOT::ServerSetDefault() {
+	ID serverID = opentxs::OTAPI_Wrap::GetServer_ID(0);
+	if(serverID.empty()) return false;
+	cout << "Setting server " << ServerGetName(serverID) << " as default" << endl;
+	return ServerSetDefault(ServerGetName(serverID), false);
 }
 
 bool cUseOT::ServerSetDefault(const string & serverName, bool dryrun) {

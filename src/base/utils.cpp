@@ -773,6 +773,7 @@ void cEnvUtils::WriteToFile(const string path, const string content) {
 		file << content;
 		file.close();
 		_info("saving to file: " << path << " ok");
+		cout << "Saved to " << path << endl;
 
 	} catch (std::fstream::failure &e) {
 		_erro("Exception opening/reading/closing file: " << e.what());

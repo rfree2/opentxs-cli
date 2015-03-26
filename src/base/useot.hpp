@@ -152,10 +152,11 @@ namespace nUse {
 		HINT vector<string> AssetGetAllNames();
 
 		EXEC bool AssetAdd(const string & filename, bool dryrun); ///< adds asset by contract
+		EXEC bool AssetSetDefault(); ///< Set default asset, also known as purse
 		EXEC bool AssetSetDefault(const std::string & asset, bool dryrun); ///< Set default asset, also known as purse
 		EXEC bool AssetDisplayAll(bool dryrun);
-		EXEC bool AssetIssue(const string & serverID, const string & nymID, bool dryrun) ;
-		EXEC bool AssetNew(const string & nym, bool dryrun);
+		EXEC bool AssetIssue(const string & serverID, const string & nymID, const string & filename, bool dryrun) ;
+		EXEC bool AssetNew(const string & nym, const string & filename, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
 		EXEC bool AssetShowContract(const string & asset, const string & filename, bool dryrun); ///< shows asset contract or saves it to file
 
@@ -274,6 +275,7 @@ namespace nUse {
 		ID ServerGetDefault(); ///< Gets ID of default server
 		ID ServerGetId(const string & server); ///< Gets server ID both from name and ID with prefix
 		string ServerGetName(const string & serverID); ///< Gets Name of default server
+		bool ServerSetDefault();
 
 		HINT vector<string> ServerGetAllNames();
 

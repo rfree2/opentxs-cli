@@ -548,12 +548,13 @@ void cCmdParser::Init() {
 	AddFormat("asset issue", {}, {pServer, pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetIssue(	D.v(1, U.ServerGetName( U.ServerGetDefault())),
 																							D.v(2, U.NymGetName( U.NymGetDefault())),
+																							D.v(3, ""),
 																							D.has("--dryrun") ); } );
 
-	AddFormat("asset new", {pNym}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.AssetNew(D.V(1), D.has("--dryrun") ); } );
+	AddFormat("asset new", {pNym}, {pReadFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.AssetNew(D.V(1), D.v(2, ""), D.has("--dryrun") ); } );
 
-	AddFormat("asset rm", {pNym}, {}, NullMap,
+	AddFormat("asset rm", {pAsset}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetRemove(D.V(1), D.has("--dryrun") ); } );
 
 	AddFormat("asset set-default", {pAsset}, {}, NullMap,
@@ -755,8 +756,11 @@ void cCmdParser::Init() {
 	AddFormat("server set-default", {pServer}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.ServerSetDefault( D.V(1), D.has("--dryrun") ); } );
 
-	AddFormat("server show-contract", {}, {pServer, pWriteFile}, NullMap,
-		LAMBDA { auto &D=*d; return U.ServerShowContract(D.v(1, U.ServerGetDefault()), D.v(2, ""), D.has("--dryrun") ); } );
+	AddFormat("server show-contract", {pServer}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerShowContract(D.v(1), D.v(2, ""), D.has("--dryrun") ); } );
+
+	AddFormat("server show-contract-default", {}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.ServerShowContract(U.ServerGetName(U.ServerGetDefault()), D.v(1, ""), D.has("--dryrun") ); } );
 
 	//======== ot text ========
 
