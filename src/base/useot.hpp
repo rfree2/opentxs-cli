@@ -147,7 +147,7 @@ namespace nUse {
 		ID AssetGetId(const string & asset); ///< Gets asset ID both from name and ID with prefix
 		string AssetGetName(const ID & accountID);
 		string AssetGetContract(const string & asset);
-		string AssetGetDefault(); ///< Get default asset, also known as purse
+		ID AssetGetDefault(); ///< Get default asset, also known as purse
 
 		HINT vector<string> AssetGetAllNames();
 
@@ -186,6 +186,7 @@ namespace nUse {
 		//================= ?contract =================
 
 		string ContractSign(const std::string & nymID, const std::string & contract);
+		EXEC bool ContractSign(const string & nym, const string & filename, const string & outfilename, bool dryrun);
 
 		//================= market =================
 		EXEC bool MarketList(const string & srvName, const string & nymName, bool dryrun); ///< displaying available markets

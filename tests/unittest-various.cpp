@@ -166,7 +166,23 @@ TEST_F(cUseOtTest, vector) {
 	EXPECT_TRUE(one.empty());
 }
 
+TEST_F(cUseOtTest, mint) {
+	auto assetID = useOt->AssetGetDefault();
+	auto asset = useOt->AssetGetName(assetID);
 
+	auto srvID = useOt->ServerGetDefault();
+
+	_mark("asset: " << asset << ", srv: " << useOt->ServerGetName(srvID));
+
+	auto mint = opentxs::OTAPI_Wrap::LoadMint(srvID, assetID);
+	_dbg2(mint);
+
+	auto ok = opentxs::OTAPI_Wrap::Mint_IsStillGood(srvID, assetID);
+	_info(ok);
+
+
+
+}
 
 
 

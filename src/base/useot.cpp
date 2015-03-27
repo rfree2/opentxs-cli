@@ -930,25 +930,22 @@ string cUseOT::AssetGetContract(const string & asset){
 	return strContract;
 }
 
-string cUseOT::AssetGetDefault(){
+ID cUseOT::AssetGetDefault(){
 	auto defaultAsset = mDefaultIDs.at(nUtils::eSubjectType::Asset);
 	if(defaultAsset.empty() || defaultAsset == "-") throw string("No default asset!");
 	return defaultAsset;
 }
+
 
 bool cUseOT::AssetIssue(const string & serverID, const string & nymID, const string & filename, bool dryrun) { // Issue new asset type
 	_fact("asset ls");
 	if(dryrun) return true;
 	if(!Init()) return false;
 
-	string signedContract;
+
 	_dbg3("Message is empty, starting text editor");
 
-	try {
-		signedContract = GetInput(filename);
-	} catch (...) {
-		return false;
-	}
+	string signedContract = GetInput(filename);
 
 	string strResponse = mMadeEasy->issue_asset_type(serverID, nymID, signedContract);
 
@@ -1550,15 +1547,40 @@ bool cUseOT::ChequeDiscard(const string & acc, const string & nym, const int32_t
 	return true;
 }
 
-string cUseOT::ContractSign(const std::string & nymID, const std::string & contract){ // FIXME can't sign contract with this (assetNew() functionality)
+string cUseOT::ContractSign(const std::string & nymID, const std::string & contract){
+	// FIXME can't sign contract with this (assetNew() functionality)
 	if(!Init())
 		return "";
 	return opentxs::OTAPI_Wrap::AddSignature(nymID, contract);
 }
 
+bool cUseOT::ContractSign(const string & nym, const string & filename, const string & outfilename, bool dryrun) {
+	_fact("contract sign " << nym << " " << filename << " " << outfilename);
+	if (dryrun) return true;
+	if (!Init()) return false;
+	/**
+	 * NOTE: The actual OT functionality (Use Cases) NEVER requires you to sign via this function.
+     * Why not? because, anytime a signature is needed on something, the relevant OT API call will
+     * require you to pass in the Nym, and the API already signs internally wherever it deems appropriate.
+     * Thus, this function is only for advanced uses, for OT-Scripts, server operators, etc.
+	*/
+
+	string contract = GetInput(filename);
+	auto signedContract = opentxs::OTAPI_Wrap::SignContract(NymGetId(nym), contract);
+
+	try {
+		nUtils::cEnvUtils envUtils;
+		envUtils.WriteToFile(filename, signedContract);
+	} catch(...) {
+		return reportError("Can't sign contract");
+	}
+
+	return true;
+}
+
 bool cUseOT::MarketList(const string & srvName, const string & nymName, bool dryrun) {
 	_fact("market ls " << srvName << ", " << nymName);
-	if (dryrun) return false;
+	if (dryrun) return true;
 	if (!Init()) return false;
 
 	ID serverID = ServerGetId(srvName);
@@ -1840,11 +1862,12 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 		_erro("Cannot create new nym: '" << nymName << "'. Nym with that name exists" );
 		return false;
 	}
-
+	bool ok = true;
 	int32_t nKeybits = 1024;
 	string NYM_ID_SOURCE = ""; // TODO: check
 	string ALT_LOCATION = "";
 	string nymID = mMadeEasy->create_nym(nKeybits, NYM_ID_SOURCE, ALT_LOCATION);
+
 
 	if (nymID.empty()) {
 		_erro("Failed trying to create new Nym: " << nymName);
@@ -1866,23 +1889,24 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 
 	mCache.mNyms.insert( std::make_pair(nymID, nymName) ); // insert nym to nyms cache
 
-	if ( registerOnServer ) {
-		try {
-			NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
-		} catch(...) {
-			nUtils::reportError("No default server, can't register nym");
-		}
-	}
-
 	try {
 		auto defaultNym = NymGetDefault();
 	} catch (...) {
 		_info("No default nym, sets " << zkr::cc::bold << nymName << zkr::cc::console << " as default");
 		cout << "Setting " << nymName << " as default nym." << endl;
-		return NymSetDefault(nymName, false);
+		ok = ok && NymSetDefault(nymName, false);
 	}
 
-	return true;
+	if ( registerOnServer ) {
+		try {
+			ok = ok && NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
+		} catch(...) {
+			ok = ok && nUtils::reportError("No default server, can't register nym");
+		}
+	}
+
+
+	return ok;
 }
 
 bool cUseOT::NymExport(const string & nymName, const string & filename, bool dryrun) {
@@ -1995,7 +2019,7 @@ string cUseOT::NymGetDefault() {
 	if(!Init())
 		return "";
 	auto defaultNym = mDefaultIDs.at(nUtils::eSubjectType::User);
-	if(defaultNym.empty()) throw string("No default nym!");
+	if(defaultNym.empty() || defaultNym=="-") throw string("No default nym!");
 	return defaultNym;
 }
 

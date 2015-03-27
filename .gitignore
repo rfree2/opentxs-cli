@@ -21,3 +21,13 @@ run.sh
 run-test.sh
 *.test
 tests_output/
+*_testfile_.txt
+
+### Linux ###
+*~
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*

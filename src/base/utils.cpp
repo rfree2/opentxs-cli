@@ -761,11 +761,21 @@ const string cEnvUtils::ReadFromFile(const string path) {
 	std::ifstream ifs(cFilesystemUtils::TildeToHome(path).c_str());
 	_dbg3(cFilesystemUtils::TildeToHome(path));
 	string msg((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-	_dbg3(msg);
+
+	// debug
+	size_t maxSize = 40;
+	string display = (msg.size()>maxSize)? msg.substr(0, maxSize) + "..." : msg;
+	_dbg2(display);
+
 	return msg;
 }
 
 void cEnvUtils::WriteToFile(const string path, const string content) {
+	if(path.empty() || content.empty()) {
+		(content.empty())? throw string("empty content") : cout << content << endl;
+		return;
+	}
+
 	std::fstream file;
 	file.exceptions(std::fstream::failbit | std::fstream::badbit);
 	try {
@@ -778,7 +788,8 @@ void cEnvUtils::WriteToFile(const string path, const string content) {
 	} catch (std::fstream::failure &e) {
 		_erro("Exception opening/reading/closing file: " << e.what());
 		cout << "Error writing to file: " << path << endl;
-		throw e;
+		cout << zkr::cc::fore::lightred << "Can't write to file: " << path << zkr::cc::console << endl;
+		cout << content << endl;
 	} // saving ok
 }
 
