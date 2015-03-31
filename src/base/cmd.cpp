@@ -607,7 +607,8 @@ void cCmdProcessing::_Parse(bool allowBadCmdname) {
 }
 
 vector<string> cCmdProcessing::UseComplete(int char_pos) {
-	_mark("Will complete command line: ["<<mCommandLineString<<"] at char_pos="<<char_pos); // mCommandLine is not parsed yet
+	const string logname = "completition";
+	_mark_c(logname, "Will complete command line: ["<<mCommandLineString<<"] at char_pos="<<char_pos); // mCommandLine is not parsed yet
 	const vector<string> allowed_pre_words = { "ot", "help" };
 
 	mCommandLineString = nUtils::SpecialFromEscape(mCommandLineString, char_pos); // change all escaped space characters to special character for easier parsing. Need to pass char_pos, because of change in string length
@@ -621,15 +622,15 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			ok = 0;
 		}
 
-		_mark("Will complete command line: ["<<mCommandLineString<<"] " << " words " << DbgVector(mCommandLine) << " at char_pos="<<char_pos);
+		_mark_c(logname, "Will complete command line: ["<<mCommandLineString<<"] " << " words " << DbgVector(mCommandLine) << " at char_pos="<<char_pos);
 		if ((mCommandLine.size() == 0) && (mCommandLineString.size() > 0)) {
-			_note("Correcting the no-words case");
+			_note_c(logname, "Correcting the no-words case");
 			mCommandLine.push_back(mCommandLineString); // cut by space?
 		}
 
 		if (!ok) { // first parse failed maybe because we wanted to complete something here like ot nym sh~ alice and parsed assumed it's "nym" + arg "sh",
 			mCommandLineString = mCommandLineString.substr(0, char_pos);
-			_note("Parsing failed, will parse again as ["<<mCommandLineString<<"]");
+			_note_c(logname, "Parsing failed, will parse again as ["<<mCommandLineString<<"]");
 			// instead assuming it is half-written command name "nym sh~".
 			// so we will re-parse just the part before char position
 			mStateParse = tState::never; // to force re-parsnig again
@@ -639,32 +640,32 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			} catch (cErrParseSyntax &e) {
 				ok = 0;
 			}
-			_mark("After PARSING AGAIN: Will complete command line: ["<<mCommandLineString<<"] " << " words " << DbgVector(mCommandLine) << " at char_pos="<<char_pos);
+			_mark_c(logname, "After PARSING AGAIN: Will complete command line: ["<<mCommandLineString<<"] " << " words " << DbgVector(mCommandLine) << " at char_pos="<<char_pos);
 		}
 		if (!ok)
 			mFormat = nullptr; // we do not have any realiable format/cmdname if even very lax parsing failed
 	} // parse
 	if (mStateParse != tState::succeeded) {
 		if (mStateParse == tState::succeeded_partial)
-			_dbg3("Failed to fully parse."); // can be ok - maybe we want to comlete cmd name like "ot msg sendfr~"
+			_dbg3_c(logname, "Failed to fully parse."); // can be ok - maybe we want to comlete cmd name like "ot msg sendfr~"
 		else
-			_dbg1("Failed to parse (even partially)");
+			_dbg1_c(logname, "Failed to parse (even partially)");
 	}
 	ASRT(nullptr != mData);
 
 	vector < string > allwords; // vector of all words including pre "ot" (before removing that pre, so we can complete first word)
 	if (mData->mIsPreErased) {
-		_mark("Restoring pre, for the reason to complete the pre-word");
+		_mark_c(logname, "Restoring pre, for the reason to complete the pre-word");
 		size_t pos = mCommandLineString.find(' ');
 		if (pos == string::npos)
 			pos = mCommandLineString.size(); // there are no words with space e.g. "ot" or "o" or "hel"
 		if (pos != string::npos)
 			allwords.push_back(mCommandLineString.substr(0, pos));
 	}
-	_mark("Allwords1=" << DbgVector(allwords));
+	_mark_c(logname, "Allwords1=" << DbgVector(allwords));
 	for (const auto & elem : mCommandLine)
 		allwords.push_back(elem);
-	_mark("Allwords2=" << DbgVector(allwords));
+	_mark_c(logname, "Allwords2=" << DbgVector(allwords));
 
 	if (allwords.size() == 0)
 		return allowed_pre_words;
@@ -691,30 +692,30 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 	try {
 		int word_ix = mData->CharIx2WordIx(char_pos);
 		bool fake_empty = false; // are we adding fake word "" at end for purpose of completion at end of string?
-		_mark("mCommandLineString: " << mCommandLineString << "char_pos: " << char_pos);
+		_mark_c(logname, "mCommandLineString: " << mCommandLineString << "char_pos: " << char_pos);
 		if (mCommandLineString.at(char_pos - 1) == ' ') {
-			_mark("tryblock2");
+			_mark_c(logname, "tryblock2");
 			word_ix++; // jump to next word XXX
 			if (word_ix >= xsize_t(mCommandLine.size())) {
 				fake_empty = true;
 				int add_empty_at_word = mData->CharIx2WordIx(char_pos - 1); // choose the word-index after which we should insert the "" new word (if we're completing in middle of string)
-				_mark("will add in add_empty_at_word=" << add_empty_at_word);
+				_mark_c(logname, "will add in add_empty_at_word=" << add_empty_at_word);
 				mCommandLine.insert(mCommandLine.begin() + add_empty_at_word, "");
-				_dbg2("mCommandLine="<<DbgVector(mCommandLine));
+				_dbg2_c(logname, "mCommandLine="<<DbgVector(mCommandLine));
 			} // fake word
 		}
 
 		if (allwords.size() < 1) {
-			_mark("size<1");
+			_mark_c(logname, "size<1");
 			if (!fake_empty)
 				return WordsThatMatch("", allowed_pre_words);
 		}
 		if (allwords.size() == 1) {
-			_mark("size==1");
-			_mark("tryblock3");
+			_mark_c(logname, "size==1");
+			_mark_c(logname, "tryblock3");
 			if (!fake_empty)
 				return WordsThatMatch(allwords.at(0), allowed_pre_words);
-			_mark("tryblock4");
+			_mark_c(logname, "tryblock4");
 		}
 
 		if (allwords.at(0) == "help")
@@ -723,9 +724,9 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 		//_dbg1("word_ix=" << word_ix);
 		int arg_nr = mData->WordIx2ArgNr(word_ix);
 
-		_dbg1("mCommandLine=" << DbgVector(mCommandLine));
+		_dbg1_c(logname, "mCommandLine=" << DbgVector(mCommandLine));
 		string word_sofar = mCommandLine.at(word_ix - mData->mFirstWord); // the current word that we need to complete. e.g. "--dryr" (and we will complete "--dryrun")
-		_dbg3(word_sofar);
+		_dbg3_c(logname, word_sofar);
 		long int word_previous_ixtab = word_ix - mData->mFirstWord - 1;
 		const string word_previous =
 				(word_previous_ixtab >= 0) ?
@@ -736,10 +737,10 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 				(!fake_empty) ?
 						mData->mWordIx2Entity.at(word_ix) :
 						cParseEntity(cParseEntity::tKind::fake_empty, char_pos);
-		_dbg3("entity="<<entity);
+		_dbg3_c(logname, "entity="<<entity);
 		char sofar_last_char = mCommandLineString.at(char_pos - 1); // the character after which we are now completing e.g. "g" for "msg~" or " " for "msg ~"
 		const bool after_word = sofar_last_char == ' '; // are we now after (e.g. 1st) word, e.g. because we stand on space like in  "ot msg ~"  (instead "ot msg~")
-		_note("Completion at pos="<<char_pos<<" word_ix="<<word_ix<<" arg_nr="<<arg_nr<<" entity="<<entity <<" word_sofar=["<<word_sofar<<"] sofar_last_char=["<<sofar_last_char<<"] word_previous="<<word_previous<<" after_word="<<after_word);
+		_note_c(logname, "Completion at pos="<<char_pos<<" word_ix="<<word_ix<<" arg_nr="<<arg_nr<<" entity="<<entity <<" word_sofar=["<<word_sofar<<"] sofar_last_char=["<<sofar_last_char<<"] word_previous="<<word_previous<<" after_word="<<after_word);
 
 		vector < string > matching; // <--- the completions what seem to fit
 
@@ -749,11 +750,11 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			// try to make an --option out of the DUAL
 
 			cParseEntity entity_previous = mData->mWordIx2Entity.at(word_ix - 1);
-			_fact("checking DUAL vs entity_previous="<<entity_previous<<" at mFormat:" << ( (mFormat!=nullptr) ? "yes":"null"));
+			_fact_c(logname, "checking DUAL vs entity_previous="<<entity_previous<<" at mFormat:" << ( (mFormat!=nullptr) ? "yes":"null"));
 			if ((entity_previous.mKind == cParseEntity::tKind::cmdname) && (entity_previous.mSub == 1) && (mFormat != nullptr)) {
 				// "msg ~" (or maybe... "msg -~" or "msg ad~") and "msg" is a valid command, so we add all options here, like "msg --dryrun"
 				// yes obviously "msg a~" will not be an option but this is ok e.g. code will add 0 options here and continue
-				_mark(" OPTIONS NAMES: " << DbgVector(mFormat->GetPossibleOptionNames()));
+				_mark_c(logname, " OPTIONS NAMES: " << DbgVector(mFormat->GetPossibleOptionNames()));
 				matching += WordsThatMatch(word_sofar, mFormat->GetPossibleOptionNames());
 			}
 
@@ -785,7 +786,7 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 		} // fake empty
 
 		if (entity.mKind == cParseEntity::tKind::argument_somekind) {
-			_dbg1("Finding out which kind of argument is here, from entity="<<entity);
+			_dbg1_c(logname, "Finding out which kind of argument is here, from entity="<<entity);
 			if (!mFormat) { // we do not yet have a format even
 				if (allwords.size() <= 1)
 					entity.SetKind(cParseEntity::tKind::cmdname); // in commad name... is 0 correct?
@@ -802,7 +803,7 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 				}
 			}
 		}
-		_fact("matching after DUAL: " << DbgVector(matching) << " and now entity="<<entity);
+		_fact_c(logname, "matching after DUAL: " << DbgVector(matching) << " and now entity="<<entity);
 
 		if (entity.mKind == cParseEntity::tKind::option_name) {
 			shared_ptr<cCmdFormat> format = mFormat; // info about command "msg sendfrom"
@@ -831,10 +832,10 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			//if (!fake_empty) ASRT( mData->V(arg_nr) == word_sofar ); // the current work == current arg. (unless this is new word) VYRLY - dont wan't it because there can be more words than args
 			cParamInfo param_info = mFormat->GetParamInfo(arg_nr); // eg. pNymFrom  <--- info about kind (completion function etc) of argument that we now are tab-completing
 			auto completions = param_info.GetFuncHint()(*mUse, *mData, arg_nr);
-			_info("Var completions: " << DbgVector(completions));
+			_info_c(logname, "Var completions: " << DbgVector(completions));
 			return matching + WordsThatMatch(word_sofar, completions);
 		} else if (entity.mKind == cParseEntity::tKind::variable_ext) {
-			_info("Completing variable_ext as arg_nr="<<arg_nr);
+			_info_c(logname, "Completing variable_ext as arg_nr="<<arg_nr);
 			ASRT(mFormat);
 			if (!fake_empty)
 				ASRT(mData->v(arg_nr) == word_sofar); // the current work == current arg. (unless this is new word)
@@ -843,7 +844,7 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			return matching + WordsThatMatch(word_sofar, completions);
 		} else if (entity.mKind == cParseEntity::tKind::cmdname) {
 			const int cmd_word_nr = entity.mSub;
-			_info("Completing command name cmd_word_nr="<<cmd_word_nr<<" after_word="<<after_word<<" word_sofar="<<word_sofar);
+			_info_c(logname, "Completing command name cmd_word_nr="<<cmd_word_nr<<" after_word="<<after_word<<" word_sofar="<<word_sofar);
 			if ((cmd_word_nr == 0)) { // "~" like from "ot ~"
 				matching += WordsThatMatch("", mParser->GetCmdNamesWord1());
 				return matching; // <---
@@ -856,7 +857,7 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 			} else if ((cmd_word_nr == 2)) { // "msg se~"
 				auto match2 = mParser->GetCmdNamesWord2(word_previous); // skip ignore for the "" word2 of command (so to not add it e.g. to options --dryrun from DUAL condition)
 				match2.erase(std::remove_if(match2.begin(), match2.end(), [](const string &v) {return (v=="");}), match2.end());
-				_dbg2("match2="<<DbgVector(match2));
+				_dbg2_c(logname, "match2="<<DbgVector(match2));
 				matching += WordsThatMatch(word_sofar, match2);
 				return matching; // <---
 			} else
@@ -865,10 +866,10 @@ vector<string> cCmdProcessing::UseComplete(int char_pos) {
 		} else if (entity.mKind == cParseEntity::tKind::pre) {
 			return matching + vector<string> { "ot" };
 		} else if (entity.mKind == cParseEntity::tKind::fake_empty) {
-			_warn("Didnt knew how to complete (further) this fake_empty entity="<<entity<<" (set it to proper type after the DUAL code)");
+			_warn_c(logname, "Didnt knew how to complete (further) this fake_empty entity="<<entity<<" (set it to proper type after the DUAL code)");
 			return matching; // TODO
 		} else {
-			_erro("Unimplemented entity type in completion");
+			_erro_c(logname, "Unimplemented entity type in completion");
 			return vector<string> { };
 		}
 
