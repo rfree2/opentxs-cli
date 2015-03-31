@@ -93,6 +93,7 @@ namespace nUse {
 		VALID bool CheckIfExists(const nUtils::eSubjectType type, const string & subject);
 		VALID bool CheckIfExists(const nUtils::eSubjectType type, const string & subject, const string & without);
 		EXEC bool DisplayDefaultSubject(const nUtils::eSubjectType type, bool dryrun);
+		EXEC bool DefaultsExport(const string & filename, bool dryrun);
 		bool DisplayAllDefaults(bool dryrun);
 		EXEC bool DisplayHistory(bool dryrun);
 		string SubjectGetDescr(const nUtils::eSubjectType type, const string & subject);
@@ -106,7 +107,6 @@ namespace nUse {
 		string AccountGetDefault();
 		ID AccountGetId(const string & account); ///< Gets account ID both from name and ID with prefix
 		string AccountGetName(const ID & accountID);
-		bool AccountSetName(const string & accountID, const string & NewAccountName);
 		ID AccountGetAssetID(const string & account);
 		string AccountGetAsset(const string & account);
 
@@ -123,6 +123,7 @@ namespace nUse {
 		EXEC bool AccountRemove(const string & account, bool dryrun) ;
 		EXEC bool AccountRename(const string & account, const string & newAccountName, bool dryrun);
 		EXEC bool AccountSetDefault(const string & account, bool dryrun);
+		EXEC bool AccountSetName(const string & accountID, const string & NewAccountName, bool dryrun);
 		EXEC bool AccountTransfer(const string & accountFrom, const string & accountTo, const int64_t & amount, const string & note, bool dryrun);
 
 		//================= account-in =================
@@ -155,7 +156,7 @@ namespace nUse {
 		EXEC bool AssetSetDefault(); ///< Set default asset, also known as purse
 		EXEC bool AssetSetDefault(const std::string & asset, bool dryrun); ///< Set default asset, also known as purse
 		EXEC bool AssetDisplayAll(bool dryrun);
-		EXEC bool AssetIssue(const string & serverID, const string & nymID, const string & filename, bool dryrun) ;
+		EXEC bool AssetIssue(const string & server, const string & nym, const string & filename, bool dryrun) ;
 		EXEC bool AssetNew(const string & nym, const string & filename, bool dryrun);
 		EXEC bool AssetRemove(const string & asset, bool dryrun);
 		EXEC bool AssetShowContract(const string & asset, const string & filename, bool dryrun); ///< shows asset contract or saves it to file
@@ -216,7 +217,7 @@ namespace nUse {
 
 		void NymGetAll(bool force=false);
 		vector<string> NymGetAllIDs();
-		string NymGetDefault();
+		ID NymGetDefault();
 		ID NymGetId(const string & nym); ///< Gets Nym ID both from name and ID with prefix
 		ID NymGetToNymId(const string & nym, const string & ownerNymID); ///< like @see NymGetID() but allows nyms from address book, should be use to get recipient nym ID
 		string NymGetName(const ID & nymID);

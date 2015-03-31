@@ -108,7 +108,7 @@ void cUseOT::LoadDefaults() {
 	// TODO What if there is, for example no accounts?
 	// TODO Check if defaults are correct.
 	if ( !configManager.Load(mDefaultIDsFile, mDefaultIDs) ) {
-		_dbg1("Cannot open " + mDefaultIDsFile + " file, setting IDs with ID 0 as default"); //TODO check if there is any nym in wallet
+		_warn("Cannot open " + mDefaultIDsFile + " file, setting IDs with ID 0 as default"); //TODO check if there is any nym in wallet
 		ID accountID = opentxs::OTAPI_Wrap::GetAccountWallet_ID(0);
         ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(0);
         ID NymID = opentxs::OTAPI_Wrap::GetNym_ID(0);
@@ -118,21 +118,22 @@ void cUseOT::LoadDefaults() {
 			_warn("There is no accounts in the wallet, can't set default account");
 
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Account, accountID));
-		if ( assetID.empty() ) {
+
+		if ( assetID.empty() )
 			_warn("There is no assets in the wallet, can't set default asset");
-			AssetSetDefault();
-		}
+
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Asset, assetID));
+
 		if ( NymID.empty() )
-			_warn("There is no nyms in the wallet, can't set default nym");
+			_erro("There is no nyms in the wallet, can't set default nym");
 
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::User, NymID));
-		if ( serverID.empty() ) {
+
+		if ( serverID.empty() )
 			_erro("There is no servers in the wallet, can't set default server");
-			ServerSetDefault();
-		}
 
 		mDefaultIDs.insert(std::make_pair(nUtils::eSubjectType::Server, serverID));
+		nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	}
 }
 
@@ -159,6 +160,24 @@ bool cUseOT::DisplayAllDefaults(bool dryrun) {
 				nUtils::SubjectType2String(var.first) + "\t" + nUtils::stringToColor(var.second) + var.second + " "
 						+ defaultName + nocol);
 	}
+	return true;
+}
+
+bool cUseOT::DefaultsExport(const string & filename, bool dryrun) {
+	_fact("export all defaults");
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	auto p = [](string what, string value) -> string {return what + "=" + value + "\n";};
+	string all = "";
+	for (auto var : mDefaultIDs) {
+		string defaultName = (this->*cUseOT::subjectGetNameFunc.at(var.first))(var.second);
+		all += p(nUtils::SubjectType2String(var.first) + "ID", var.second); // ID
+		all += p(nUtils::SubjectType2String(var.first), defaultName);
+	}
+	nUtils::cEnvUtils envUtils;
+	envUtils.WriteToFile(filename, all);
+
 	return true;
 }
 
@@ -424,7 +443,7 @@ bool cUseOT::AccountRename(const string & account, const string & newAccountName
 
 	ID accountID = AccountGetId(account);
 
-	if( AccountSetName (accountID, newAccountName) ) {
+	if( AccountSetName (accountID, newAccountName, false) ) {
 		_info("Account " << AccountGetName(accountID) + "(" + accountID + ")" << " renamed to " << newAccountName);
 		return true;
 	}
@@ -463,7 +482,7 @@ bool cUseOT::AccountCreate(const string & nym, const string & asset, const strin
 	}
 
 	// Set the Name of the new account.
-	if ( AccountSetName(accountID, newAccountName) ){
+	if ( AccountSetName(accountID, newAccountName, false) ){
 		cout << "Account " << newAccountName << "(" << accountID << ")" << " created successfully." << endl;
 		AccountRefresh("^" + accountID, false, dryrun);
 	}
@@ -797,18 +816,20 @@ bool cUseOT::AccountOutDisplay(const string & account, bool dryrun) {
 	return false;
 }
 
-bool cUseOT::AccountSetName(const string & accountID, const string & newAccountName) { //TODO: passing to function: const string & nymName, const string & signerNymName,
+bool cUseOT::AccountSetName(const string & accountID, const string & newAccountName, bool dryrun) { //TODO: passing to function: const string & nymName, const string & signerNymName,
+	_fact("account set-name " << accountID << " " << newAccountName);
+	if(dryrun) return true;
 	if(!Init()) return false;
 
 	if ( !opentxs::OTAPI_Wrap::SetAccountWallet_Name (accountID, mDefaultIDs.at(nUtils::eSubjectType::User), newAccountName) ) {
-		_erro("Failed trying to name new account: " << accountID);
-		return false;
+		return reportError("Failed trying to name new account: " + accountID);
 	}
 	_info("Set account " << accountID << "name to " << newAccountName);
+	cout << "Set account " << accountID << "name to " << newAccountName << endl;
 	return true;
 }
 bool cUseOT::AddressBookAdd(const string & nym, const string & newNym, const ID & newNymID, bool dryrun) {
-	_fact("ot addressbook add " << nym << " " << newNym << " " << newNymID);
+	_fact("addressbook add " << nym << " " << newNym << " " << newNymID);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -822,7 +843,7 @@ bool cUseOT::AddressBookAdd(const string & nym, const string & newNym, const ID 
 	return added;
 }
 bool cUseOT::AddressBookDisplay(const string & nym, bool dryrun) {
-	_fact("ot addressbook ls " << nym);
+	_fact("addressbook ls " << nym);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
@@ -931,19 +952,23 @@ string cUseOT::AssetGetContract(const string & asset){
 }
 
 ID cUseOT::AssetGetDefault(){
+	if(!Init()) return "";
 	auto defaultAsset = mDefaultIDs.at(nUtils::eSubjectType::Asset);
 	if(defaultAsset.empty() || defaultAsset == "-") throw string("No default asset!");
 	return defaultAsset;
 }
 
 
-bool cUseOT::AssetIssue(const string & serverID, const string & nymID, const string & filename, bool dryrun) { // Issue new asset type
-	_fact("asset ls");
+bool cUseOT::AssetIssue(const string & server, const string & nym, const string & filename, bool dryrun) { // Issue new asset type
+	_fact("asset ls " << server << " " << nym << " " << filename);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
+	const ID serverID = ServerGetId(server);
+	const ID nymID = NymGetId(nym);
 
-	_dbg3("Message is empty, starting text editor");
+	if(!opentxs::OTAPI_Wrap::IsNym_RegisteredAtServer(nymID, serverID))
+		return reportError("Nym " + nym + " isn't register at server!");
 
 	string signedContract = GetInput(filename);
 
@@ -990,6 +1015,7 @@ bool cUseOT::AssetRemove(const string & asset, bool dryrun) {
 	if ( opentxs::OTAPI_Wrap::Wallet_CanRemoveAssetType(assetID) ) {
 		if ( opentxs::OTAPI_Wrap::Wallet_RemoveAssetType(assetID) ) {
 			_info("Asset was deleted successfully");
+			mDefaultIDs.at(nUtils::eSubjectType::Asset) = "-";
 			return true;
 		}
 	}
@@ -999,7 +1025,7 @@ bool cUseOT::AssetRemove(const string & asset, bool dryrun) {
 bool cUseOT::AssetSetDefault() {
 	ID assetID = opentxs::OTAPI_Wrap::GetAssetType_ID(0);
 	if(assetID.empty()) return false;
-	cout << "Setting asset" << AssetGetName(assetID) << " as default" << endl;
+	_note("Setting asset" << AssetGetName(assetID) << " as default");
 	return AssetSetDefault(AssetGetName(assetID), false);
 }
 
@@ -1139,16 +1165,17 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 
 	if ("PURSE" == instrumentType) {
 	}
-	// Todo: case "TOKEN"
-	//
-	// NOTE: This is commented out because since it is guessing the NymID as MyNym,
-	// then it will just create a purse for MyNym and import it into that purse, and
-	// then later when doing a deposit, THAT's when it tries to DECRYPT that token
-	// and re-encrypt it to the SERVER's nym... and that's when we might find out that
-	// it never was encrypted to MyNym in the first place -- we had just assumed it
-	// was here, when we did the import. Until I can look at that in more detail, it
-	// will remain commented out.
-	else {
+	/** Todo: case "TOKEN"
+	 *
+	 * NOTE: This is commented out because since it is guessing the NymID as MyNym,
+	 * then it will just create a purse for MyNym and import it into that purse, and
+	 * then later when doing a deposit, THAT's when it tries to DECRYPT that token
+	 * and re-encrypt it to the SERVER's nym... and that's when we might find out that
+	 * it never was encrypted to MyNym in the first place -- we had just assumed it
+	 * was here, when we did the import. Until I can look at that in more detail, it
+	 * will remain commented out.
+	 */
+	//else {
 			//            // This version supports cash tokens (instead of purse...)
 			//            bool bImportedToken = importCashPurse(strServerID, MyNym, strAssetID, userInput, isPurse)
 			//
@@ -1158,46 +1185,51 @@ bool cUseOT::CashImport(const string & nym, bool dryrun) {
 			//                return 1;
 			//; }
 
-			opentxs::OTAPI_Wrap::Output(0, "\n\nFailure: Unable to determine instrument type. Expected (cash) PURSE.\n");
-			return false;
-	}
+			//opentxs::OTAPI_Wrap::Output(0, "\n\nFailure: Unable to determine instrument type. Expected (cash) PURSE.\n");
+			//return false;
+	//}
 
 	// This tells us if the purse is password-protected. (Versus being owned
 	// by a Nym.)
 	bool hasPassword = opentxs::OTAPI_Wrap::Purse_HasPassword(serverID, instrument);
 
-	// Even if the Purse is owned by a Nym, that Nym's ID may not necessarily
-	// be present on the purse itself (it's optional to list it there.)
-	// opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID tells us WHAT the recipient User ID
-	// is, IF it's on the purse. (But does NOT tell us WHETHER there is a
-	// recipient. The above function is for that.)
-	//
+	/**
+	 * Even if the Purse is owned by a Nym, that Nym's ID may not necessarily
+	 * be present on the purse itself (it's optional to list it there.)
+	 * opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID tells us WHAT the recipient User ID
+	 * is, IF it's on the purse. (But does NOT tell us WHETHER there is a
+	 * recipient. The above function is for that.)
+	 */
 	ID purseOwner = "";
 
 	if (!hasPassword) {
 			purseOwner = opentxs::OTAPI_Wrap::Instrmnt_GetRecipientNymID(instrument); // TRY and get the Nym ID (it may have been left blank.)
 	}
-
-	// Whether the purse was password-protected (and thus had no Nym ID)
-	// or whether it does have a Nym ID (but it wasn't listed on the purse)
-	// Then either way, in those cases strPurseOwner will still be NULL.
-	//
-	// (The third case is that the purse is Nym protected and the ID WAS available,
-	// in which case we'll skip this block, since we already have it.)
-	//
-	// But even in the case where there's no Nym at all (password protected)
-	// we STILL need to pass a Signer Nym ID into opentxs::OTAPI_Wrap::Wallet_ImportPurse.
-	// So if it's still NULL here, then we use --mynym to make the call.
-	// And also, even in the case where there IS a Nym but it's not listed,
-	// we must assume the USER knows the appropriate NymID, even if it's not
-	// listed on the purse itself. And in that case as well, the user can
-	// simply specify the Nym using --mynym.
-	//
-	// Bottom line: by this point, if it's still not set, then we just use
-	// MyNym, and if THAT's not set, then we return failure.
-	//
+	/**
+	 * Whether the purse was password-protected (and thus had no Nym ID)
+	 * or whether it does have a Nym ID (but it wasn't listed on the purse)
+	 * Then either way, in those cases strPurseOwner will still be NULL.
+	 *
+	 * (The third case is that the purse is Nym protected and the ID WAS available,
+	 * in which case we'll skip this block, since we already have it.)
+	 *
+	 * But even in the case where there's no Nym at all (password protected)
+	 * we STILL need to pass a Signer Nym ID into opentxs::OTAPI_Wrap::Wallet_ImportPurse.
+	 * So if it's still NULL here, then we use --mynym to make the call.
+	 * And also, even in the case where there IS a Nym but it's not listed,
+	 * we must assume the USER knows the appropriate NymID, even if it's not
+	 * listed on the purse itself. And in that case as well, the user can
+	 * simply specify the Nym using --mynym.
+	 *
+	 * Bottom line: by this point, if it's still not set, then we just use
+	 * MyNym, and if THAT's not set, then we return failure.
+	 */
 	if (purseOwner.empty()) {
-			opentxs::OTAPI_Wrap::Output(0, "\n\n The NymID isn't evident from the purse itself... (listing it is optional.)\nThe purse may have no Nym at all--it may instead be password-protected.) Either way, a signer nym is still necessary, even for password-protected purses.\n\n Trying MyNym...\n");
+		opentxs::OTAPI_Wrap::Output(0,
+				"\n\n The NymID isn't evident from the purse itself... (listing it is optional.)\n"
+				"The purse may have no Nym at all--it may instead be password-protected.) "
+				"Either way, a signer nym is still necessary, even for password-protected purses.\n\n "
+				"Trying MyNym...\n");
 			purseOwner = nymID;
 	}
 
@@ -1873,12 +1905,13 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 		_erro("Failed trying to create new Nym: " << nymName);
 		return false;
 	}
-	// Set the Name of the new Nym.
-	// Signer Nym? When testing, there is only one nym, so you just pass it twice.
-	// But in real production, a user will have a default signing nym, the same way that he might have a default signing key in PGP,
-	// and that must be passed in whenever he changes the name on any of the other nyms in his wallet.
-	// (In order to properly sign and save the change.)
-
+	/**
+	 * Set the Name of the new Nym.
+	 * Signer Nym? When testing, there is only one nym, so you just pass it twice.
+	 * But in real production, a user will have a default signing nym, the same way that he might have a default signing key in PGP,
+	 * and that must be passed in whenever he changes the name on any of the other nyms in his wallet.
+ 	 * (In order to properly sign and save the change.)
+     */
 	if ( !opentxs::OTAPI_Wrap::SetNym_Name(nymID, nymID, nymName) ) {
 		_erro("Failed trying to name new Nym: " << nymID);
 		return false;
@@ -2015,7 +2048,7 @@ bool cUseOT::NymDisplayAll(bool dryrun) {
 	return true;
 }
 
-string cUseOT::NymGetDefault() {
+ID cUseOT::NymGetDefault() {
 	if(!Init())
 		return "";
 	auto defaultNym = mDefaultIDs.at(nUtils::eSubjectType::User);
@@ -2159,6 +2192,7 @@ bool cUseOT::NymRegister(const string & nymName, const string & serverName, bool
 		return true;
 	}
 	_info("Nym " << nymName << "(" << nymID << ")" << " was already registered" << endl);
+	cout << zkr::cc::fore::lightgreen << "Nym " << nymName << " registered" << zkr::cc::console << endl;
 	return true;
 }
 
@@ -2551,22 +2585,10 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 	if (strType.empty())
 		return nOT::nUtils::reportError("Unable to determine instrument's type. Expected CHEQUE, VOUCHER, INVOICE, or (cash) PURSE");
 
+
 	// If there's a payment type,
 	// and it's not "ANY", and it's the wrong type,
 	// then skip this one.
-	//
-//	if (VerifyStringVal(strPaymentType) && (strPaymentType != "ANY") && (strPaymentType != strType))
-//	{
-//			if ((("CHEQUE" == strPaymentType) && ("VOUCHER" == strType)) || (("VOUCHER" == strPaymentType) && ("CHEQUE" == strType)))
-//			{
-//					// in this case we allow it to drop through.
-//			}
-//			else
-//			{
-//					opentxs::OTAPI_Wrap::Output(0, "The instrument " + strIndexErrorMsg + "is not a " + strPaymentType + ". (It's a " + strType + ". Skipping.)\n");
-//					return -1;
-//			}
-//	}
 
 	// But we need to make sure the invoice is made out to strMyNymID (or to no one.)
 	// Because if it IS endorsed to a Nym, and strMyNymID is NOT that nym, then the
@@ -2620,15 +2642,16 @@ bool cUseOT::PaymentAccept(const string & account, int64_t index, bool dryrun) {
 		return false;
 	}
 
-	// TODO, IMPORTANT: After the below deposits are completed successfully, the wallet
-	// will receive a "successful deposit" server reply. When that happens, OT (internally)
-	// needs to go and see if the deposited item was a payment in the payments inbox. If so,
-	// it should REMOVE it from that box and move it to the record box.
-	//
-	// That's why you don't see me messing with the payments inbox even when these are successful.
-	// They DO need to be removed from the payments inbox, but just not here in the script. (Rather,
-	// internally by OT itself.)
-	//
+	/**
+	 * TODO, IMPORTANT: After the below deposits are completed successfully, the wallet
+	 * will receive a "successful deposit" server reply. When that happens, OT (internally)
+	 * needs to go and see if the deposited item was a payment in the payments inbox. If so,
+	 * it should REMOVE it from that box and move it to the record box.
+	 *
+	 * That's why you don't see me messing with the payments inbox even when these are successful.
+	 * They DO need to be removed from the payments inbox, but just not here in the script. (Rather,
+	 * internally by OT itself.)
+	 */
 
 	PrintInstrumentInfo(instrument);
 	if ("CHEQUE" == strType || "VOUCHER" == strType) {
@@ -3097,7 +3120,7 @@ bool cUseOT::ServerRemove(const string & serverName, bool dryrun) {
 bool cUseOT::ServerSetDefault() {
 	ID serverID = opentxs::OTAPI_Wrap::GetServer_ID(0);
 	if(serverID.empty()) return false;
-	cout << "Setting server " << ServerGetName(serverID) << " as default" << endl;
+	_note("Setting server " << ServerGetName(serverID) << " as default");
 	return ServerSetDefault(ServerGetName(serverID), false);
 }
 

@@ -100,13 +100,13 @@ void cCmdParser::Init() {
 		}
 	);
 
-	cParamInfo pNymId( "nym-id", [] () -> string { return Tr(eDictType::help, "nym-id") },
+	cParamInfo pId( "id", [] () -> string { return Tr(eDictType::help, "id") },
 			[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-				_dbg3("Nym validation");
+				_dbg3("id validation");
 				return true;
 			} ,
 			[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
-				_dbg3("Nym hinting");
+				_dbg3("id hinting");
 				return vector<string> {"otx"};
 			}
 	);
@@ -151,6 +151,18 @@ void cCmdParser::Init() {
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Account hinting");
 			return use.AccountGetAllNames();
+		}
+	);
+
+	cParamInfo pAccountId( "account-id", [] () -> string { return Tr(eDictType::help, "account-d") },
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			_dbg3("Account validation");
+			auto accounts = use.AccountGetAllIds();
+			return std::find(accounts.begin(), accounts.end(), data.Var(curr_word_ix + 1))!=accounts.end();
+		} ,
+		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			_dbg3("Account hinting");
+			return use.AccountGetAllIds();
 		}
 	);
 
@@ -463,6 +475,9 @@ void cCmdParser::Init() {
 	AddFormat("defaults", {}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.DisplayAllDefaults(D.has("--dryrun") ); } );
 
+	AddFormat("defaults export", {}, {pWriteFile}, NullMap,
+		LAMBDA { auto &D=*d; return U.DefaultsExport(D.v(1, ""), D.has("--dryrun") ); } );
+
 	AddFormat("refresh", {}, {} , NullMap,
 		LAMBDA { auto &D=*d; return	U.Refresh( D.has("--dryrun") ); } ) ;
 
@@ -488,6 +503,9 @@ void cCmdParser::Init() {
 
 	AddFormat("account set-default", {pAccount}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AccountSetDefault( D.V(1), D.has("--dryrun") ); } );
+
+	AddFormat("account set-name", {pAccountId, pAccountNewName}, {}, NullMap,
+		LAMBDA { auto &D=*d; return U.AccountSetName( D.V(1), D.V(2), D.has("--dryrun") ); } );
 
 	AddFormat("account rm", {pAccount}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AccountRemove( D.V(1), D.has("--dryrun") ); } );
@@ -528,10 +546,10 @@ void cCmdParser::Init() {
 	AddFormat("addressbook ls", {}, {pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookDisplay(D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
-	AddFormat("addressbook add", {pNym, pText, pNymId}, {}, NullMap,
+	AddFormat("addressbook add", {pNym, pText, pId}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookAdd(D.V(1), D.V(2), D.V(3), D.has("--dryrun") ); } );
 
-	AddFormat("addressbook rm", {pNym, pNymId}, {}, NullMap,
+	AddFormat("addressbook rm", {pNym, pId}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.AddressBookRemove(D.V(1), D.V(2), D.has("--dryrun") ); } );
 
 	//======== ot asset ========
@@ -562,6 +580,7 @@ void cCmdParser::Init() {
 
 	AddFormat("asset show-contract", {}, {pAsset, pWriteFile}, NullMap,
 		LAMBDA { auto &D=*d; return U.AssetShowContract(D.v(1, U.AssetGetName(U.AssetGetDefault())), D.v(2, ""), D.has("--dryrun") ); } );
+
 
 	//======== ot basket ======
 
