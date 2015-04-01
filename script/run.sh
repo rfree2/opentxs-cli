@@ -29,6 +29,7 @@ removePid
 
 if [[ $# -eq 1 ]]; then 
     if [[ $1 -eq "gdb" ]]; then 
+        setfattr -n user.pax.flags -v rm ./build/bin/otx &> /dev/null
         gdb -return-child-result -ex run -ex "thread apply all bt" -ex "quit" --args ./build/bin/otx +normal +debugfile --complete-shell	
     fi
 else 
