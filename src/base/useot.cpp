@@ -221,7 +221,7 @@ bool cUseOT::Refresh(bool dryrun) {
 		}
 		_dbg1("Can not refresh ");
 		return false;
-	} catch (std::exception& e) { // FIXME: map::at exception
+	} catch (std::exception& e) {
 		_erro(e.what());
 		return false;
 	}
@@ -1001,7 +1001,7 @@ bool cUseOT::AssetNew(const string & nym, const string & filename, bool dryrun) 
 		return nUtils::reportError("", message, "Provided contract was empty");
 	}
 
-	nUtils::DisplayStringEndl(cout, opentxs::OTAPI_Wrap::CreateAssetContract(NymGetId(nym), xmlContents) ); //TODO save contract to file
+	nUtils::DisplayStringEndl(cout, opentxs::OTAPI_Wrap::CreateAssetContract(NymGetId(nym), xmlContents) );
 
 	try {
 		auto defaultAsset = AssetGetDefault();
