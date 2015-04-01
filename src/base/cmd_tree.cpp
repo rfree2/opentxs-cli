@@ -678,8 +678,11 @@ void cCmdParser::Init() {
 	AddFormat("nym info", {}, {pNym}, NullMap,
 		LAMBDA { auto &D=*d; return U.NymDisplayInfo( D.v(1, U.NymGetName( U.NymGetDefault() )), D.has("--dryrun") ); } );
 
-	AddFormat("nym register", {pNym}, {pServer}, NullMap ,
-		LAMBDA { auto &D=*d; return U.NymRegister( D.V(1), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--dryrun") ); } );
+	AddFormat("nym register", {pNym}, {pServer}, { {"--force", pBool} },
+		LAMBDA { auto &D=*d; return U.NymRegister( D.V(1), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--force"), D.has("--dryrun") ); } );
+
+	AddFormat("nym unregister", {pNym}, {pServer}, { {"--force", pBool} },
+		LAMBDA { auto &D=*d; return U.NymUnregister( D.V(1), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--force"), D.has("--dryrun") );} );
 
 	AddFormat("nym rm", {pNym}, {}, NullMap,
 		LAMBDA { auto &D=*d; return U.NymRemove( D.V(1), D.has("--dryrun") ); } );

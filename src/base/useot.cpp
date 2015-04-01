@@ -315,7 +315,7 @@ string cUseOT::AccountGetDefault() {
 	if(!Init())
 		return "";
 	auto defaultAcc = mDefaultIDs.at(nUtils::eSubjectType::Account);
-	if(defaultAcc.empty()) throw string("No default account!");
+	if(defaultAcc.empty() || defaultAcc == "-") throw string("No default account!");
 	return defaultAcc;
 }
 
@@ -486,7 +486,13 @@ bool cUseOT::AccountCreate(const string & nym, const string & asset, const strin
 		cout << "Account " << newAccountName << "(" << accountID << ")" << " created successfully." << endl;
 		AccountRefresh("^" + accountID, false, dryrun);
 	}
-	return false;
+
+	try {
+		auto defaultAcc = AccountGetDefault();
+	} catch(...) {
+		return AccountSetDefault(newAccountName, false);
+	}
+	return true;
 }
 
 vector<string> cUseOT::AccountGetAllNames() {
@@ -1932,7 +1938,7 @@ bool cUseOT::NymCreate(const string & nymName, bool registerOnServer, bool dryru
 
 	if ( registerOnServer ) {
 		try {
-			ok = ok && NymRegister(nymName, "^" + ServerGetDefault(), dryrun);
+			ok = ok && NymRegister(nymName, "^" + ServerGetDefault(), false, dryrun);
 		} catch(...) {
 			ok = ok && nUtils::reportError("No default server, can't register nym");
 		}
@@ -2176,23 +2182,29 @@ bool cUseOT::NymRefresh(const string & nymName, bool all, bool dryrun) { //TODO 
 	return false;
 }
 
-bool cUseOT::NymRegister(const string & nymName, const string & serverName, bool dryrun) {
-	_fact("nym register " << nymName << " on server " << serverName);
+bool cUseOT::NymRegister(const string & nymName, const string & serverName, bool force, bool dryrun) {
+	_fact("nym register " << nymName << " on server " << serverName << " force=" << force);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	ID nymID = NymGetId(nymName);
 	ID serverID = ServerGetId(serverName);
 
-	if (!opentxs::OTAPI_Wrap::IsNym_RegisteredAtServer(nymID, serverID)) {
+	if (!opentxs::OTAPI_Wrap::IsNym_RegisteredAtServer(nymID, serverID) || force) {
 		string response = mMadeEasy->register_nym(serverID, nymID);
+
+		if(mMadeEasy->VerifyMessageSuccess(response) != 1) {
+			return reportError(response, "error register nym: " + nymName, "Can't register nym " + nymName);
+		}
+
 		nOT::nUtils::DisplayStringEndl(cout, response);
 		_info("Nym " << nymName << "(" << nymID << ")" << " was registered successfully on server");
-		cout << "Nym " << nymName << "(" << nymID << ")" << " was registered successfully on server" << endl;
+		cout << zkr::cc::fore::lightgreen << "Nym " << nymName << "(" << nymID << ")"
+				<< " was registered successfully on server" << zkr::cc::console << endl;
 		return true;
 	}
 	_info("Nym " << nymName << "(" << nymID << ")" << " was already registered" << endl);
-	cout << zkr::cc::fore::lightgreen << "Nym " << nymName << " registered" << zkr::cc::console << endl;
+	cout << "Nym " << nymName << " was already registered" << endl;
 	return true;
 }
 
@@ -2204,7 +2216,8 @@ bool cUseOT::NymRemove(const string & nymName, bool dryrun) {
 	string nymID = NymGetId(nymName);
 	if ( opentxs::OTAPI_Wrap::Wallet_CanRemoveNym(nymID) ) {
 		if ( opentxs::OTAPI_Wrap::Wallet_RemoveNym(nymID) ) {
-			_info("Nym " << nymName  <<  "(" << nymID << ")" << " was deleted successfully");
+			cout << zkr::cc::fore::green << "Nym " << nymName  << " was deleted successfully";
+			_info(nymName << " deleted");
 			mCache.mNyms.erase(nymID);
 			return true;
 		}
@@ -2249,6 +2262,27 @@ bool cUseOT::NymSetDefault(const string & nymName, bool dryrun) {
 	// Save defaults to config file:
 	nUtils::configManager.Save(mDefaultIDsFile, mDefaultIDs);
 	return true;
+}
+
+bool cUseOT::NymUnregister(const string &nym, const string & server, bool force, bool dryrun) {
+	_fact("nym unregister nym=" << nym << " server=" << server << " force=" << force);
+	if(dryrun) return true;
+	if(!Init()) return false;
+
+	const ID nymID = NymGetId(nym);
+	const ID srvID = ServerGetId(server);
+
+	if(!opentxs::OTAPI_Wrap::IsNym_RegisteredAtServer(nymID, srvID)) {
+		cout << zkr::cc::fore::red << "Nym " << nym << " wasn't register at server " << server << zkr::cc::console
+				<< endl;
+		if(force) cout << "Trying unregister nym" << endl;
+		else return false;
+	}
+
+	auto unregister = opentxs::OTAPI_Wrap::unregisterNym(srvID, nymID);
+	_note("unregister: " << unregister);
+	return unregister == 1;
+
 }
 bool cUseOT::OutpaymentDiscard(const string & acc, const string & nym, const int32_t index, bool dryrun) {
 	if(!Init())	return false;
