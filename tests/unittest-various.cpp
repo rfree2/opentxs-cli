@@ -4,6 +4,7 @@
 #include "../src/base/lib_common3.hpp"
 
 #include "../src/base/useot.hpp"
+#include "../src/base/cmd.hpp"
 #include <typeinfo>
 
 //#include <condition_variable>
@@ -102,7 +103,7 @@ TEST_F(cUseOtTest, AccGetNym) {
 		EXPECT_EQ(useOt->NymGetId(nym), useOt->AccountGetNymID(acc));
 	}
 }
-
+/*
 TEST_F(cUseOtTest, Nymbox) {
 	const auto srvID = useOt->ServerGetId(server);
 	for(auto nymID : useOt->NymGetAllIDs()) {
@@ -118,8 +119,8 @@ TEST_F(cUseOtTest, Nymbox) {
 		auto txnNum = opentxs::OTAPI_Wrap::GetNym_TransactionNumCount(srvID, nymID);
 		_info(txnNum);
 	}
-}
-
+}*/
+/*
 TEST_F(cUseOtTest, BasketDisplay) {
 	using namespace opentxs;
 	auto tmp = useOt->Init();
@@ -141,7 +142,7 @@ TEST_F(cUseOtTest, BasketDisplay) {
 		ok = ok || isb;
 	}
 	// EXPECT_TRUE(ok);
-}
+}*/
 
 TEST_F(cUseOtTest, Home) {
 	auto home = cFilesystemUtils::GetHomeDir();

@@ -169,14 +169,29 @@ void cCmdParser::Init() {
 	cParamInfo pAccountMy( "account-my", [] () -> string { return Tr(eDictType::help, "account-my") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Account validation");
-				return use.CheckIfExists(nUtils::eSubjectType::Account, data.Var(curr_word_ix + 1));
+			return use.CheckIfExists(nUtils::eSubjectType::Account, data.Var(curr_word_ix + 1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Account hinting");
 			return use.AccountGetAllNames();
 		}
 	);
-	cParamInfo pAccountTo = pAccount << cParamInfo("account-to", [] () -> string { return Tr(eDictType::help, "account-to") }); // TODO suggest not the same account as was used already before
+	cParamInfo pAccountTo = pAccount << cParamInfo("account-to", [] () -> string { return Tr(eDictType::help, "account-to") }, // TODO suggest not the same account as was used already before
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			_dbg3("Account validation: " <<  data.Var(curr_word_ix+1));
+			auto accFrom = (curr_word_ix == 0)? use.AccountGetName(use.AccountGetDefault()) : data.Var(curr_word_ix);
+
+			return use.CheckIfExists(nUtils::eSubjectType::Account, data.Var(curr_word_ix + 1), accFrom);
+		} ,
+		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			auto accFrom = (curr_word_ix == 1)? use.AccountGetName(use.AccountGetDefault()) : data.Var(curr_word_ix-1);
+			using namespace nOT::nUtils::nOper;
+			_dbg3("Account hinting");
+			_dbg2("Account from " << accFrom);
+			return use.AccountGetAllNames() - accFrom;
+	}
+	);
+
 	cParamInfo pAccountFrom = pAccountMy << cParamInfo("account-from", [] () -> string { return Tr(eDictType::help, "account-from") });
 
 	cParamInfo pAccountNewName( "account-new", [] () -> string { return Tr(eDictType::help, "account-new") },
