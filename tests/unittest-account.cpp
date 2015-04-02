@@ -76,9 +76,12 @@ TEST_F(cUseOtAccountTest, Cmd) {
 	auto nyms = useOt->NymGetAllNames();
 	auto accs = useOt->AccountGetAllNames();
 
+	auto defaultAcc = "\"" + useOt->AccountGetName(useOt->AccountGetDefault()) + "\" ";
+	_note("default account: " << defaultAcc);
+
 	if(nyms.size() < 2 || accs.size() < 2) return;
-	auto acc1 = accs.front() + " ";
-	auto acc2 = accs.back() + " ";
+	auto acc1 = "\"" + accs.front() + "\" ";
+	auto acc2 = "\"" + accs.back() + "\" ";
 
 	shared_ptr<nOT::nNewcli::cCmdParser> parser(new nOT::nNewcli::cCmdParser);
 	parser->Init();
@@ -94,12 +97,11 @@ TEST_F(cUseOtAccountTest, Cmd) {
 	EXPECT_NO_THROW(cmd( acc_cmd + acc1 + acc2 + "2"));
 
 	string acc_cmd2 = "account transfer-to ";
-	string acc_good = (acc1==useOt->AccountGetName(useOt->AccountGetDefault()))? acc2 : acc1;
+	string acc_good = (acc1 == defaultAcc)? acc2 : acc1;
 	string acc_cmd2_good = acc_cmd2 + acc_good + " 2";
 	EXPECT_NO_THROW(cmd(acc_cmd2_good));
 
-	string acc_bad = (acc1==useOt->AccountGetName(useOt->AccountGetDefault()))? acc1 : acc2;
-	string acc_cmd2_bad = acc_cmd2 + acc_bad + " 2";
+	string acc_cmd2_bad = acc_cmd2 + defaultAcc + " 2";
 	EXPECT_ANY_THROW(cmd(acc_cmd2_bad));
 
 }
