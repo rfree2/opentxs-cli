@@ -143,8 +143,8 @@ bool cUseOT::DisplayDefaultSubject(const nUtils::eSubjectType type, bool dryrun)
 	if(!Init()) return false;
 	ID defaultID = mDefaultIDs.at(type);
 	string defaultName = (this->*cUseOT::subjectGetNameFunc.at(type))(defaultID);
-	nUtils::DisplayStringEndl(cout, "Defaut " + nUtils::SubjectType2String(type) + ":" );
-	nUtils::DisplayStringEndl(cout, defaultID + " " + defaultName );
+	nUtils::DisplayStringEndl("Defaut " + nUtils::SubjectType2String(type) + ":" );
+	nUtils::DisplayStringEndl(stringToColor(defaultID) + defaultID + " " + defaultName );
 	return true;
 }
 
