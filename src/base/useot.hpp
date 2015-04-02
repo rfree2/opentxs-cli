@@ -235,7 +235,7 @@ namespace nUse {
 		EXEC bool NymImport(const string & filename, bool dryrun);
 		EXEC bool NymRefresh(const string & nymName, bool all, bool dryrun);
 		EXEC bool NymRegister(const string & nymName, const string & serverName, bool force, bool dryrun);
-		EXEC bool NymRemove(const string & nymName, bool dryrun);
+		EXEC bool NymRemove(const string & nymName, bool force, bool dryrun);
 		EXEC bool NymRename(const string & oldNymName, const string & newNymName, bool dryrun);
 		EXEC bool NymSetDefault(const string & nymName, bool dryrun);
 		EXEC bool NymUnregister(const string &nym, const string & server, bool force, bool dryrun);

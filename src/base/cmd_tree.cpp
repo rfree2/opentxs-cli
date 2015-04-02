@@ -101,14 +101,14 @@ void cCmdParser::Init() {
 	);
 
 	cParamInfo pId( "id", [] () -> string { return Tr(eDictType::help, "id") },
-			[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-				_dbg3("id validation");
-				return true;
-			} ,
-			[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
-				_dbg3("id hinting");
-				return vector<string> {"otx"};
-			}
+		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
+			_dbg3("id validation");
+			return true;
+		} ,
+		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
+			_dbg3("id hinting");
+			return vector<string> {"otx"};
+		}
 	);
 
 	cParamInfo pNymAcc( "nym-acc", [] () -> string { return Tr(eDictType::help, "nym-acc") },
@@ -176,7 +176,7 @@ void cCmdParser::Init() {
 			return use.AccountGetAllNames();
 		}
 	);
-	cParamInfo pAccountTo = pAccount << cParamInfo("account-to", [] () -> string { return Tr(eDictType::help, "account-to") }, // TODO suggest not the same account as was used already before
+	cParamInfo pAccountTo("account-to", [] () -> string { return Tr(eDictType::help, "account-to") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Account validation: " <<  data.Var(curr_word_ix+1));
 			auto accFrom = (curr_word_ix == 0)? use.AccountGetName(use.AccountGetDefault()) : data.Var(curr_word_ix);
@@ -189,7 +189,7 @@ void cCmdParser::Init() {
 			_dbg3("Account hinting");
 			_dbg2("Account from " << accFrom);
 			return use.AccountGetAllNames() - accFrom;
-	}
+		}
 	);
 
 	cParamInfo pAccountFrom = pAccountMy << cParamInfo("account-from", [] () -> string { return Tr(eDictType::help, "account-from") });
@@ -209,7 +209,7 @@ void cCmdParser::Init() {
 	cParamInfo pAsset( "asset", [] () -> string { return Tr(eDictType::help, "asset") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			_dbg3("Asset validation");
-				return use.CheckIfExists(nUtils::eSubjectType::Asset, data.Var(curr_word_ix + 1));
+			return use.CheckIfExists(nUtils::eSubjectType::Asset, data.Var(curr_word_ix + 1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			_dbg3("Asset hinting");
@@ -241,9 +241,13 @@ void cCmdParser::Init() {
 
 	cParamInfo pOnceInt( "int", [] () -> string { return Tr(eDictType::help, "int") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-			// TODO check if is any integer
-			// TODO check if not present in data
-			return true;
+			try {
+				auto integer = stoi(data.Var(curr_word_ix+1));
+				return true;
+			} catch(...) {
+				_erro(data.Var(curr_word_ix+1) << " not a number");
+				return false;
+			}
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> { "-1", "0", "1", "2", "100" };
@@ -252,9 +256,13 @@ void cCmdParser::Init() {
 
 	cParamInfo pAmount( "amount", [] () -> string { return Tr(eDictType::help, "amount") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-			// TODO check if is any integer
-			// TODO check if can send that amount
-			return true;
+			try {
+				auto integer = stoi(data.Var(curr_word_ix+1));
+				return integer > 0;
+			} catch(...) {
+				_erro(data.Var(curr_word_ix+1) << " not a number");
+				return false;
+			}
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> {"1", "10", "100" };
@@ -634,10 +642,10 @@ void cCmdParser::Init() {
 	//======== ot cheque ========
 
 	AddFormat("cheque new", {pAccountFrom, pNymFrom, pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
-			LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.v(5, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.ChequeCreate(D.V(1), D.V(2), D.V(3), stoi(D.V(4)), D.v(5, U.ServerGetName(U.ServerGetDefault())),  D.o1("--memo", ""), D.has("--dryrun") ); } );
 
 	AddFormat("cheque discard", {pAccount, pNym}, {pOutpaymentIndex}, {},
-			LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.ChequeDiscard(D.V(1), D.V(2), stoi(D.v(3, "-1")), D.has("--dryrun") ); } );
 
 	AddFormat("cheque new-for", {pNymTo, pAmount}, {pServer}, { {"--memo",pText} },
 		LAMBDA {auto &D=*d; return U.ChequeCreate( U.AccountGetName( U.AccountGetDefault() ), U.AccountGetNym( U.AccountGetName(U.AccountGetDefault()) ), D.V(1), stoi(D.V(2)), D.v(3, U.ServerGetName(U.ServerGetDefault())), D.o1("--memo", ""), D.has("--dryrun") );} );
@@ -699,8 +707,8 @@ void cCmdParser::Init() {
 	AddFormat("nym unregister", {pNym}, {pServer}, { {"--force", pBool} },
 		LAMBDA { auto &D=*d; return U.NymUnregister( D.V(1), D.v(2, U.ServerGetName(U.ServerGetDefault())), D.has("--force"), D.has("--dryrun") );} );
 
-	AddFormat("nym rm", {pNym}, {}, NullMap,
-		LAMBDA { auto &D=*d; return U.NymRemove( D.V(1), D.has("--dryrun") ); } );
+	AddFormat("nym remove", {pNym}, {}, { {"--force", pBool} },
+		LAMBDA { auto &D=*d; return U.NymRemove( D.V(1), D.has("--force"), D.has("--dryrun") ); } );
 
 	AddFormat("nym new", {pNymNewName}, {}, { {"--register", pBool} },
 		LAMBDA { auto &D=*d; return U.NymCreate( D.V(1), D.has("--register"), D.has("--dryrun") ); } );
@@ -720,22 +728,22 @@ void cCmdParser::Init() {
 	//======== ot nym-outpayment ========
 
 	AddFormat("outpayment discard", {pAccount}, {pNymAcc, pOutpaymentIndex}, NullMap,
-			LAMBDA { auto &D=*d; return U.OutpaymentDiscard(D.V(1), D.v(2, U.AccountGetNym(D.V(1))), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentDiscard(D.V(1), D.v(2, U.AccountGetNym(D.V(1))), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
 
 	AddFormat("outpayment ls", {}, {pNym}, NullMap,
-			LAMBDA { auto &D=*d; return U.OutpaymentDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentDisplay( D.v(1, U.NymGetName(U.NymGetDefault())), D.has("--dryrun") ); } );
 
 	AddFormat("outpayment show", {}, {pNym, pOutpaymentIndex}, NullMap,
-			LAMBDA { auto &D=*d; return U.OutpaymentShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentShow( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2,"0")) ,  D.has("--dryrun") ); } );
 
 	AddFormat("outpayment rm", {pNym}, {pOutpaymentIndex}, { {"--all", pBool} },
-			LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentRemove( D.v(1, U.NymGetName(U.NymGetDefault())) , stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
 
 	AddFormat("outpayment send", {pNymFrom, pNymTo}, {pInt}, NullMap,
-			LAMBDA { auto &D=*d; return U.OutpaymentSend( D.V(1), D.V(2), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentSend( D.V(1), D.V(2), stoi(D.v(3, "0")), D.has("--dryrun") ); } );
 
 	AddFormat("outpayment send-to", {pNymTo}, {pInt}, { {"--all", pBool} },
-			LAMBDA { auto &D=*d; return U.OutpaymentSend( U.NymGetName( U.NymGetDefault()), D.V(1), stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
+		LAMBDA { auto &D=*d; return U.OutpaymentSend( U.NymGetName( U.NymGetDefault()), D.V(1), stoi(D.v(2, "0")), D.has("--all"), D.has("--dryrun") ); } );
 
 
 	//======== ot payment ========

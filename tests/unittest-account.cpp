@@ -36,13 +36,13 @@ TEST_F(cUseOtAccountTest, Transfer1) {
 	useOt->Refresh(false);
 
 	EXPECT_EQ(fromAccBalance-amount, useOt->AccountGetBalance(acc2));
-	sleep(3);
+	sleep(1);
 
 //	useOt->Refresh(false);
 
 	EXPECT_TRUE(useOt->AccountInAccept(acc1, 0, false, false));
 
-	sleep(4);
+	sleep(2);
 	useOt->Refresh(false);
 	sleep(1);
 	EXPECT_EQ(toAccBalance+amount, useOt->AccountGetBalance(acc1));
@@ -75,8 +75,17 @@ TEST_F(cUseOtAccountTest, Transfer2) {
 TEST_F(cUseOtAccountTest, Cmd) {
 	auto nyms = useOt->NymGetAllNames();
 	auto accs = useOt->AccountGetAllNames();
+	_dbg3("getting default");
 
-	auto defaultAcc = "\"" + useOt->AccountGetName(useOt->AccountGetDefault()) + "\" ";
+	auto defaultAccID = useOt->AccountGetDefault();
+	_dbg2(defaultAccID);
+	ASSERT_TRUE(defaultAccID != "-" && !defaultAccID.empty());
+	auto defaultAcc = useOt->AccountGetName(defaultAccID);
+	_dbg2(defaultAcc);
+	ASSERT_TRUE(defaultAcc != "-" && !defaultAcc.empty());
+
+	defaultAcc = "\"" + defaultAcc + "\" ";
+
 	_note("default account: " << defaultAcc);
 
 	if(nyms.size() < 2 || accs.size() < 2) return;

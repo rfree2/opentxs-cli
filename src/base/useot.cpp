@@ -228,6 +228,7 @@ bool cUseOT::Refresh(bool dryrun) {
 }
 
 bool cUseOT::Init() { // TODO init on the beginning of application execution
+	if (mDefaultIDs.empty()) LoadDefaults();
 	if (OTAPI_error) return false;
 	if (OTAPI_loaded) return true;
 	try {
@@ -2208,15 +2209,16 @@ bool cUseOT::NymRegister(const string & nymName, const string & serverName, bool
 	return true;
 }
 
-bool cUseOT::NymRemove(const string & nymName, bool dryrun) {
+bool cUseOT::NymRemove(const string & nymName, bool force, bool dryrun) {
 	_fact("nym rm " << nymName);
 	if(dryrun) return true;
 	if(!Init()) return false;
 
 	string nymID = NymGetId(nymName);
-	if ( opentxs::OTAPI_Wrap::Wallet_CanRemoveNym(nymID) ) {
+	if ( opentxs::OTAPI_Wrap::Wallet_CanRemoveNym(nymID) || force) {
 		if ( opentxs::OTAPI_Wrap::Wallet_RemoveNym(nymID) ) {
-			cout << zkr::cc::fore::green << "Nym " << nymName  << " was deleted successfully";
+			cout << zkr::cc::fore::green << "Nym " << nymName << " was deleted successfully" << zkr::cc::console
+					<< endl;
 			_info(nymName << " deleted");
 			mCache.mNyms.erase(nymID);
 			return true;
