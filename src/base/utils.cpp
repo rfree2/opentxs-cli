@@ -333,7 +333,7 @@ std::string SpecialFromEscape(const std::string &s, int & pos) {
 		try {
 			const bool is_escape = s.at(i) == escape_char;
 			if (is_escape) {
-				if (! (std::stoi(s)+1 < s_len) ) throw std::string("Invalid escape opened at end of string");
+				if (! (std::stoul(s)+1 < s_len) ) throw std::string("Invalid escape opened at end of string");
 				const char next_char = s.at(i+1);
 				if (next_char == space_char) {
 					newStr<<nonbreak_char;
@@ -455,6 +455,20 @@ std::string GetLastCharIf(const std::string & str) { // TODO unicode?
 	auto s = str.length();
 	if (s==0) return ""; // empty string signalizes ther is nothing to be returned
 	return std::string( 1 , str.at( s - 1) );
+}
+
+bool isNumber(const std::string &s, bool positive) {
+	try {
+		int number = std::stoi(s);
+		if(!positive) return true;
+		return (number > 0)? true : false;
+	} catch(...) {
+		_erro("[" << s << "] not a number!");
+		return false;
+	}
+}
+bool isNumber(const std::string &s) {
+	return isNumber(s, false);
 }
 
 // ====================================================================
@@ -632,7 +646,7 @@ bool cConfigManager::Load(const string & fileName, map<string, string> & str){
 			else {
 				_dbg3("config1:"<<vec.at(0));
 				string all = "";
-				for(auto i=1; i<vec.size(); ++i) all += vec.at(i);
+				for(size_t i=1; i<vec.size(); ++i) all += vec.at(i);
 
 				str.insert ( std::pair<string, string>(vec.at(0) , all ) );
 			}

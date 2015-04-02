@@ -241,13 +241,7 @@ void cCmdParser::Init() {
 
 	cParamInfo pOnceInt( "int", [] () -> string { return Tr(eDictType::help, "int") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-			try {
-				auto integer = stoi(data.Var(curr_word_ix+1));
-				return true;
-			} catch(...) {
-				_erro(data.Var(curr_word_ix+1) << " not a number");
-				return false;
-			}
+			return nUtils::isNumber(data.Var(curr_word_ix+1));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> { "-1", "0", "1", "2", "100" };
@@ -256,13 +250,7 @@ void cCmdParser::Init() {
 
 	cParamInfo pAmount( "amount", [] () -> string { return Tr(eDictType::help, "amount") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
-			try {
-				auto integer = stoi(data.Var(curr_word_ix+1));
-				return integer > 0;
-			} catch(...) {
-				_erro(data.Var(curr_word_ix+1) << " not a number");
-				return false;
-			}
+			return nUtils::isNumber(data.Var(curr_word_ix+1), true);
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> {"1", "10", "100" };
@@ -332,7 +320,10 @@ void cCmdParser::Init() {
 	cParamInfo pMsgInIndex( "msg-index-inbox", [] () -> string { return Tr(eDictType::help, "msg-index-inbox") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			if ( ( data.Var(nr) == "-1" && use.MsgInCheckIndex(data.Var(nr-1), 0) ) || use.MsgInCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)) ) ) {//TODO check if integer
+			if(!nUtils::isNumber(data.Var(nr))) return false;
+
+			if ( ( data.Var(nr) == "-1" && use.MsgInCheckIndex(data.Var(nr-1), 0) )
+					|| use.MsgInCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)) ) ) {
 				return true;
 			}
 			return false;
@@ -346,7 +337,10 @@ void cCmdParser::Init() {
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
 			cout << "nym:"  << data.Var(nr-1) << endl;
-			if ( ( data.Var(nr) == "-1" && use.MsgOutCheckIndex(data.Var(nr-1), 0) ) || use.MsgOutCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)) ) ) {//TODO check if integer
+
+			if(!nUtils::isNumber(data.Var(nr))) return false;
+			if ( ( data.Var(nr) == "-1" && use.MsgOutCheckIndex(data.Var(nr-1), 0) )
+					|| use.MsgOutCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)) ) ) {
 				return true;
 			}
 			return false;
@@ -360,7 +354,7 @@ void cCmdParser::Init() {
 	cParamInfo pInboxIndex( "inbox-index", [] () -> string { return Tr(eDictType::help, "inbox-index") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
-			return true; //TODO
+			return nUtils::isNumber(data.Var(nr)); // TODO
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
 			return vector<string> {}; //TODO hinting function for msg index
@@ -370,6 +364,7 @@ void cCmdParser::Init() {
 	cParamInfo pOutpaymentIndex( "outpayment-index", [] () -> string { return Tr(eDictType::help, "outpayment-index") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
+			if(!nUtils::isNumber(data.Var(nr))) return false;
 			return use.OutpaymentCheckIndex(data.Var(nr-1), std::stoi( data.Var(nr)));
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {
@@ -382,6 +377,7 @@ void cCmdParser::Init() {
 	cParamInfo pPaymetInboxIndex( "payment-inbox-index", [] () -> string { return Tr(eDictType::help, "payment-inbox-index") },
 		[] (cUseOT & use, cCmdData & data, size_t curr_word_ix ) -> bool {
 			const int nr = curr_word_ix+1;
+			if(!nUtils::isNumber(data.Var(nr))) return false;
 			return true; //TODO
 		} ,
 		[] ( cUseOT & use, cCmdData & data, size_t curr_word_ix  ) -> vector<string> {

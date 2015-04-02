@@ -203,6 +203,8 @@ char GetLastChar(const std::string & str);
 std::string GetLastCharIf(const std::string & str); // TODO unicode?
 std::string EscapeString(const std::string &s);
 
+bool isNumber(const std::string &s, bool positive);
+bool isNumber(const std::string &s);
 
 template <class T>
 std::string DbgVector(const std::vector<T> &v, const std::string &delim="|") {
@@ -263,7 +265,7 @@ eSubjectType String2SubjectType(const string & type);
  bool reportError(const string & var, const string & description, const string & message);
  bool reportError(const string & message);
 
- // ====================================================================
+// ====================================================================
 
  string GetText();
  string GetInput(const string &filename); ///< gets input from file, if empty - from text editor.
